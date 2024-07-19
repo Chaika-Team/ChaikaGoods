@@ -1,0 +1,12 @@
+is_debug: true
+listen:
+  type: port
+  bind_ip: 127.0.0.1
+  port: 1234
+storage:
+  type: postgres
+  host: localhost
+  port: 5432
+  database: database
+  user: user
+  password: pass
