@@ -1,4 +1,4 @@
-package error
+package myerr
 
 import "fmt"
 
@@ -12,7 +12,7 @@ func (e *NotFound) Error() string {
 }
 
 type DuplicateError struct {
-	str string
+	Str string
 }
 
 func (e *DuplicateError) Error() string {
