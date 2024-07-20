@@ -16,5 +16,5 @@ type DuplicateError struct {
 }
 
 func (e *DuplicateError) Error() string {
-	return fmt.Sprintf("Resource %s duplicated", e.str)
+	return fmt.Sprintf("Resource %s duplicated", e.Str)
 }

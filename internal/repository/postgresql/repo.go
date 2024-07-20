@@ -116,10 +116,10 @@ func (r *GoodsRepository) GetPackageByID(ctx context.Context, packageID int64) (
 	pkg := models.Package{}
 	err := r.client.QueryRow(ctx, sqlPackage, packageID).Scan(&pkg.ID, &pkg.PackageName, &pkg.Description)
 	if err != nil {
-		err := r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
-		if err != nil {
-			return nil, nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, &myerr.NotFound{ID: fmt.Sprintf("%d", packageID)}
 		}
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
 		return nil, nil, err
 	}
 
@@ -162,6 +162,10 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID 
 			continue
 		}
 		contents = append(contents, c)
+	}
+
+	if len(contents) == 0 {
+		return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", packageID)}
 	}
 
 	return contents, nil
