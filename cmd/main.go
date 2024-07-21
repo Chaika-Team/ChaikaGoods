@@ -2,6 +2,7 @@ package main
 
 import (
 	"ChaikaGoods/internal/config"
+	"ChaikaGoods/internal/models"
 	repo "ChaikaGoods/internal/repository/postgresql"
 	"context"
 	"flag"
@@ -58,4 +59,38 @@ func main() {
 		_ = level.Error(logger).Log("message", "Failed to get product by ID", "err", err)
 	}
 	fmt.Printf("Product: %v\n", product)
+
+	products, err := repository.GetAllProducts(ctx)
+	if err != nil {
+		_ = level.Error(logger).Log("message", "Failed to get all products", "err", err)
+	}
+	fmt.Printf("Products: %v\n", products)
+	product = &models.Product{
+		Name:        "Test product",
+		Description: "Test description",
+		Price:       100,
+		SKU:         "test-sku1",
+	}
+	err = repository.AddQueryToCreateProduct(ctx, product)
+	if err != nil {
+		_ = level.Error(logger).Log("message", "Failed to add query to create product", "err", err)
+	}
+	// Get Current Dev Version
+	version, err := repository.GetCurrentDevVersion(ctx)
+	if err != nil {
+		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
+	}
+	print("Current dev version: ", version.VersionID)
+	// Apply changes
+	err = repository.ApplyChanges(ctx, version)
+	if err != nil {
+		_ = level.Error(logger).Log("message", "Failed to apply changes", "err", err)
+	}
+	// Get Current Dev Version
+	version, err = repository.GetCurrentDevVersion(ctx)
+	if err != nil {
+		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
+	}
+	print("Current dev version: ", version.VersionID)
+
 }

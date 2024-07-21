@@ -57,7 +57,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
-	product := models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Execute the query
@@ -66,14 +66,157 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.True(t, version.IsDev)
 	changes, err = repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
-	assert.NotNil(t, changes)
 	assert.Len(t, changes, 1+startLen, "Expected one new change")
-	change := changes[0]
+	change := &changes[0]
 	assert.Equal(t, models.OperationTypeInsert, change.OperationType)
 	assert.Equal(t, product, change.NewValue)
 	// Cleanup
 	err = repo.DeleteChange(ctx, change.ID)
 	assert.NoError(t, err, "Failed to delete change")
+}
+
+// TestAddQueryToUpdateProduct tests the AddQueryToUpdateProduct method of the GoodsRepository.
+func TestAddQueryToUpdateProduct(t *testing.T) {
+	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
+
+	ctx := context.Background()
+	version, err := repo.GetCurrentDevVersion(ctx)
+	// Get all changes to count it before adding a new one
+	changes, err := repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	startLen := len(changes)
+
+	product := &models.Product{ID: 1, Price: 2077.00}
+	// Update the product
+	err = repo.AddQueryToUpdateProduct(ctx, product)
+	assert.NoError(t, err, "Failed to add query to update product")
+	// Execute the query
+	changes, err = repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.NotNil(t, changes)
+	assert.Len(t, changes, 1+startLen, "Expected one new change")
+	change := changes[len(changes)-1]
+	assert.Equal(t, models.OperationTypeUpdate, int(change.OperationType))
+	assert.Equal(t, product.Price, change.NewValue.Price)
+	// Cleanup
+	err = repo.DeleteChange(ctx, changes[0].ID)
+	assert.NoError(t, err, "Failed to delete change")
+	err = repo.DeleteChange(ctx, change.ID)
+	assert.NoError(t, err, "Failed to delete change")
+
+}
+
+// TestAddQueryToDeleteProduct tests the AddQueryToDeleteProduct method of the GoodsRepository.
+func TestGetAllChanges(t *testing.T) {
+	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
+	ctx := context.Background()
+	version, err := repo.GetCurrentDevVersion(ctx)
+	// Get all changes to count it before adding a new one
+	changes, err := repo.GetAllChanges(ctx, version)
+	startlen := len(changes)
+	assert.NoError(t, err, "Failed to get all changes")
+	// Add a new change
+	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	err = repo.AddQueryToCreateProduct(context.Background(), product)
+	assert.NoError(t, err, "Failed to add query to create product")
+	// Get all changes again
+	changes, err = repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.NotNil(t, changes)
+	assert.Len(t, changes, 1+startlen, "Expected one new change")
+	// Cleanup
+	err = repo.DeleteChange(ctx, changes[0].ID)
+	assert.NoError(t, err, "Failed to delete change")
+}
+
+// TestGetCurrentDevVersion tests the GetCurrentDevVersion method of the GoodsRepository.
+func TestGetCurrentDevVersion(t *testing.T) {
+	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
+	ctx := context.Background()
+	version, err := repo.GetCurrentDevVersion(ctx)
+	assert.NoError(t, err, "Failed to get current dev version")
+	assert.NotNil(t, version)
+	assert.True(t, version.IsDev)
+}
+
+// TestApplyChanges tests the ApplyChanges method of the GoodsRepository.
+func TestApplyChanges_Simple(t *testing.T) {
+	// Test create, update and delete queries with applying changes
+	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
+	ctx := context.Background()
+	version, err := repo.GetCurrentDevVersion(ctx)
+	assert.NoError(t, err, "Failed to get current dev version")
+	// Get all products
+	products, err := repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	startLenProducts := len(products)
+
+	//Create a new product
+	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	err = repo.AddQueryToCreateProduct(ctx, product)
+	assert.NoError(t, err, "Failed to add query to create product")
+	// Check that the number of products not changed, because we didn't apply changes
+	products, err = repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	assert.Len(t, products, startLenProducts, "Number of products should not change")
+	// Apply changes
+	err = repo.ApplyChanges(ctx, version)
+	assert.NoError(t, err, "Failed to apply changes")
+	// Get all products again
+	products, err = repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	assert.NotNil(t, products)
+	assert.Len(t, products, len(products)+1, "Expected one new product")
+	// Check that dev version is changed
+	newVersion, err := repo.CreateNewDevVersion(ctx)
+	assert.NoError(t, err, "Failed to create new dev version")
+	assert.NotEqual(t, version, newVersion, "Dev version should be changed")
+
+	//Check that the number of changes is zero, because we applied them
+	changes, err := repo.GetAllChanges(ctx, newVersion)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
+
+	// Get last product from products
+	product = &products[len(products)-1]
+	// Update the product
+	product.Price = 2077.00
+	err = repo.AddQueryToUpdateProduct(ctx, product)
+	assert.NoError(t, err, "Failed to add query to update product")
+	// Check that price is not changed, because we didn't apply changes
+	products, err = repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	assert.NotNil(t, products)
+	assert.NotEqual(t, 2077.00, products[len(products)-1].Price, "Price should not be changed")
+	// Check number of changes, should be 1
+	changes, err = repo.GetAllChanges(ctx, newVersion)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.Len(t, changes, 1, "Expected one change")
+	// Apply changes
+	err = repo.ApplyChanges(ctx, newVersion)
+	assert.NoError(t, err, "Failed to apply changes")
+	// Check that price is changed
+	updatedProduct, err := repo.GetProductByID(ctx, product.ID)
+	assert.NoError(t, err, "Failed to get product by ID")
+	assert.NotNil(t, updatedProduct)
+	assert.Equal(t, 2077.00, updatedProduct.Price, "Price should be updated")
+	// Check that the number of changes is zero, because we applied them
+	changes, err = repo.GetAllChanges(ctx, newVersion)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
+
+	// Delete the product
+	err = repo.AddQueryToDeleteProduct(ctx, product.ID)
+	assert.NoError(t, err, "Failed to add query to delete product")
+	// Apply changes
+	err = repo.ApplyChanges(ctx, newVersion)
+	assert.NoError(t, err, "Failed to apply changes")
+
+	// Check that the number of products is the same as before
+	products, err = repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	assert.Len(t, products, startLenProducts, "Number of products should be the same")
+
 }
 
 // TestGetAllProducts tests the GetAllProducts method of the GoodsRepository.
@@ -109,7 +252,6 @@ func TestGetPackageByID(t *testing.T) {
 	// delete the package
 	err = repo.DeletePackage(context.Background(), pkg.ID)
 	assert.NoError(t, err, "Failed to delete test package")
-
 }
 
 // TestListPackages tests the ListPackages method of the GoodsRepository.

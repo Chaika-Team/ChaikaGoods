@@ -67,7 +67,7 @@ func (r *GoodsRepository) GetAllProducts(ctx context.Context) ([]models.Product,
 }
 
 // AddQueryToCreateProduct добавляет запрос на создание продукта в базе данных.
-func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product models.Product) error {
+func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product *models.Product) error {
 	// добавляем новое изменение в базу
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	var changeID int
@@ -81,7 +81,7 @@ func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product m
 }
 
 // AddQueryToUpdateProduct добавление запроса на обновления продукта в базе данных.
-func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product models.Product) error {
+func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product *models.Product) error {
 	// добавляем новое изменение в базу
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	//TODO: в new_value ранится вся инфа о продукте, а не только измененные поля. Надо улучшить, чтобы хранились только измененные поля
@@ -106,61 +106,79 @@ func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64)
 	return nil
 }
 
-// ApplyChanges применяет изменения в базе данных продуктов.
-func (r *GoodsRepository) ApplyChanges(ctx context.Context, version int) error {
-	// берём все изменения, которые не были применены
-	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
-	rows, err := r.client.Query(ctx, sql, version)
+func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Version) error {
+	// Начало транзакции
+	tx, err := r.client.Begin(ctx)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get changes: %v", err))
-		return err
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+
+	// Завершение транзакции в случае ошибки или при успешном выполнении
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback(ctx)
+			panic(p) // Re-throw panic after rollback
+		} else if err != nil {
+			tx.Rollback(ctx) // Rollback transaction if error occurred
+		} else {
+			err = tx.Commit(ctx) // Commit transaction if all is good
+		}
+	}()
+
+	// Взять все изменения, которые не были применены
+	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
+	rows, err := tx.Query(ctx, sql, version.VersionID)
+	if err != nil {
+		return fmt.Errorf("failed to get changes: %v", err)
 	}
 	defer rows.Close()
-	// применяем изменения
+
 	for rows.Next() {
 		var changeID int
-		var product models.Product
+		var newValue string // Assuming new_value is JSON string for simplicity
 		var operation models.OperationType
-		if err := rows.Scan(&changeID, &product, operation); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan change: %v", err))
-			continue
-		}
-		// применяем изменение в зависимости от операции
-		switch operation := operation; operation {
-		case models.OperationTypeInsert:
-			sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
-			err = r.client.QueryRow(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).Scan(&product.ID)
-			if err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to insert product: %v", err))
-				continue
-			}
-		case models.OperationTypeUpdate:
-			sql = `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
-			_, err = r.client.Exec(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU, product.ID)
-			if err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to update product: %v", err))
-				continue
-			}
-		case models.OperationTypeDelete:
-			sql = `DELETE FROM public.product WHERE id = $1;`
-			_, err = r.client.Exec(ctx, sql, product.ID)
-			if err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to delete product: %v", err))
-				continue
-			}
-		default:
-			_ = r.log.Log("error", fmt.Sprintf("Unknown operation: %v", operation))
+		if err := rows.Scan(&changeID, &newValue, &operation); err != nil {
+			return fmt.Errorf("failed to scan change: %v", err)
 		}
 
-		// помечаем изменение как примененное
-		sql = `UPDATE public.changes SET considered = TRUE WHERE change_id = $1;`
-		_, err = r.client.Exec(ctx, sql, changeID)
+		// Обработка изменений в зависимости от типа операции
+		switch operation {
+		case models.OperationTypeInsert:
+			_, err = tx.Exec(ctx, `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES (...)` /* values based on newValue */)
+		case models.OperationTypeUpdate:
+			_, err = tx.Exec(ctx, `UPDATE public.product SET ... WHERE id = ...` /* values based on newValue */)
+		case models.OperationTypeDelete:
+			_, err = tx.Exec(ctx, `DELETE FROM public.product WHERE id = ...` /* id based on newValue */)
+		}
 		if err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to update change: %v", err))
-			continue
+			return fmt.Errorf("failed to apply changes: %v", err)
+		}
+
+		// Отметить изменение как применённое
+		_, err = tx.Exec(ctx, `UPDATE public.changes SET considered = TRUE WHERE change_id = $1`, changeID)
+		if err != nil {
+			return fmt.Errorf("failed to mark change as considered: %v", err)
 		}
 	}
+
+	// Пометить версию как применённую
+	_, err = tx.Exec(ctx, `UPDATE public.version SET applied = TRUE WHERE version_id = $1`, version.VersionID)
+	if err != nil {
+		return fmt.Errorf("failed to mark version as applied: %v", err)
+	}
 	return nil
+}
+
+// CreateNewDevVersion создает новую версию базы данных продуктов для разработки.
+func (r *GoodsRepository) CreateNewDevVersion(ctx context.Context) (models.Version, error) {
+	sql := `INSERT INTO public.version DEFAULT VALUES  RETURNING version_id;`
+	var v models.Version
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to create new dev version: %v", err))
+		return models.Version{}, err
+	}
+	return v, nil
 }
 
 // GetAllChanges возвращает все изменения в базе данных продуктов за конкретную версию.
