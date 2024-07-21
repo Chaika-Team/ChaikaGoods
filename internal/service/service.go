@@ -101,32 +101,32 @@ func (s *Service) AddPacket(ctx context.Context, name string, description string
 	return nil
 }
 
-// AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, product *models.Product) error {
-	logger := log.With(s.log, "method", "AddProduct")
-	if err := s.repo.CreateProduct(ctx, product); err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return err
-	}
-	return nil
-}
-
-// UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, product *models.Product) error {
-	logger := log.With(s.log, "method", "UpdateProduct")
-	if err := s.repo.UpdateProduct(ctx, product); err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return err
-	}
-	return nil
-}
-
-// DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) error {
-	logger := log.With(s.log, "method", "DeleteProduct")
-	if err := s.repo.DeleteProduct(ctx, id); err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return err
-	}
-	return nil
-}
+//// AddProduct добавляет новый продукт в базу данных.
+//func (s *Service) AddProduct(ctx context.Context, product *models.Product) error {
+//	logger := log.With(s.log, "method", "AddProduct")
+//	if err := s.repo.CreateProduct(ctx, product); err != nil {
+//		_ = level.Error(logger).Log("err", err)
+//		return err
+//	}
+//	return nil
+//}
+//
+//// UpdateProduct обновляет информацию о продукте в базе данных.
+//func (s *Service) UpdateProduct(ctx context.Context, product *models.Product) error {
+//	logger := log.With(s.log, "method", "UpdateProduct")
+//	if err := s.repo.UpdateProduct(ctx, product); err != nil {
+//		_ = level.Error(logger).Log("err", err)
+//		return err
+//	}
+//	return nil
+//}
+//
+//// DeleteProduct удаляет продукт из базы данных.
+//func (s *Service) DeleteProduct(ctx context.Context, id int64) error {
+//	logger := log.With(s.log, "method", "DeleteProduct")
+//	if err := s.repo.DeleteProduct(ctx, id); err != nil {
+//		_ = level.Error(logger).Log("err", err)
+//		return err
+//	}
+//	return nil
+//}

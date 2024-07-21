@@ -7,5 +7,5 @@ storage:
   host: 127.0.0.1
   port: 5432
   database: ChaikaGoods
-  user: postgres
-  password: XRbuBj1OOyyeF1tp
+  user: application_user
+  password: UiHSlmUAGcc4fr3
