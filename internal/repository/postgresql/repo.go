@@ -8,16 +8,15 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type GoodsRepository struct {
-	client *pgxpool.Pool
+	client Client
 	log    log.Logger
 }
 
 // NewGoodsRepository создает новый экземпляр GoodsRepository.
-func NewGoodsRepository(client *pgxpool.Pool, logger log.Logger) *GoodsRepository {
+func NewGoodsRepository(client Client, logger log.Logger) *GoodsRepository {
 	return &GoodsRepository{
 		client: client,
 		log:    logger,
@@ -173,7 +172,7 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID 
 
 // ListPackages возвращает список всех пакетов.
 func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
-	sql := `SELECT packageid, packagename, description FROM public."package";`
+	sql := `SELECT packageid, packagename, description FROM public.package;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to list packages: %v", err))

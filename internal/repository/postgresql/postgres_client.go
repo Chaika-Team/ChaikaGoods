@@ -26,6 +26,10 @@ type Client interface {
 	// QueryRow sends a query to the database and returns a single row.
 	// The args are for any placeholder parameters in the query.
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+
+	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+
+	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 // NewClient creates a new Client from a pgx.Conn.
