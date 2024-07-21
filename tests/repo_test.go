@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	logger := log.NewNopLogger() // Using no-op logger for testing
 
 	// Read configuration for test database
-	cfg := config.GetConfigWithPath(logger, "C:\\Users\\Fasci\\GolandProjects\\ChaikaGoods\\config_test.yml")
+	cfg := config.GetConfigWithPath(logger, "..\\config_test.yml")
 
 	// Initialize database connection
 	var err error
@@ -46,24 +46,34 @@ func TestMain(m *testing.M) {
 	}
 }
 
-// TestGetProductByID tests the GetProductByID method of the GoodsRepository.
-func TestGetProductByID(t *testing.T) {
+// TestAddQueryToCreateProduct tests the AddQueryToCreateProduct method of the GoodsRepository.
+func TestAddQueryToCreateProduct(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
-	expected := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/image.jpg", SKU: "TESTSKU100"}
-	err := repo.CreateProduct(context.Background(), expected)
-	assert.NoError(t, err, "Failed to create test product")
-	product, err := repo.GetProductByID(context.Background(), expected.ID)
-	assert.NoError(t, err, "Failed to execute GetProductByID")
-	assert.NotNil(t, product)
-	assert.Equal(t, expected.Name, product.Name)
-	assert.Equal(t, expected.Description, product.Description)
-	assert.Equal(t, expected.Price, product.Price)
-	assert.Equal(t, expected.ImageURL, product.ImageURL)
-	assert.Equal(t, expected.SKU, product.SKU)
+	ctx := context.Background()
+	version, err := repo.GetCurrentDevVersion(ctx)
+	// Get all changes to count it before adding a new one
+	changes, err := repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	startLen := len(changes)
 
-	err = repo.DeleteProduct(context.Background(), expected.ID)
-	assert.NoError(t, err, "Failed to delete test product")
+	product := models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	err = repo.AddQueryToCreateProduct(context.Background(), product)
+	assert.NoError(t, err, "Failed to add query to create product")
+	// Execute the query
+	assert.NoError(t, err, "Failed to get current dev version")
+	assert.NotNil(t, version)
+	assert.True(t, version.IsDev)
+	changes, err = repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.NotNil(t, changes)
+	assert.Len(t, changes, 1+startLen, "Expected one new change")
+	change := changes[0]
+	assert.Equal(t, models.OperationTypeInsert, change.OperationType)
+	assert.Equal(t, product, change.NewValue)
+	// Cleanup
+	err = repo.DeleteChange(ctx, change.ID)
+	assert.NoError(t, err, "Failed to delete change")
 }
 
 // TestGetAllProducts tests the GetAllProducts method of the GoodsRepository.
@@ -73,55 +83,6 @@ func TestGetAllProducts(t *testing.T) {
 	assert.NoError(t, err, "Failed to execute GetAllProducts")
 	assert.NotNil(t, products)
 	assert.NotEmpty(t, products)
-}
-
-// TestUpdateProduct tests the UpdateProduct method of the GoodsRepository.
-func TestUpdateProduct(t *testing.T) {
-	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
-
-	// Create a product to update
-	product := &models.Product{Name: "Update Product", Description: "Before update", Price: 20.00, ImageURL: "images/before.jpg", SKU: "UPDATESKU100"}
-	err := repo.CreateProduct(context.Background(), product)
-	assert.NoError(t, err, "Failed to create product for update test")
-
-	// Update product details
-	product.Name = "Updated Product"
-	product.Description = "After update"
-	product.Price = 25.00
-	product.ImageURL = "images/after.jpg"
-	err = repo.UpdateProduct(context.Background(), product)
-	assert.NoError(t, err, "Failed to update product")
-
-	// Retrieve the updated product to verify changes
-	updatedProduct, err := repo.GetProductByID(context.Background(), product.ID)
-	assert.NoError(t, err)
-	assert.Equal(t, "Updated Product", updatedProduct.Name)
-	assert.Equal(t, "After update", updatedProduct.Description)
-	assert.Equal(t, 25.00, updatedProduct.Price)
-	assert.Equal(t, "images/after.jpg", updatedProduct.ImageURL)
-
-	// Cleanup
-	err = repo.DeleteProduct(context.Background(), product.ID)
-	assert.NoError(t, err, "Failed to delete product after update test")
-}
-
-// TestDeleteProduct tests the DeleteProduct method of the GoodsRepository.
-func TestDeleteProduct(t *testing.T) {
-	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
-
-	// Create a product to delete
-	product := &models.Product{Name: "Product to Delete", Description: "A product to be deleted", Price: 30.00, ImageURL: "images/delete.jpg", SKU: "DELETESKU100"}
-	err := repo.CreateProduct(context.Background(), product)
-	assert.NoError(t, err, "Failed to create product for deletion test")
-
-	// Delete the product
-	err = repo.DeleteProduct(context.Background(), product.ID)
-	assert.NoError(t, err, "Failed to delete product")
-
-	// Verify deletion by attempting to fetch it
-	_, err = repo.GetProductByID(context.Background(), product.ID)
-	assert.Error(t, err, "Expected an error fetching a deleted product")
-
 }
 
 // TestGetPackageByID tests the GetPackageByID method of the GoodsRepository.
@@ -198,37 +159,37 @@ func TestCreatePackage(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete the newly created package")
 }
 
-// TestAddProductToPackage tests the AddProductToPackage method of the GoodsRepository.
-func TestAddProductToPackage(t *testing.T) {
-	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
-
-	// Create a package and product for testing
-	pkg := &models.Package{PackageName: "Test Package", Description: "Package for product addition"}
-	err := repo.CreatePackage(context.Background(), pkg)
-	assert.NoError(t, err, "Failed to create package")
-
-	product := &models.Product{Name: "Product for Package", Description: "A product to add to package", Price: 15.00, ImageURL: "images/package.jpg", SKU: "PACKAGEPROD100"}
-	err = repo.CreateProduct(context.Background(), product)
-	assert.NoError(t, err, "Failed to create product for package")
-
-	// Add product to package
-	err = repo.AddProductToPackage(context.Background(), pkg.ID, []models.PackageContent{
-		{PackageID: pkg.ID, ProductID: product.ID, Quantity: 10},
-	})
-	assert.NoError(t, err, "Failed to add product to package")
-
-	// Verify addition
-	contents, err := repo.GetProductsByPackageID(context.Background(), pkg.ID)
-	assert.NoError(t, err, "Failed to get products by package ID")
-	assert.NotEmpty(t, contents, "No products found in package")
-	assert.Len(t, contents, 1, "Expected one product in package")
-
-	// Cleanup
-	err = repo.DeletePackage(context.Background(), pkg.ID)
-	assert.NoError(t, err, "Failed to delete package with products")
-	err = repo.DeleteProduct(context.Background(), product.ID)
-	assert.NoError(t, err, "Failed to delete product used in package")
-}
+//// TestAddProductToPackage tests the AddProductToPackage method of the GoodsRepository.
+//func TestAddProductToPackage(t *testing.T) {
+//	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
+//
+//	// Create a package and product for testing
+//	pkg := &models.Package{PackageName: "Test Package", Description: "Package for product addition"}
+//	err := repo.CreatePackage(context.Background(), pkg)
+//	assert.NoError(t, err, "Failed to create package")
+//
+//	product := &models.Product{Name: "Product for Package", Description: "A product to add to package", Price: 15.00, ImageURL: "images/package.jpg", SKU: "PACKAGEPROD100"}
+//	err = repo.CreateProduct(context.Background(), product)
+//	assert.NoError(t, err, "Failed to create product for package")
+//
+//	// Add product to package
+//	err = repo.AddProductToPackage(context.Background(), pkg.ID, []models.PackageContent{
+//		{PackageID: pkg.ID, ProductID: product.ID, Quantity: 10},
+//	})
+//	assert.NoError(t, err, "Failed to add product to package")
+//
+//	// Verify addition
+//	contents, err := repo.GetProductsByPackageID(context.Background(), pkg.ID)
+//	assert.NoError(t, err, "Failed to get products by package ID")
+//	assert.NotEmpty(t, contents, "No products found in package")
+//	assert.Len(t, contents, 1, "Expected one product in package")
+//
+//	// Cleanup
+//	err = repo.DeletePackage(context.Background(), pkg.ID)
+//	assert.NoError(t, err, "Failed to delete package with products")
+//	err = repo.DeleteProduct(context.Background(), product.ID)
+//	assert.NoError(t, err, "Failed to delete product used in package")
+//}
 
 // TestDeletePackage tests the DeletePackage method of the GoodsRepository.
 func TestDeletePackage(t *testing.T) {

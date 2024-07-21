@@ -163,6 +163,51 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version int) error {
 	return nil
 }
 
+// GetAllChanges возвращает все изменения в базе данных продуктов за конкретную версию.
+func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Version) ([]models.Change, error) {
+	sql := `SELECT change_id, operation, new_value, change_timestamp, considered FROM public.changes WHERE version_id = $1;`
+	rows, err := r.client.Query(ctx, sql, version.VersionID)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get all changes: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+	var changes []models.Change
+	for rows.Next() {
+		var c models.Change
+		if err := rows.Scan(&c.ID, &c.OperationType, &c.NewValue, &c.ChangeTimestamp, &c.Considered); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan change: %v", err))
+			continue
+		}
+		c.VersionID = version.VersionID
+		changes = append(changes, c)
+	}
+	return changes, nil
+}
+
+// GetCurrentDevVersion возвращает текущую версию базы данных продуктов к которой привязываются новые изменения.
+func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
+	sql := `SELECT version_id, creation_date, is_dev, applied FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
+	var v models.Version
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get current dev version: %v", err))
+		return models.Version{}, err
+	}
+	return v, nil
+}
+
+// DeleteChange удаляет изменение из базы данных по его ID.
+func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
+	sql := `DELETE FROM public.changes WHERE change_id = $1;`
+	_, err := r.client.Exec(ctx, sql, id)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to delete change: %v", err))
+		return err
+	}
+	return nil
+}
+
 // Package queries
 
 // GetPackageByID получает полную информацию о пакете, включая его содержимое.
