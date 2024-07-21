@@ -1,0 +1,11 @@
+is_debug: true
+listen:
+  type:
+  port: 8080
+storage:
+  type: postgres
+  host: 127.0.0.1
+  port: 5432
+  database: ChaikaGoods
+  user: postgres
+  password: XRbuBj1OOyyeF1tp
