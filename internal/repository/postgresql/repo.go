@@ -66,43 +66,99 @@ func (r *GoodsRepository) GetAllProducts(ctx context.Context) ([]models.Product,
 	return products, nil
 }
 
-// CreateProduct добавляет новый продукт в базу данных.
-func (r *GoodsRepository) CreateProduct(ctx context.Context, product *models.Product) error {
-	sql := `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (sku) DO NOTHING RETURNING id;`
-	err := r.client.QueryRow(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).Scan(&product.ID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return &myerr.DuplicateError{Str: product.SKU}
-	} else if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to create product: %v", err))
+// AddQueryToCreateProduct добавляет запрос на создание продукта в базе данных.
+func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product models.Product) error {
+	// добавляем новое изменение в базу
+	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
+	var changeID int
+	err := r.client.QueryRow(ctx, sql, models.OperationTypeInsert, product).Scan(&changeID)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
+		return err
+
+	}
+	return nil
+}
+
+// AddQueryToUpdateProduct добавление запроса на обновления продукта в базе данных.
+func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product models.Product) error {
+	// добавляем новое изменение в базу
+	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
+	//TODO: в new_value ранится вся инфа о продукте, а не только измененные поля. Надо улучшить, чтобы хранились только измененные поля
+	var changeID int
+	err := r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, product).Scan(&changeID)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
 	}
 	return nil
 }
 
-// UpdateProduct обновляет информацию о продукте в базе данных.
-func (r *GoodsRepository) UpdateProduct(ctx context.Context, product *models.Product) error {
-	sql := `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
-	commandTag, err := r.client.Exec(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU, product.ID)
+// AddQueryToDeleteProduct удаляет продукт из базы данных по его ID.
+func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64) error {
+	sql := `INSERT INTO public.changes(operation, new_value) VALUES ($1, $2) RETURNING change_id;` //version_id подставляется автоматически
+	var changeID int
+	err := r.client.QueryRow(ctx, sql, models.OperationTypeDelete, id).Scan(&changeID)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to update product: %v", err))
+		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
-	}
-	if commandTag.RowsAffected() == 0 {
-		return &myerr.NotFound{ID: fmt.Sprintf("%d", product.ID)}
 	}
 	return nil
 }
 
-// DeleteProduct удаляет продукт из базы данных по его ID.
-func (r *GoodsRepository) DeleteProduct(ctx context.Context, id int64) error {
-	sql := `DELETE FROM public.product WHERE id = $1;`
-	commandTag, err := r.client.Exec(ctx, sql, id)
+// ApplyChanges применяет изменения в базе данных продуктов.
+func (r *GoodsRepository) ApplyChanges(ctx context.Context, version int) error {
+	// берём все изменения, которые не были применены
+	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
+	rows, err := r.client.Query(ctx, sql, version)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete product: %v", err))
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get changes: %v", err))
 		return err
 	}
-	if commandTag.RowsAffected() == 0 {
-		return &myerr.NotFound{ID: fmt.Sprintf("%d", id)}
+	defer rows.Close()
+	// применяем изменения
+	for rows.Next() {
+		var changeID int
+		var product models.Product
+		var operation models.OperationType
+		if err := rows.Scan(&changeID, &product, operation); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan change: %v", err))
+			continue
+		}
+		// применяем изменение в зависимости от операции
+		switch operation := operation; operation {
+		case models.OperationTypeInsert:
+			sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+			err = r.client.QueryRow(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).Scan(&product.ID)
+			if err != nil {
+				_ = r.log.Log("error", fmt.Sprintf("Failed to insert product: %v", err))
+				continue
+			}
+		case models.OperationTypeUpdate:
+			sql = `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
+			_, err = r.client.Exec(ctx, sql, product.Name, product.Description, product.Price, product.ImageURL, product.SKU, product.ID)
+			if err != nil {
+				_ = r.log.Log("error", fmt.Sprintf("Failed to update product: %v", err))
+				continue
+			}
+		case models.OperationTypeDelete:
+			sql = `DELETE FROM public.product WHERE id = $1;`
+			_, err = r.client.Exec(ctx, sql, product.ID)
+			if err != nil {
+				_ = r.log.Log("error", fmt.Sprintf("Failed to delete product: %v", err))
+				continue
+			}
+		default:
+			_ = r.log.Log("error", fmt.Sprintf("Unknown operation: %v", operation))
+		}
+
+		// помечаем изменение как примененное
+		sql = `UPDATE public.changes SET considered = TRUE WHERE change_id = $1;`
+		_, err = r.client.Exec(ctx, sql, changeID)
+		if err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to update change: %v", err))
+			continue
+		}
 	}
 	return nil
 }
