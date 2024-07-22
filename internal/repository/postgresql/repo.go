@@ -116,10 +116,16 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 	// Завершение транзакции в случае ошибки или при успешном выполнении
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback(ctx)
+			err := tx.Rollback(ctx)
+			if err != nil {
+				_ = r.log.Log("error", fmt.Sprintf("Failed to rollback transaction: %v", err))
+			}
 			panic(p) // Re-throw panic after rollback
 		} else if err != nil {
-			tx.Rollback(ctx) // Rollback transaction if error occurred
+			err := tx.Rollback(ctx)
+			if err != nil {
+				_ = r.log.Log("error", fmt.Sprintf("Failed to rollback transaction: %v", err))
+			} // Rollback transaction if error occurred
 		} else {
 			err = tx.Commit(ctx) // Commit transaction if all is good
 		}
@@ -133,9 +139,10 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 	}
 	defer rows.Close()
 
+	// Применить все изменения
 	for rows.Next() {
 		var changeID int
-		var newValue string // Assuming new_value is JSON string for simplicity
+		var newValue models.Product
 		var operation models.OperationType
 		if err := rows.Scan(&changeID, &newValue, &operation); err != nil {
 			return fmt.Errorf("failed to scan change: %v", err)
@@ -144,14 +151,22 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 		// Обработка изменений в зависимости от типа операции
 		switch operation {
 		case models.OperationTypeInsert:
-			_, err = tx.Exec(ctx, `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES (...)` /* values based on newValue */)
+			sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1,$2,$3,$4,$5)`
+			_, err = tx.Exec(ctx, sql, newValue.Name, newValue.Description, newValue.Price, newValue.ImageURL, newValue.SKU)
+			if err != nil {
+				return fmt.Errorf("failed to insert product: %v", err)
+			}
 		case models.OperationTypeUpdate:
-			_, err = tx.Exec(ctx, `UPDATE public.product SET ... WHERE id = ...` /* values based on newValue */)
+			// TODO: сделать обновление только измененных полей
+			panic("not implemented")
 		case models.OperationTypeDelete:
-			_, err = tx.Exec(ctx, `DELETE FROM public.product WHERE id = ...` /* id based on newValue */)
-		}
-		if err != nil {
-			return fmt.Errorf("failed to apply changes: %v", err)
+			sql = `DELETE FROM public.product WHERE id = $1`
+			_, err = tx.Exec(ctx, sql, newValue.ID)
+			if err != nil {
+				return fmt.Errorf("failed to delete product: %v", err)
+			}
+		default:
+			return fmt.Errorf("unknown operation type: %v", operation)
 		}
 
 		// Отметить изменение как применённое
@@ -160,9 +175,8 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 			return fmt.Errorf("failed to mark change as considered: %v", err)
 		}
 	}
-
-	// Пометить версию как применённую
-	_, err = tx.Exec(ctx, `UPDATE public.version SET applied = TRUE WHERE version_id = $1`, version.VersionID)
+	// Пометить версию как применённую и не dev
+	_, err = tx.Exec(ctx, `UPDATE public.version SET applied = TRUE, is_dev = FALSE WHERE version_id = $1`, version.VersionID)
 	if err != nil {
 		return fmt.Errorf("failed to mark version as applied: %v", err)
 	}
@@ -205,9 +219,9 @@ func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Vers
 
 // GetCurrentDevVersion возвращает текущую версию базы данных продуктов к которой привязываются новые изменения.
 func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
-	sql := `SELECT version_id, creation_date, is_dev, applied FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
+	sql := `SELECT version_id FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
 	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied)
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get current dev version: %v", err))
 		return models.Version{}, err
@@ -232,7 +246,7 @@ func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
 func (r *GoodsRepository) GetPackageByID(ctx context.Context, packageID int64) (*models.Package, []models.PackageContent, error) {
 	sqlPackage := `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
 	pkg := models.Package{}
-	err := r.client.QueryRow(ctx, sqlPackage, packageID).Scan(&pkg.ID, &pkg.PackageName, &pkg.Description)
+	err := r.client.QueryRow(ctx, sqlPackage, packageID).Scan(&pkg.ID, pkg.PackageName, pkg.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil, &myerr.NotFound{ID: fmt.Sprintf("%d", packageID)}
@@ -252,7 +266,7 @@ func (r *GoodsRepository) GetPackageByID(ctx context.Context, packageID int64) (
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
+		if err := rows.Scan(&c.ID, c.PackageID, c.ProductID, c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
 			continue
 		}
@@ -275,7 +289,7 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID 
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
+		if err := rows.Scan(&c.ID, c.PackageID, c.ProductID, c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
 			continue
 		}
@@ -302,7 +316,7 @@ func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, e
 	var packages []models.Package
 	for rows.Next() {
 		var p models.Package
-		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
+		if err := rows.Scan(&p.ID, p.PackageName, p.Description); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
 			continue
 		}

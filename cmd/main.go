@@ -5,6 +5,7 @@ import (
 	"ChaikaGoods/internal/models"
 	repo "ChaikaGoods/internal/repository/postgresql"
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/go-kit/log"
@@ -65,11 +66,13 @@ func main() {
 		_ = level.Error(logger).Log("message", "Failed to get all products", "err", err)
 	}
 	fmt.Printf("Products: %v\n", products)
+	// Add new product, with sql.Null* fields
 	product = &models.Product{
-		Name:        "Test product",
-		Description: "Test description",
-		Price:       100,
-		SKU:         "test-sku1",
+		Name:        sql.NullString{String: "Test Product", Valid: true},
+		Description: sql.NullString{String: "Test Description", Valid: true},
+		Price:       sql.NullFloat64{Float64: 100.0, Valid: true},
+		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
+		SKU:         sql.NullString{String: "SKU-123", Valid: true},
 	}
 	err = repository.AddQueryToCreateProduct(ctx, product)
 	if err != nil {

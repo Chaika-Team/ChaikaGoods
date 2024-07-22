@@ -69,7 +69,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.Len(t, changes, 1+startLen, "Expected one new change")
 	change := &changes[0]
 	assert.Equal(t, models.OperationTypeInsert, change.OperationType)
-	assert.Equal(t, product, change.NewValue)
+	assert.Equal(t, *product, change.NewValue)
 	// Cleanup
 	err = repo.DeleteChange(ctx, change.ID)
 	assert.NoError(t, err, "Failed to delete change")
