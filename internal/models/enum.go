@@ -4,7 +4,8 @@ package models
 type OperationType int
 
 const (
-	OperationTypeInsert OperationType = 0
-	OperationTypeUpdate               = 1
-	OperationTypeDelete               = 2
+	OperationTypeUnknown OperationType = 0
+	OperationTypeInsert                = 1
+	OperationTypeUpdate                = 2
+	OperationTypeDelete                = 3
 )
