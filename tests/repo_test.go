@@ -5,6 +5,7 @@ import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/repository/postgresql"
 	"context"
+	"database/sql"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +58,13 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
-	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	product := &models.Product{
+		Name:        sql.NullString{String: "Test Product", Valid: true},
+		Description: sql.NullString{String: "Test Product", Valid: true},
+		Price:       sql.NullFloat64{Float64: 10.0, Valid: true},
+		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
+		SKU:         sql.NullString{String: "images/test.png", Valid: true},
+	}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Execute the query
