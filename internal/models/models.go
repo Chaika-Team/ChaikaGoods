@@ -1,15 +1,18 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 // Product описывает товар.
 type Product struct {
-	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	ImageURL    string  `json:"image_url"`
-	SKU         string  `json:"sku"`
+	ID          int64           `json:"id"`
+	Name        sql.NullString  `json:"name"`
+	Description sql.NullString  `json:"description"`
+	Price       sql.NullFloat64 `json:"price"`
+	ImageURL    sql.NullString  `json:"image_url"`
+	SKU         sql.NullString  `json:"sku"`
 }
 
 // Package описывает пакет товаров.
