@@ -2,7 +2,6 @@ package postgresql
 
 import (
 	"ChaikaGoods/internal/config"
-	"ChaikaGoods/internal/utils"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
@@ -32,30 +31,32 @@ type Client interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
-// NewClient creates a new Client from a pgx.Conn.
-// It connects to the database using the provided connection details and returns a pool of connections.
-// The function will attempt to connect to the database maxAttempts times before failing.
+// NewClient создает новый пул соединений с базой данных.
+// Подключение к базе данных осуществляется с использованием предоставленных параметров подключения.
+// Функция будет пытаться подключиться к базе данных заданное количество попыток.
 func NewClient(ctx context.Context, conn config.StorageConfig, maxAttempts int) (pool *pgxpool.Pool, err error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", conn.Host, conn.User, conn.Password, conn.Database)
 	connConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Fatalf("Unable to parse DSN: %v", err)
+		return nil, fmt.Errorf("unable to parse DSN: %v", err)
 	}
+	//
+	//// Настройка дополнительных параметров конфигурации, если необходимо
+	//connConfig.MaxConns = 10                        // Максимальное количество соединений
+	//connConfig.MinConns = 2                         // Минимальное количество соединений
+	//connConfig.HealthCheckPeriod = 30 * time.Second // Период проверки состояния соединений
 
-	// Пытаемся подключиться к базе данных с заданным количеством попыток
-	err = utils.DoWithTries(func() error {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-
+	for i := 1; i <= maxAttempts; i++ {
 		pool, err = pgxpool.NewWithConfig(ctx, connConfig)
-		if err != nil {
-			return fmt.Errorf("failed to connect to database: %v", err)
+		if err == nil {
+			return pool, nil // Успешное подключение
 		}
-		return nil
-	}, maxAttempts, 5*time.Second)
 
-	if err != nil {
-		log.Fatalf("Failed to connect to the database after %d attempts: %v", maxAttempts, err)
+		if i < maxAttempts {
+			log.Printf("Failed to connect to database, attempt %d/%d: %v", i, maxAttempts, err)
+			time.Sleep(5 * time.Second) // Пауза перед следующей попыткой
+		}
 	}
-	return pool, nil
+
+	return nil, fmt.Errorf("failed to connect to the database after %d attempts: %v", maxAttempts, err)
 }

@@ -58,6 +58,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
+	// Add a new product
 	product := &models.Product{
 		Name:        sql.NullString{String: "Test Product", Valid: true},
 		Description: sql.NullString{String: "Test Product", Valid: true},
@@ -67,10 +68,8 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
-	// Execute the query
-	assert.NoError(t, err, "Failed to get current dev version")
-	assert.NotNil(t, version)
-	assert.True(t, version.IsDev)
+
+	// Get all changes again
 	changes, err = repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 1+startLen, "Expected one new change")
@@ -93,7 +92,10 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
-	product := &models.Product{ID: 1, Price: 2077.00}
+	product := &models.Product{
+		ID:    1,
+		Price: sql.NullFloat64{Float64: 2077.00, Valid: true},
+	}
 	// Update the product
 	err = repo.AddQueryToUpdateProduct(ctx, product)
 	assert.NoError(t, err, "Failed to add query to update product")
@@ -123,7 +125,13 @@ func TestGetAllChanges(t *testing.T) {
 	startlen := len(changes)
 	assert.NoError(t, err, "Failed to get all changes")
 	// Add a new change
-	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	product := &models.Product{
+		Name:        sql.NullString{String: "Test Product", Valid: true},
+		Description: sql.NullString{String: "A test product", Valid: true},
+		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
+		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
+		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+	}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Get all changes again
@@ -159,7 +167,13 @@ func TestApplyChanges_Simple(t *testing.T) {
 	startLenProducts := len(products)
 
 	//Create a new product
-	product := &models.Product{Name: "Test Product", Description: "A test product", Price: 10.00, ImageURL: "images/test.jpg", SKU: "TESTSKU100"}
+	product := &models.Product{
+		Name:        sql.NullString{String: "Test Product", Valid: true},
+		Description: sql.NullString{String: "A test product", Valid: true},
+		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
+		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
+		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+	}
 	err = repo.AddQueryToCreateProduct(ctx, product)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Check that the number of products not changed, because we didn't apply changes
@@ -187,7 +201,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	// Get last product from products
 	product = &products[len(products)-1]
 	// Update the product
-	product.Price = 2077.00
+	product.Price = sql.NullFloat64{Float64: 2077.00, Valid: true}
 	err = repo.AddQueryToUpdateProduct(ctx, product)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Check that price is not changed, because we didn't apply changes

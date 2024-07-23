@@ -107,6 +107,14 @@ func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64)
 }
 
 func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Version) error {
+	// Взять все изменения, которые не были применены
+	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
+	rows, err := r.client.Query(ctx, sql, version.VersionID)
+	if err != nil {
+		return fmt.Errorf("failed to get changes: %v", err)
+	}
+	defer rows.Close()
+
 	// Начало транзакции
 	tx, err := r.client.Begin(ctx)
 	if err != nil {
@@ -130,14 +138,6 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 			err = tx.Commit(ctx) // Commit transaction if all is good
 		}
 	}()
-
-	// Взять все изменения, которые не были применены
-	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
-	rows, err := tx.Query(ctx, sql, version.VersionID)
-	if err != nil {
-		return fmt.Errorf("failed to get changes: %v", err)
-	}
-	defer rows.Close()
 
 	// Применить все изменения
 	for rows.Next() {

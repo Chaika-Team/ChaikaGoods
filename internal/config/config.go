@@ -24,6 +24,8 @@ type StorageConfig struct {
 	Database string `json:"database" env-default:""`
 	User     string `json:"user" env-default:""`
 	Password string `json:"password"`
+	MaxConns int    `json:"max_conns" env-default:"10"`
+	MinConns int    `json:"min_conns" env-default:"2"`
 }
 
 var instance *Config
