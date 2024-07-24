@@ -173,6 +173,14 @@ func TestApplyChanges_Simple(t *testing.T) {
 	ctx := context.Background()
 	version, err := repo.GetCurrentDevVersion(ctx)
 	assert.NoError(t, err, "Failed to get current dev version")
+
+	// Clear all changes
+	changes, err := repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	for _, change := range changes {
+		err = repo.DeleteChange(ctx, change.ID)
+		assert.NoError(t, err, "Failed to delete change")
+	}
 	// Get all products
 	products, err := repo.GetAllProducts(ctx)
 	assert.NoError(t, err, "Failed to get all products")
@@ -192,6 +200,10 @@ func TestApplyChanges_Simple(t *testing.T) {
 	products, err = repo.GetAllProducts(ctx)
 	assert.NoError(t, err, "Failed to get all products")
 	assert.Len(t, products, startLenProducts, "Number of products should not change")
+	// check that the number of changes is 1
+	changes, err = repo.GetAllChanges(ctx, version)
+	assert.NoError(t, err, "Failed to get all changes")
+	assert.Len(t, changes, 1, "Expected one change")
 	// Apply changes
 	err = repo.ApplyChanges(ctx, version)
 	assert.NoError(t, err, "Failed to apply changes")
@@ -206,7 +218,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NotEqual(t, version, newVersion, "Dev version should be changed")
 
 	//Check that the number of changes is zero, because we applied them
-	changes, err := repo.GetAllChanges(ctx, newVersion)
+	changes, err = repo.GetAllChanges(ctx, newVersion)
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
 

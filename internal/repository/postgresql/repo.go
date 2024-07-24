@@ -143,26 +143,58 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 	// Применить все изменения
 	for rows.Next() {
 		var changeID int
-		var newValue models.Product
+		var productDataRaw json.RawMessage
 		var operation models.OperationType
-		if err := rows.Scan(&changeID, &newValue, &operation); err != nil {
+		if err := rows.Scan(&changeID, &productDataRaw, &operation); err != nil {
 			return fmt.Errorf("failed to scan change: %v", err)
 		}
-
+		// Распаковка нового значения
+		var productData models.Product
+		if err := productData.UnmarshalJSON(productDataRaw); err != nil {
+			return fmt.Errorf("failed to unmarshal new value: %v", err)
+		}
 		// Обработка изменений в зависимости от типа операции
 		switch operation {
 		case models.OperationTypeInsert:
 			sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1,$2,$3,$4,$5)`
-			_, err = tx.Exec(ctx, sql, newValue.Name, newValue.Description, newValue.Price, newValue.ImageURL, newValue.SKU)
+			_, err = tx.Exec(ctx, sql, productData.Name, productData.Description, productData.Price, productData.ImageURL, productData.SKU)
 			if err != nil {
 				return fmt.Errorf("failed to insert product: %v", err)
 			}
 		case models.OperationTypeUpdate:
-			// TODO: сделать обновление только измененных полей
-			panic("not implemented")
+			// Сформировать запрос на обновление только из валидных полей
+			sql = `UPDATE public.product SET `
+			var args []interface{}
+			if productData.Name.Valid {
+				sql += `name = $2, `
+				args = append(args, productData.Name)
+			}
+			if productData.Description.Valid {
+				sql += `description = $3, `
+				args = append(args, productData.Description)
+			}
+			if productData.Price.Valid {
+				sql += `price = $4, `
+				args = append(args, productData.Price)
+			}
+			if productData.ImageURL.Valid {
+				sql += `imageurl = $5, `
+				args = append(args, productData.ImageURL)
+			}
+			if productData.SKU.Valid {
+				sql += `sku = $6, `
+				args = append(args, productData.SKU)
+			}
+			// TODO: возможно есть способ сделать это без кучи if-ов
+			sql = sql[:len(sql)-2] + ` WHERE id = $1;`
+			args = append([]interface{}{productData.ID}, args...)
+			_, err = tx.Exec(ctx, sql, args...)
+			if err != nil {
+				return fmt.Errorf("failed to update product: %v", err)
+			}
 		case models.OperationTypeDelete:
 			sql = `DELETE FROM public.product WHERE id = $1`
-			_, err = tx.Exec(ctx, sql, newValue.ID)
+			_, err = tx.Exec(ctx, sql, productData.ID)
 			if err != nil {
 				return fmt.Errorf("failed to delete product: %v", err)
 			}
