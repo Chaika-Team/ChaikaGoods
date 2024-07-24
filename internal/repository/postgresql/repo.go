@@ -4,6 +4,7 @@ import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/myerr"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/log"
@@ -187,7 +188,7 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 func (r *GoodsRepository) CreateNewDevVersion(ctx context.Context) (models.Version, error) {
 	sql := `INSERT INTO public.version DEFAULT VALUES  RETURNING version_id;`
 	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied)
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to create new dev version: %v", err))
 		return models.Version{}, err
@@ -211,6 +212,11 @@ func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Vers
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan change: %v", err))
 			continue
 		}
+		var product models.Product
+		if err := json.Unmarshal(c.NewValue, &product); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to unmarshal new value: %v", err))
+			continue
+		}
 		c.VersionID = version.VersionID
 		changes = append(changes, c)
 	}
@@ -219,9 +225,9 @@ func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Vers
 
 // GetCurrentDevVersion возвращает текущую версию базы данных продуктов к которой привязываются новые изменения.
 func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
-	sql := `SELECT version_id FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
+	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
 	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID)
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get current dev version: %v", err))
 		return models.Version{}, err
@@ -243,43 +249,42 @@ func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
 // Package queries
 
 // GetPackageByID получает полную информацию о пакете, включая его содержимое.
-func (r *GoodsRepository) GetPackageByID(ctx context.Context, packageID int64) (*models.Package, []models.PackageContent, error) {
+func (r *GoodsRepository) GetPackageByID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
 	sqlPackage := `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
-	pkg := models.Package{}
-	err := r.client.QueryRow(ctx, sqlPackage, packageID).Scan(&pkg.ID, pkg.PackageName, pkg.Description)
+	err := r.client.QueryRow(ctx, sqlPackage, p.ID).Scan(&p.ID, &p.PackageName, &p.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil, &myerr.NotFound{ID: fmt.Sprintf("%d", packageID)}
+			return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", p.ID)}
 		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
-		return nil, nil, err
+		return nil, err
 	}
 
 	sqlContents := `SELECT packagecontentid, packageid, productid, quantity FROM public.packagecontent WHERE packageid = $1;`
-	rows, err := r.client.Query(ctx, sqlContents, packageID)
+	rows, err := r.client.Query(ctx, sqlContents, p.ID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get package contents: %v", err))
-		return nil, nil, err
+		return nil, err
 	}
 	defer rows.Close()
 
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, c.PackageID, c.ProductID, c.Quantity); err != nil {
+		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
-			continue
+			return nil, err
 		}
 		contents = append(contents, c)
 	}
 
-	return &pkg, contents, nil
+	return contents, nil
 }
 
 // GetProductsByPackageID получает список продуктов в определенном пакете.
-func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error) {
+func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
 	sql := `SELECT packagecontentid, packageid, productid, quantity FROM public.packagecontent WHERE packageid = $1;`
-	rows, err := r.client.Query(ctx, sql, packageID)
+	rows, err := r.client.Query(ctx, sql, p.ID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get products by package ID: %v", err))
 		return nil, err
@@ -289,7 +294,7 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID 
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, c.PackageID, c.ProductID, c.Quantity); err != nil {
+		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
 			continue
 		}
@@ -297,7 +302,7 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, packageID 
 	}
 
 	if len(contents) == 0 {
-		return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", packageID)}
+		return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", p.ID)}
 	}
 
 	return contents, nil
@@ -316,7 +321,7 @@ func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, e
 	var packages []models.Package
 	for rows.Next() {
 		var p models.Package
-		if err := rows.Scan(&p.ID, p.PackageName, p.Description); err != nil {
+		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
 			continue
 		}
@@ -329,7 +334,7 @@ func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, e
 // CreatePackage добавляет новый пустой пакет в базу данных.
 func (r *GoodsRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
 	sql := `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
-	err := r.client.QueryRow(ctx, sql, pkg.PackageName, pkg.Description).Scan(&pkg.ID)
+	err := r.client.QueryRow(ctx, sql, &pkg.PackageName, &pkg.Description).Scan(&pkg.ID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to create package: %v", err))
 		return err
