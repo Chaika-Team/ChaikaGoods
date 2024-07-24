@@ -53,18 +53,21 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 
 	ctx := context.Background()
 	version, err := repo.GetCurrentDevVersion(ctx)
-	// Get all changes to count it before adding a new one
+	assert.NoError(t, err, "Failed to get current dev version")
+	// Clear all changes before adding a new one
 	changes, err := repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
-	startLen := len(changes)
-
+	for _, change := range changes {
+		err = repo.DeleteChange(ctx, change.ID)
+		assert.NoError(t, err, "Failed to delete change")
+	}
 	// Add a new product
 	product := &models.Product{
 		Name:        sql.NullString{String: "Test Product", Valid: true},
 		Description: sql.NullString{String: "Test Product", Valid: true},
 		Price:       sql.NullFloat64{Float64: 10.0, Valid: true},
 		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
-		SKU:         sql.NullString{String: "images/test.png", Valid: true},
+		SKU:         sql.NullString{String: "SKUF", Valid: true},
 	}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
@@ -72,10 +75,15 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	// Get all changes again
 	changes, err = repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
-	assert.Len(t, changes, 1+startLen, "Expected one new change")
+	assert.NotNil(t, changes)
+	assert.Len(t, changes, 1, "Expected one new change")
+	// Check the change
 	change := &changes[0]
-	assert.Equal(t, models.OperationTypeInsert, change.OperationType)
-	assert.Equal(t, *product, change.NewValue)
+	assert.Equal(t, models.OperationTypeInsert, int(change.OperationType))
+	// unmarshal the new value
+	var newProduct models.Product
+	err = newProduct.UnmarshalJSON(change.NewValue)
+	assert.Equal(t, *product, newProduct, "New product should be equal to the added product")
 	// Cleanup
 	err = repo.DeleteChange(ctx, change.ID)
 	assert.NoError(t, err, "Failed to delete change")
@@ -87,6 +95,7 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 
 	ctx := context.Background()
 	version, err := repo.GetCurrentDevVersion(ctx)
+	assert.NoError(t, err, "Failed to get current dev version")
 	// Get all changes to count it before adding a new one
 	changes, err := repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
@@ -106,7 +115,10 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.Len(t, changes, 1+startLen, "Expected one new change")
 	change := changes[len(changes)-1]
 	assert.Equal(t, models.OperationTypeUpdate, int(change.OperationType))
-	assert.Equal(t, product.Price, change.NewValue.Price)
+	// unmarshal the new value
+	var updatedProduct models.Product
+	err = updatedProduct.UnmarshalJSON(change.NewValue)
+	assert.Equal(t, product.Price, updatedProduct.Price, "Price should be updated")
 	// Cleanup
 	err = repo.DeleteChange(ctx, changes[0].ID)
 	assert.NoError(t, err, "Failed to delete change")
@@ -263,7 +275,8 @@ func TestGetPackageByID(t *testing.T) {
 	})
 	assert.NoError(t, err, "Failed to add products to test package")
 	// get the package by ID
-	pkg2, contents, err := repo.GetPackageByID(context.Background(), pkg.ID)
+	pkg2 := &models.Package{ID: pkg.ID}
+	contents, err := repo.GetPackageByID(context.Background(), pkg2)
 	assert.NoError(t, err, "Failed to get package by ID")
 	assert.NotNil(t, pkg2)
 	assert.Equal(t, pkg.ID, pkg2.ID)
@@ -313,9 +326,12 @@ func TestCreatePackage(t *testing.T) {
 	assert.NoError(t, err, "Failed to create package")
 
 	// Verify creation by fetching it
-	_, contents, err := repo.GetPackageByID(context.Background(), pkg.ID)
+	pkg2 := &models.Package{ID: pkg.ID}
+	contents, err := repo.GetPackageByID(context.Background(), pkg2)
 	assert.NoError(t, err, "Failed to fetch the newly created package")
 	assert.Empty(t, contents, "New package should have no contents")
+	assert.Equal(t, pkg.PackageName, pkg2.PackageName, "Package name should match")
+	assert.Equal(t, pkg.Description, pkg2.Description, "Package description should match")
 
 	// Cleanup
 	err = repo.DeletePackage(context.Background(), pkg.ID)
@@ -368,8 +384,8 @@ func TestDeletePackage(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete package")
 
 	// Verify deletion by attempting to fetch it
-	id, contents, err := repo.GetPackageByID(context.Background(), pkg.ID)
-	assert.Error(t, err, "Expected an error fetching a deleted package")
-	assert.Nil(t, id, "Expected nil package")
-	assert.Nil(t, contents, "Expected nil contents for deleted package")
+
+	contents, err := repo.GetPackageByID(context.Background(), pkg)
+	assert.Error(t, err, "Package should not be found after deletion")
+	assert.Empty(t, contents, "Package should not be found after deletion")
 }

@@ -99,7 +99,7 @@ func main() {
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
 	}
-	print("Current dev version: ", version.VersionID)
+	println("Current dev version: ", version.VersionID)
 	// Apply changes
 	err = repository.ApplyChanges(ctx, version)
 	if err != nil {
@@ -114,6 +114,6 @@ func main() {
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
 	}
-	print("Current dev version: ", version.VersionID)
+	println("Current dev version: ", version.VersionID)
 
 }
