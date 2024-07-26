@@ -72,7 +72,11 @@ func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product *
 	// добавляем новое изменение в базу
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	var changeID int
-	err := r.client.QueryRow(ctx, sql, models.OperationTypeInsert, product).Scan(&changeID)
+	p, err := json.Marshal(product)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product %v: %v", &product.ID, err))
+	}
+	err = r.client.QueryRow(ctx, sql, models.OperationTypeInsert, p).Scan(&changeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
@@ -87,7 +91,11 @@ func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product *
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	//TODO: в new_value ранится вся инфа о продукте, а не только измененные поля. Надо улучшить, чтобы хранились только измененные поля
 	var changeID int
-	err := r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, product).Scan(&changeID)
+	p, err := json.Marshal(&product)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product %v: %v", &product.ID, err))
+	}
+	err = r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, p).Scan(&changeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
@@ -107,10 +115,10 @@ func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64)
 	return nil
 }
 
-func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Version) error {
+func (r *GoodsRepository) ApplyChanges(ctx context.Context, version *models.Version) error {
 	// Взять все изменения, которые не были применены
 	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
-	rows, err := r.client.Query(ctx, sql, version.VersionID)
+	rows, err := r.client.Query(ctx, sql, &version.VersionID)
 	if err != nil {
 		return fmt.Errorf("failed to get changes: %v", err)
 	}
@@ -143,14 +151,14 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 	// Применить все изменения
 	for rows.Next() {
 		var changeID int
-		var productDataRaw json.RawMessage
+		var productDataRaw *json.RawMessage
 		var operation models.OperationType
 		if err := rows.Scan(&changeID, &productDataRaw, &operation); err != nil {
 			return fmt.Errorf("failed to scan change: %v", err)
 		}
 		// Распаковка нового значения
 		var productData models.Product
-		if err := productData.UnmarshalJSON(productDataRaw); err != nil {
+		if err := json.Unmarshal(*productDataRaw, &productData); err != nil {
 			return fmt.Errorf("failed to unmarshal new value: %v", err)
 		}
 		// Обработка изменений в зависимости от типа операции
@@ -164,34 +172,35 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 		case models.OperationTypeUpdate:
 			// Сформировать запрос на обновление только из валидных полей
 			sql = `UPDATE public.product SET `
-			var args []interface{}
-			if productData.Name.Valid {
-				sql += `name = $2, `
-				args = append(args, productData.Name)
-			}
-			if productData.Description.Valid {
-				sql += `description = $3, `
-				args = append(args, productData.Description)
-			}
-			if productData.Price.Valid {
-				sql += `price = $4, `
-				args = append(args, productData.Price)
-			}
-			if productData.ImageURL.Valid {
-				sql += `imageurl = $5, `
-				args = append(args, productData.ImageURL)
-			}
-			if productData.SKU.Valid {
-				sql += `sku = $6, `
-				args = append(args, productData.SKU)
-			}
+			//var args []interface{}
+			//if productData.Name.Valid {
+			//	sql += `name = $2, `
+			//	args = append(args, productData.Name)
+			//}
+			//if productData.Description.Valid {
+			//	sql += `description = $3, `
+			//	args = append(args, productData.Description)
+			//}
+			//if productData.Price.Valid {
+			//	sql += `price = $4, `
+			//	args = append(args, productData.Price)
+			//}
+			//if productData.ImageURL.Valid {
+			//	sql += `imageurl = $5, `
+			//	args = append(args, productData.ImageURL)
+			//}
+			//if productData.SKU.Valid {
+			//	sql += `sku = $6, `
+			//	args = append(args, productData.SKU)
+			//}
+			panic("not implemented")
 			// TODO: возможно есть способ сделать это без кучи if-ов
-			sql = sql[:len(sql)-2] + ` WHERE id = $1;`
-			args = append([]interface{}{productData.ID}, args...)
-			_, err = tx.Exec(ctx, sql, args...)
-			if err != nil {
-				return fmt.Errorf("failed to update product: %v", err)
-			}
+			//sql = sql[:len(sql)-2] + ` WHERE id = $1;`
+			//args = append([]interface{}{productData.ID}, args...)
+			//_, err = tx.Exec(ctx, sql, args...)
+			//if err != nil {
+			//	return fmt.Errorf("failed to update product: %v", err)
+			//}
 		case models.OperationTypeDelete:
 			sql = `DELETE FROM public.product WHERE id = $1`
 			_, err = tx.Exec(ctx, sql, productData.ID)

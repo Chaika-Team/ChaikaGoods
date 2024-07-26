@@ -5,7 +5,7 @@ import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/repository/postgresql"
 	"context"
-	"database/sql"
+	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
@@ -61,13 +61,18 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 		err = repo.DeleteChange(ctx, change.ID)
 		assert.NoError(t, err, "Failed to delete change")
 	}
-	// Add a new product
+	// Add a new product (with pointer fields)
+	name := "Sample Product"
+	description := "This is a sample product."
+	price := 9.99
+	imageURL := "images/test.jpg"
+	sku := "ABC123"
 	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "Test Product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.0, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
-		SKU:         sql.NullString{String: "SKUF", Valid: true},
+		Name:        &name,
+		Description: &description,
+		Price:       &price,
+		ImageURL:    &imageURL,
+		SKU:         &sku,
 	}
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
@@ -82,7 +87,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.Equal(t, models.OperationTypeInsert, int(change.OperationType))
 	// unmarshal the new value
 	var newProduct models.Product
-	err = newProduct.UnmarshalJSON(change.NewValue)
+	err = json.Unmarshal(change.NewValue, &newProduct)
 	assert.Equal(t, *product, newProduct, "New product should be equal to the added product")
 	// Cleanup
 	err = repo.DeleteChange(ctx, change.ID)
@@ -101,9 +106,12 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
+	// Create a new product
+	name := "Sample Product"
+	price := 9.99
 	product := &models.Product{
-		ID:    1,
-		Price: sql.NullFloat64{Float64: 2077.00, Valid: true},
+		Name:  &name,
+		Price: &price,
 	}
 	// Update the product
 	err = repo.AddQueryToUpdateProduct(ctx, product)
@@ -117,7 +125,7 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.Equal(t, models.OperationTypeUpdate, int(change.OperationType))
 	// unmarshal the new value
 	var updatedProduct models.Product
-	err = updatedProduct.UnmarshalJSON(change.NewValue)
+	err = json.Unmarshal(change.NewValue, &updatedProduct)
 	assert.Equal(t, product.Price, updatedProduct.Price, "Price should be updated")
 	// Cleanup
 	err = repo.DeleteChange(ctx, changes[0].ID)
@@ -137,13 +145,15 @@ func TestGetAllChanges(t *testing.T) {
 	startlen := len(changes)
 	assert.NoError(t, err, "Failed to get all changes")
 	// Add a new change
+	name := "Sample Product"
+	price := 9.99
+	description := "This is a sample product."
 	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "A test product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
-		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+		Name:        &name,
+		Price:       &price,
+		Description: &description,
 	}
+
 	err = repo.AddQueryToCreateProduct(context.Background(), product)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Get all changes again
@@ -187,12 +197,18 @@ func TestApplyChanges_Simple(t *testing.T) {
 	startLenProducts := len(products)
 
 	//Create a new product
+	name := "Sample Product"
+	description := "This is a sample product."
+	price := 9.99
+	imageURL := "images/test.jpg"
+	sku := "ABC123"
+
 	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "A test product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
-		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+		Name:        &name,
+		Description: &description,
+		Price:       &price,
+		ImageURL:    &imageURL,
+		SKU:         &sku,
 	}
 	err = repo.AddQueryToCreateProduct(ctx, product)
 	assert.NoError(t, err, "Failed to add query to create product")
@@ -205,7 +221,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 1, "Expected one change")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, version)
+	err = repo.ApplyChanges(ctx, &version)
 	assert.NoError(t, err, "Failed to apply changes")
 	// Get all products again
 	products, err = repo.GetAllProducts(ctx)
@@ -225,7 +241,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	// Get last product from products
 	product = &products[len(products)-1]
 	// Update the product
-	product.Price = sql.NullFloat64{Float64: 2077.00, Valid: true}
+	*product.Price = 2077
 	err = repo.AddQueryToUpdateProduct(ctx, product)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Check that price is not changed, because we didn't apply changes
@@ -238,10 +254,10 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 1, "Expected one change")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, newVersion)
+	err = repo.ApplyChanges(ctx, &newVersion)
 	assert.NoError(t, err, "Failed to apply changes")
 	// Check that price is changed
-	updatedProduct, err := repo.GetProductByID(ctx, product.ID)
+	updatedProduct, err := repo.GetProductByID(ctx, *product.ID)
 	assert.NoError(t, err, "Failed to get product by ID")
 	assert.NotNil(t, updatedProduct)
 	assert.Equal(t, 2077.00, updatedProduct.Price, "Price should be updated")
@@ -251,10 +267,10 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
 
 	// Delete the product
-	err = repo.AddQueryToDeleteProduct(ctx, product.ID)
+	err = repo.AddQueryToDeleteProduct(ctx, *product.ID)
 	assert.NoError(t, err, "Failed to add query to delete product")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, newVersion)
+	err = repo.ApplyChanges(ctx, &newVersion)
 	assert.NoError(t, err, "Failed to apply changes")
 
 	// Check that the number of products is the same as before

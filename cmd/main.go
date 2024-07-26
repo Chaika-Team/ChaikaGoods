@@ -5,7 +5,6 @@ import (
 	"ChaikaGoods/internal/models"
 	repo "ChaikaGoods/internal/repository/postgresql"
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/go-kit/log"
@@ -83,12 +82,17 @@ func main() {
 	}
 
 	// Add new product, with sql.Null* fields
+	name := "Test Product"
+	description := "Test Description"
+	price := 100.0
+	imageURL := "images/test.jpg"
+	sku := "TEST-001"
 	product = &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "Test Description", Valid: true},
-		Price:       sql.NullFloat64{Float64: 100.0, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
-		SKU:         sql.NullString{String: "TEST123", Valid: true},
+		Name:        &name,
+		Description: &description,
+		Price:       &price,
+		ImageURL:    &imageURL,
+		SKU:         &sku,
 	}
 	err = repository.AddQueryToCreateProduct(ctx, product)
 	if err != nil {
@@ -101,7 +105,7 @@ func main() {
 	}
 	println("Current dev version: ", version.VersionID)
 	// Apply changes
-	err = repository.ApplyChanges(ctx, version)
+	err = repository.ApplyChanges(ctx, &version)
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to apply changes", "err", err)
 	}
