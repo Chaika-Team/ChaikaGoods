@@ -1,39 +1,21 @@
 package models
 
 import (
-	"database/sql"
 	"encoding/json"
 	"time"
 )
 
 // Product описывает товар.
 type Product struct {
-	ID          int64           `json:"id"`
-	Name        sql.NullString  `json:"name"`
-	Description sql.NullString  `json:"description"`
-	Price       sql.NullFloat64 `json:"price"`
-	ImageURL    sql.NullString  `json:"image_url"`
-	SKU         sql.NullString  `json:"sku"`
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	ImageURL    string  `json:"imageurl"`
+	SKU         string  `json:"sku"`
 }
 
-// UnmarshalJSON реализует интерфейс Unmarshaler для типа Product.
-func (p *Product) UnmarshalJSON(data []byte) error {
-	type Alias Product
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(p),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	p.Name = sql.NullString{String: aux.Name.String, Valid: aux.Name.Valid}
-	p.Description = sql.NullString{String: aux.Description.String, Valid: aux.Description.Valid}
-	p.Price = sql.NullFloat64{Float64: aux.Price.Float64, Valid: aux.Price.Valid}
-	p.ImageURL = sql.NullString{String: aux.ImageURL.String, Valid: aux.ImageURL.Valid}
-	p.SKU = sql.NullString{String: aux.SKU.String, Valid: aux.SKU.Valid}
-	return nil
-}
+// Add custom methods to MarshalJSON and UnmarshalJSON for the models.Product type.
 
 // Package описывает пакет товаров.
 type Package struct {
