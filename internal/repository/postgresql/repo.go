@@ -3,12 +3,14 @@ package postgresql
 import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/myerr"
+	"ChaikaGoods/internal/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5"
+	"strconv"
 )
 
 type GoodsRepository struct {
@@ -68,11 +70,17 @@ func (r *GoodsRepository) GetAllProducts(ctx context.Context) ([]models.Product,
 }
 
 // AddQueryToCreateProduct добавляет запрос на создание продукта в базе данных.
-func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product *models.Product) error {
+func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, data *map[string]interface{}) error {
 	// добавляем новое изменение в базу
+	newValue, err := json.Marshal(data)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product data: %v", err))
+		return err
+	}
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	var changeID int
-	err := r.client.QueryRow(ctx, sql, models.OperationTypeInsert, product).Scan(&changeID)
+	jsonValue := string(newValue)
+	err = r.client.QueryRow(ctx, sql, models.OperationTypeInsert, jsonValue).Scan(&changeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
@@ -82,12 +90,16 @@ func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, product *
 }
 
 // AddQueryToUpdateProduct добавление запроса на обновления продукта в базе данных.
-func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product *models.Product) error {
-	// добавляем новое изменение в базу
+func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, data *map[string]interface{}) error {
+	newValue, err := json.Marshal(data)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product data: %v", err))
+		return err
+	}
+	jsonValue := string(newValue)
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
-	//TODO: в new_value ранится вся инфа о продукте, а не только измененные поля. Надо улучшить, чтобы хранились только измененные поля
 	var changeID int
-	err := r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, product).Scan(&changeID)
+	err = r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, jsonValue).Scan(&changeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
@@ -99,7 +111,8 @@ func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, product *
 func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64) error {
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ($1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	var changeID int
-	err := r.client.QueryRow(ctx, sql, models.OperationTypeDelete, id).Scan(&changeID)
+	str := "{\"id\":" + strconv.FormatInt(id, 10) + "}" // Преобразование id в строку
+	err := r.client.QueryRow(ctx, sql, models.OperationTypeDelete, str).Scan(&changeID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
 		return err
@@ -107,10 +120,11 @@ func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64)
 	return nil
 }
 
-func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Version) error {
+func (r *GoodsRepository) ApplyChanges(ctx context.Context, version *models.Version) error {
+
 	// Взять все изменения, которые не были применены
 	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
-	rows, err := r.client.Query(ctx, sql, version.VersionID)
+	rows, err := r.client.Query(ctx, sql, &version.VersionID)
 	if err != nil {
 		return fmt.Errorf("failed to get changes: %v", err)
 	}
@@ -143,65 +157,31 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version models.Versi
 	// Применить все изменения
 	for rows.Next() {
 		var changeID int
-		var productDataRaw json.RawMessage
+		var productDataRaw *json.RawMessage
 		var operation models.OperationType
 		if err := rows.Scan(&changeID, &productDataRaw, &operation); err != nil {
 			return fmt.Errorf("failed to scan change: %v", err)
 		}
 		// Распаковка нового значения
-		var productData models.Product
-		if err := productData.UnmarshalJSON(productDataRaw); err != nil {
-			return fmt.Errorf("failed to unmarshal new value: %v", err)
+		var productData map[string]interface{}
+		if err := json.Unmarshal(*productDataRaw, &productData); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("failed to unmarshal new value: %v", err))
+			return err
 		}
 		// Обработка изменений в зависимости от типа операции
 		switch operation {
 		case models.OperationTypeInsert:
-			sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1,$2,$3,$4,$5)`
-			_, err = tx.Exec(ctx, sql, productData.Name, productData.Description, productData.Price, productData.ImageURL, productData.SKU)
-			if err != nil {
-				return fmt.Errorf("failed to insert product: %v", err)
-			}
+			err = r.insertProduct(ctx, &productData)
 		case models.OperationTypeUpdate:
-			// Сформировать запрос на обновление только из валидных полей
-			sql = `UPDATE public.product SET `
-			var args []interface{}
-			if productData.Name.Valid {
-				sql += `name = $2, `
-				args = append(args, productData.Name)
-			}
-			if productData.Description.Valid {
-				sql += `description = $3, `
-				args = append(args, productData.Description)
-			}
-			if productData.Price.Valid {
-				sql += `price = $4, `
-				args = append(args, productData.Price)
-			}
-			if productData.ImageURL.Valid {
-				sql += `imageurl = $5, `
-				args = append(args, productData.ImageURL)
-			}
-			if productData.SKU.Valid {
-				sql += `sku = $6, `
-				args = append(args, productData.SKU)
-			}
-			// TODO: возможно есть способ сделать это без кучи if-ов
-			sql = sql[:len(sql)-2] + ` WHERE id = $1;`
-			args = append([]interface{}{productData.ID}, args...)
-			_, err = tx.Exec(ctx, sql, args...)
-			if err != nil {
-				return fmt.Errorf("failed to update product: %v", err)
-			}
+			err = r.updateProduct(ctx, &productData)
 		case models.OperationTypeDelete:
-			sql = `DELETE FROM public.product WHERE id = $1`
-			_, err = tx.Exec(ctx, sql, productData.ID)
-			if err != nil {
-				return fmt.Errorf("failed to delete product: %v", err)
-			}
+			err = r.deleteProduct(ctx, &productData)
 		default:
 			return fmt.Errorf("unknown operation type: %v", operation)
 		}
-
+		if err != nil {
+			return fmt.Errorf("failed to apply change: %v", err)
+		}
 		// Отметить изменение как применённое
 		_, err = tx.Exec(ctx, `UPDATE public.changes SET considered = TRUE WHERE change_id = $1`, changeID)
 		if err != nil {
@@ -427,6 +407,80 @@ func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) er
 	if err := tx.Commit(ctx); err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to commit transaction: %v", err))
 		return err
+	}
+	return nil
+}
+
+func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
+	// Verify that all keys in the map correspond to the fields of the models.Product structure
+	err := utils.VerifyMapFields[models.Product](*data)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to verify product fields: %v", err))
+		return err
+	}
+	// Generate sql query with all fields in the map
+	sql := `INSERT INTO public.product (`
+	values := `) VALUES (`
+	var args []interface{}
+	idx := 1
+	for key, value := range *data {
+		sql += key + ", "
+		values += "$" + strconv.Itoa(idx) + ", "
+		args = append(args, value) // Добавление значения в список аргументов
+		idx++
+	}
+	sql = sql[:len(sql)-2] + values[:len(values)-2] + ");"
+	_, err = r.client.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed to insert product: %v", err)
+	}
+	return nil
+}
+
+func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
+	// Verify that all keys in the map correspond to the fields of the models.Product structure
+	err := utils.VerifyMapFields[models.Product](*data)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to verify product fields: %v", err))
+		return err
+	}
+	// Generate sql query with all fields in the map
+	sql := `UPDATE public.product SET `
+	var args []interface{}
+	idx := 1
+	for key, value := range *data {
+		if key == "id" {
+			continue
+		}
+		sql += key + " = $" + strconv.Itoa(idx) + ", "
+		args = append(args, value) // Добавление значения в список аргументов
+		idx++
+	}
+	if len(args) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
+	args = append(args, (*data)["id"]) // Добавление id в список аргументов
+	sql = sql[:len(sql)-2] + " WHERE id = $" + strconv.Itoa(idx) + ";"
+	_, err = r.client.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update product: %v", err)
+	}
+	return nil
+}
+
+func (r *GoodsRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
+	// get id
+	rawId, ok := (*data)["id"]
+	if !ok {
+		return fmt.Errorf("failed to get product id")
+	}
+
+	var id = int64(rawId.(float64))
+
+	sql := `DELETE FROM public.product WHERE id = $1;`
+	_, err := r.client.Exec(ctx, sql, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete product: %v", err)
 	}
 	return nil
 }

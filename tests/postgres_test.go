@@ -5,7 +5,7 @@ import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/repository/postgresql"
 	"context"
-	"database/sql"
+	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
@@ -61,15 +61,15 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 		err = repo.DeleteChange(ctx, change.ID)
 		assert.NoError(t, err, "Failed to delete change")
 	}
-	// Add a new product
-	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "Test Product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.0, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.png", Valid: true},
-		SKU:         sql.NullString{String: "SKUF", Valid: true},
+	// Add a new product data
+	data := map[string]interface{}{
+		"name":        "Test Product",
+		"description": "A product for testing",
+		"price":       99.99,
+		"imageurl":    "images/product.jpg",
+		"sku":         "TP-001",
 	}
-	err = repo.AddQueryToCreateProduct(context.Background(), product)
+	err = repo.AddQueryToCreateProduct(context.Background(), &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 
 	// Get all changes again
@@ -81,9 +81,9 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	change := &changes[0]
 	assert.Equal(t, models.OperationTypeInsert, int(change.OperationType))
 	// unmarshal the new value
-	var newProduct models.Product
-	err = newProduct.UnmarshalJSON(change.NewValue)
-	assert.Equal(t, *product, newProduct, "New product should be equal to the added product")
+	var newData map[string]interface{}
+	err = json.Unmarshal(change.NewValue, &newData)
+	assert.Equal(t, data, newData, "New product data should be equal to the added product data")
 	// Cleanup
 	err = repo.DeleteChange(ctx, change.ID)
 	assert.NoError(t, err, "Failed to delete change")
@@ -101,30 +101,41 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	startLen := len(changes)
 
-	product := &models.Product{
-		ID:    1,
-		Price: sql.NullFloat64{Float64: 2077.00, Valid: true},
+	// get some product
+	products, err := repo.GetAllProducts(ctx)
+	assert.NoError(t, err, "Failed to get all products")
+	product := products[0]
+
+	// Create a updated product data
+	data := map[string]interface{}{
+		"id":    product.ID,
+		"price": product.Price + 10.0,
 	}
 	// Update the product
-	err = repo.AddQueryToUpdateProduct(ctx, product)
+	err = repo.AddQueryToUpdateProduct(ctx, &data)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Execute the query
 	changes, err = repo.GetAllChanges(ctx, version)
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.NotNil(t, changes)
 	assert.Len(t, changes, 1+startLen, "Expected one new change")
+	// Check the last change
 	change := changes[len(changes)-1]
 	assert.Equal(t, models.OperationTypeUpdate, int(change.OperationType))
 	// unmarshal the new value
-	var updatedProduct models.Product
-	err = updatedProduct.UnmarshalJSON(change.NewValue)
-	assert.Equal(t, product.Price, updatedProduct.Price, "Price should be updated")
+	var updatedData map[string]interface{}
+	err = json.Unmarshal(change.NewValue, &updatedData)
+	assert.NoError(t, err)
+	if idFloat, ok := updatedData["id"].(float64); ok {
+		updatedData["id"] = int64(idFloat) // Приведение типа float64 к int64
+	} else {
+		assert.Fail(t, "Failed to convert id to int64")
+	}
+
+	assert.Equal(t, data, updatedData, "Price should be equal to the updated price")
 	// Cleanup
-	err = repo.DeleteChange(ctx, changes[0].ID)
-	assert.NoError(t, err, "Failed to delete change")
 	err = repo.DeleteChange(ctx, change.ID)
 	assert.NoError(t, err, "Failed to delete change")
-
 }
 
 // TestAddQueryToDeleteProduct tests the AddQueryToDeleteProduct method of the GoodsRepository.
@@ -137,14 +148,12 @@ func TestGetAllChanges(t *testing.T) {
 	startlen := len(changes)
 	assert.NoError(t, err, "Failed to get all changes")
 	// Add a new change
-	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "A test product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
-		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+	data := map[string]interface{}{
+		"name":        "Test Product",
+		"description": "A product for testing",
+		"price":       99.99,
 	}
-	err = repo.AddQueryToCreateProduct(context.Background(), product)
+	err = repo.AddQueryToCreateProduct(context.Background(), &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Get all changes again
 	changes, err = repo.GetAllChanges(ctx, version)
@@ -187,14 +196,15 @@ func TestApplyChanges_Simple(t *testing.T) {
 	startLenProducts := len(products)
 
 	//Create a new product
-	product := &models.Product{
-		Name:        sql.NullString{String: "Test Product", Valid: true},
-		Description: sql.NullString{String: "A test product", Valid: true},
-		Price:       sql.NullFloat64{Float64: 10.00, Valid: true},
-		ImageURL:    sql.NullString{String: "images/test.jpg", Valid: true},
-		SKU:         sql.NullString{String: "TESTSKU100", Valid: true},
+	data := map[string]interface{}{
+		"name":        "Test Product",
+		"description": "A product for testing",
+		"price":       99.99,
+		"imageurl":    "images/product.jpg",
+		"sku":         "TP-001",
 	}
-	err = repo.AddQueryToCreateProduct(ctx, product)
+
+	err = repo.AddQueryToCreateProduct(ctx, &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Check that the number of products not changed, because we didn't apply changes
 	products, err = repo.GetAllProducts(ctx)
@@ -205,13 +215,13 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 1, "Expected one change")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, version)
+	err = repo.ApplyChanges(ctx, &version)
 	assert.NoError(t, err, "Failed to apply changes")
 	// Get all products again
 	products, err = repo.GetAllProducts(ctx)
 	assert.NoError(t, err, "Failed to get all products")
 	assert.NotNil(t, products)
-	assert.Len(t, products, len(products)+1, "Expected one new product")
+	assert.Equal(t, startLenProducts+1, len(products), "Expected one new product")
 	// Check that dev version is changed
 	newVersion, err := repo.CreateNewDevVersion(ctx)
 	assert.NoError(t, err, "Failed to create new dev version")
@@ -223,10 +233,14 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
 
 	// Get last product from products
-	product = &products[len(products)-1]
+	product := &products[len(products)-1]
 	// Update the product
-	product.Price = sql.NullFloat64{Float64: 2077.00, Valid: true}
-	err = repo.AddQueryToUpdateProduct(ctx, product)
+	updatedData := map[string]interface{}{
+		"id":    product.ID,
+		"price": 2077.00,
+	}
+
+	err = repo.AddQueryToUpdateProduct(ctx, &updatedData)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Check that price is not changed, because we didn't apply changes
 	products, err = repo.GetAllProducts(ctx)
@@ -238,13 +252,15 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all changes")
 	assert.Len(t, changes, 1, "Expected one change")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, newVersion)
+	err = repo.ApplyChanges(ctx, &newVersion)
 	assert.NoError(t, err, "Failed to apply changes")
 	// Check that price is changed
 	updatedProduct, err := repo.GetProductByID(ctx, product.ID)
 	assert.NoError(t, err, "Failed to get product by ID")
 	assert.NotNil(t, updatedProduct)
 	assert.Equal(t, 2077.00, updatedProduct.Price, "Price should be updated")
+	newVersion, err = repo.CreateNewDevVersion(ctx)
+
 	// Check that the number of changes is zero, because we applied them
 	changes, err = repo.GetAllChanges(ctx, newVersion)
 	assert.NoError(t, err, "Failed to get all changes")
@@ -254,7 +270,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	err = repo.AddQueryToDeleteProduct(ctx, product.ID)
 	assert.NoError(t, err, "Failed to add query to delete product")
 	// Apply changes
-	err = repo.ApplyChanges(ctx, newVersion)
+	err = repo.ApplyChanges(ctx, &newVersion)
 	assert.NoError(t, err, "Failed to apply changes")
 
 	// Check that the number of products is the same as before
@@ -262,6 +278,8 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to get all products")
 	assert.Len(t, products, startLenProducts, "Number of products should be the same")
 
+	_, err = repo.CreateNewDevVersion(ctx)
+	assert.NoError(t, err, "Failed to create new dev version")
 }
 
 // TestGetAllProducts tests the GetAllProducts method of the GoodsRepository.
