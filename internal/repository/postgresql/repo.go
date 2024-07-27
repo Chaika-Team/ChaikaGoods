@@ -247,6 +247,40 @@ func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Vers
 	return v, nil
 }
 
+// GetCurrentActualVersion возвращает текущую версию базы данных продуктов c актуальными данными
+func (r *GoodsRepository) GetCurrentActualVersion(ctx context.Context) (models.Version, error) {
+	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = FALSE ORDER BY creation_date DESC LIMIT 1;`
+	var v models.Version
+	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get current actual version: %v", err))
+		return models.Version{}, err
+	}
+	return v, nil
+}
+
+// GetVersionsBetween возвращает все версии базы данных продуктов между двумя версиями.
+func (r *GoodsRepository) GetVersionsBetween(ctx context.Context, from, to int) ([]models.Version, error) {
+	sql := `SELECT version_id, creation_date, is_dev, applied FROM public.version WHERE version_id > $1 AND version_id < $2;`
+	rows, err := r.client.Query(ctx, sql, from, to)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get versions between: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+	var versions []models.Version
+	for rows.Next() {
+		var v models.Version
+		if err := rows.Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan version: %v", err))
+			continue
+		}
+		versions = append(versions, v)
+	}
+	return versions, nil
+
+}
+
 // DeleteChange удаляет изменение из базы данных по его ID.
 func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
 	sql := `DELETE FROM public.changes WHERE change_id = $1;`
@@ -411,6 +445,28 @@ func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) er
 	return nil
 }
 
+func (r *GoodsRepository) SearchPacket(ctx context.Context, searchString string, quantity int, offset int) ([]models.Package, error) {
+	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
+	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to search package: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var packages []models.Package
+	for rows.Next() {
+		var p models.Package
+		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
+			continue
+		}
+		packages = append(packages, p)
+	}
+	return packages, nil
+}
+
+// insertProduct добавляет новый продукт в базу данных, только для внутреннего использования.
 func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
@@ -437,6 +493,7 @@ func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]in
 	return nil
 }
 
+// updateProduct обновляет информацию о продукте в базе данных, только для внутреннего использования.
 func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
@@ -468,6 +525,7 @@ func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]in
 	return nil
 }
 
+// deleteProduct удаляет продукт из базы данных по его ID, только для внутреннего использования.
 func (r *GoodsRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
 	// get id
 	rawId, ok := (*data)["id"]
