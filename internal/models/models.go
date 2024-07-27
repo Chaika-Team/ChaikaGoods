@@ -7,13 +7,15 @@ import (
 
 // Product описывает товар.
 type Product struct {
-	ID          *int64   `json:"id"`
-	Name        *string  `json:"name"`
-	Description *string  `json:"description"`
-	Price       *float64 `json:"price"`
-	ImageURL    *string  `json:"image_url"`
-	SKU         *string  `json:"sku"`
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	ImageURL    string  `json:"imageurl"`
+	SKU         string  `json:"sku"`
 }
+
+// Add custom methods to MarshalJSON and UnmarshalJSON for the models.Product type.
 
 // Package описывает пакет товаров.
 type Package struct {

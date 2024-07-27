@@ -2,11 +2,9 @@ package main
 
 import (
 	"ChaikaGoods/internal/config"
-	"ChaikaGoods/internal/models"
 	repo "ChaikaGoods/internal/repository/postgresql"
 	"context"
 	"flag"
-	"fmt"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"os"
@@ -53,71 +51,10 @@ func main() {
 
 	//Init repository
 	repository := repo.NewGoodsRepository(pool, logger)
-	// test repository
-	product, err := repository.GetProductByID(ctx, 1)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to get product by ID", "err", err)
-	}
-	fmt.Printf("Product: %v\n", product)
-
-	products, err := repository.GetAllProducts(ctx)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to get all products", "err", err)
-	}
-	fmt.Printf("Products: %v\n", products)
-	// Clear all changes
-	version, err := repository.GetCurrentDevVersion(ctx)
-	if err != nil {
+	if v, err := repository.GetCurrentDevVersion(ctx); err != nil {
 		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
+	} else {
+		_ = level.Info(logger).Log("message", "Current dev version", "version", v)
 	}
-	changes, err := repository.GetAllChanges(ctx, version)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to get all changes", "err", err)
-	}
-	for _, change := range changes {
-		err = repository.DeleteChange(ctx, change.ID)
-		if err != nil {
-			_ = level.Error(logger).Log("message", "Failed to clear change", "err", err)
-		}
-	}
-
-	// Add new product, with sql.Null* fields
-	name := "Test Product"
-	description := "Test Description"
-	price := 100.0
-	imageURL := "images/test.jpg"
-	sku := "TEST-001"
-	product = &models.Product{
-		Name:        &name,
-		Description: &description,
-		Price:       &price,
-		ImageURL:    &imageURL,
-		SKU:         &sku,
-	}
-	err = repository.AddQueryToCreateProduct(ctx, product)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to add query to create product", "err", err)
-	}
-	// Get Current Dev Version
-	version, err = repository.GetCurrentDevVersion(ctx)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
-	}
-	println("Current dev version: ", version.VersionID)
-	// Apply changes
-	err = repository.ApplyChanges(ctx, &version)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to apply changes", "err", err)
-	}
-	// Get Current Dev Version
-	version, err = repository.CreateNewDevVersion(ctx)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to create new dev version", "err", err)
-	}
-	version, err = repository.GetCurrentDevVersion(ctx)
-	if err != nil {
-		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
-	}
-	println("Current dev version: ", version.VersionID)
 
 }
