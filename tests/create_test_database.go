@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// createDatabase creates a new database with the given name for testing purposes.
 func createDatabase(ctx context.Context, storageCfg config.StorageConfig) error {
 	cmdStr := fmt.Sprintf("createdb -h %s -p %s -U %s %s",
 		storageCfg.Host, storageCfg.Port, storageCfg.User, storageCfg.Database)
@@ -21,6 +22,7 @@ func createDatabase(ctx context.Context, storageCfg config.StorageConfig) error 
 	return nil
 }
 
+// restoreDatabase restores a database from a dump file with test data.
 func restoreDatabase(ctx context.Context, storageCfg config.StorageConfig, dumpFile string) error {
 	cmdStr := fmt.Sprintf("psql -h %s -p %s -U %s -d %s -f %s",
 		storageCfg.Host, storageCfg.Port, storageCfg.User, storageCfg.Database, dumpFile)
@@ -35,6 +37,7 @@ func restoreDatabase(ctx context.Context, storageCfg config.StorageConfig, dumpF
 	return nil
 }
 
+// deleteDatabase deletes a database after tests.
 func deleteDatabase(ctx context.Context, storageCfg config.StorageConfig) error {
 	cmdStr := fmt.Sprintf("dropdb -h %s -p %s -U %s %s",
 		storageCfg.Host, storageCfg.Port, storageCfg.User, storageCfg.Database)
