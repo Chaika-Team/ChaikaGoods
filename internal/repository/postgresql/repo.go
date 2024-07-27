@@ -411,6 +411,7 @@ func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) er
 	return nil
 }
 
+// insertProduct добавляет новый продукт в базу данных, только для внутреннего использования.
 func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
@@ -437,6 +438,7 @@ func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]in
 	return nil
 }
 
+// updateProduct обновляет информацию о продукте в базе данных, только для внутреннего использования.
 func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
@@ -468,6 +470,7 @@ func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]in
 	return nil
 }
 
+// deleteProduct удаляет продукт из базы данных по его ID, только для внутреннего использования.
 func (r *GoodsRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
 	// get id
 	rawId, ok := (*data)["id"]

@@ -35,6 +35,7 @@ func VerifyMapFields[T any](data map[string]interface{}) error {
 	return validateKeys(data, validKeys)
 }
 
+// validateKeys проверяет, что все ключи в map присутствуют в списке допустимых ключей.
 func validateKeys(data map[string]interface{}, validKeys map[string]bool) error {
 	for key := range data {
 		if !validKeys[key] {

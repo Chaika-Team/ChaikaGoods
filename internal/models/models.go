@@ -15,8 +15,6 @@ type Product struct {
 	SKU         string  `json:"sku"`
 }
 
-// Add custom methods to MarshalJSON and UnmarshalJSON for the models.Product type.
-
 // Package описывает пакет товаров.
 type Package struct {
 	ID          int64  `json:"id"`
