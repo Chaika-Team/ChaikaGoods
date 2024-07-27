@@ -4,8 +4,8 @@ listen:
   port: 8080
 storage:
   type: postgres
-  host: 127.0.0.1
+  host: 192.168.0.184
   port: 5432
-  database: ChaikaGoods
+  database: ChaikaGoodsTest
   user: application_user
   password: UiHSlmUAGcc4fr3
