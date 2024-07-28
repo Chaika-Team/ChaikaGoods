@@ -6,7 +6,6 @@ import (
 	"ChaikaGoods/internal/repository/postgresql"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
@@ -22,26 +21,6 @@ func TestMain(m *testing.M) {
 
 	// Read configuration for test database
 	cfg := config.GetConfigWithPath(logger, "..\\config_test.yml")
-
-	dumpFile := "..\\db\\chaikagoods_test_dump.sql"
-	// Create test database
-	if err := createDatabase(ctx, cfg.Storage); err != nil {
-		_ = logger.Log("error", fmt.Sprintf("Failed to create database: %v", err))
-		return
-	}
-
-	if err := restoreDatabase(ctx, cfg.Storage, dumpFile); err != nil {
-		_ = logger.Log("error", fmt.Sprintf("Failed to restore database: %v", err))
-		return
-	}
-
-	defer func(ctx context.Context, storageCfg config.StorageConfig) {
-		var err = deleteDatabase(ctx, storageCfg)
-		if err != nil {
-			_ = logger.Log("error", fmt.Sprintf("Failed to delete database: %v", err))
-			panic("Failed to delete test database")
-		}
-	}(ctx, cfg.Storage)
 
 	// Initialize database connection
 	var err error
