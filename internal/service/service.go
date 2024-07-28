@@ -65,6 +65,16 @@ func (s *Service) GetAllProducts(ctx context.Context) ([]models.Product, error) 
 	}
 }
 
+func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
+	logger := log.With(s.log, "method", "GetProductByID")
+	if product, err := s.repo.GetProductByID(ctx, id); err != nil {
+		_ = level.Error(logger).Log("err", err)
+		return models.Product{}, err
+	} else {
+		return product, nil
+	}
+}
+
 // GetCurrentVersion возвращает текущую версию базы данных продуктов.
 func (s *Service) GetCurrentVersion(ctx context.Context) (models.Version, error) {
 	logger := log.With(s.log, "method", "GetCurrentVersion")
@@ -132,31 +142,31 @@ func (s *Service) AddPacket(ctx context.Context, packet *models.Package, package
 }
 
 // AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) error {
+func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "AddProduct")
-	if err := s.repo.AddQueryToCreateProduct(ctx, p); err != nil {
+	if changeID, err = s.repo.AddQueryToCreateProduct(ctx, p); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) error {
+func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "UpdateProduct")
-	if err := s.repo.AddQueryToUpdateProduct(ctx, data); err != nil {
+	if changeID, err = s.repo.AddQueryToUpdateProduct(ctx, data); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }
 
 // DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) error {
+func (s *Service) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "DeleteProduct")
-	if err := s.repo.AddQueryToDeleteProduct(ctx, id); err != nil {
+	if changeID, err = s.repo.AddQueryToDeleteProduct(ctx, id); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }
