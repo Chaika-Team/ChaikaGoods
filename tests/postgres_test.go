@@ -90,7 +90,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 		"imageurl":    "images/product.jpg",
 		"sku":         "TP-001",
 	}
-	err = repo.AddQueryToCreateProduct(context.Background(), &data)
+	_, err = repo.AddQueryToCreateProduct(context.Background(), &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 
 	// Get all changes again
@@ -133,7 +133,7 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 		"price": product.Price + 10.0,
 	}
 	// Update the product
-	err = repo.AddQueryToUpdateProduct(ctx, &data)
+	_, err = repo.AddQueryToUpdateProduct(ctx, &data)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Execute the query
 	changes, err = repo.GetAllChanges(ctx, version)
@@ -174,7 +174,7 @@ func TestGetAllChanges(t *testing.T) {
 		"description": "A product for testing",
 		"price":       99.99,
 	}
-	err = repo.AddQueryToCreateProduct(context.Background(), &data)
+	_, err = repo.AddQueryToCreateProduct(context.Background(), &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Get all changes again
 	changes, err = repo.GetAllChanges(ctx, version)
@@ -225,7 +225,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 		"sku":         "TP-001",
 	}
 
-	err = repo.AddQueryToCreateProduct(ctx, &data)
+	_, err = repo.AddQueryToCreateProduct(ctx, &data)
 	assert.NoError(t, err, "Failed to add query to create product")
 	// Check that the number of products not changed, because we didn't apply changes
 	products, err = repo.GetAllProducts(ctx)
@@ -261,7 +261,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 		"price": 2077.00,
 	}
 
-	err = repo.AddQueryToUpdateProduct(ctx, &updatedData)
+	_, err = repo.AddQueryToUpdateProduct(ctx, &updatedData)
 	assert.NoError(t, err, "Failed to add query to update product")
 	// Check that price is not changed, because we didn't apply changes
 	products, err = repo.GetAllProducts(ctx)
@@ -288,7 +288,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.Len(t, changes, 0, "Expected no changes. All changes should be applied")
 
 	// Delete the product
-	err = repo.AddQueryToDeleteProduct(ctx, product.ID)
+	_, err = repo.AddQueryToDeleteProduct(ctx, product.ID)
 	assert.NoError(t, err, "Failed to add query to delete product")
 	// Apply changes
 	err = repo.ApplyChanges(ctx, &newVersion)
