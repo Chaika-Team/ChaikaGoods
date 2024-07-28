@@ -445,7 +445,7 @@ func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) er
 	return nil
 }
 
-func (r *GoodsRepository) SearchPacket(ctx context.Context, searchString string, quantity int, offset int) ([]models.Package, error) {
+func (r *GoodsRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
 	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
 	if err != nil {
