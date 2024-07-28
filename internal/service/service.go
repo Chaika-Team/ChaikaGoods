@@ -27,7 +27,7 @@ type GoodsService interface {
 	// GetAllProducts возвращает список всех продуктов.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
 	// GetCurrentVersion возвращает текущую версию базы данных продуктов.
-	GetCurrentVersion(ctx context.Context) (int, error)
+	GetCurrentVersion(ctx context.Context) (models.Version, error)
 	// GetDelta возвращает изменения в базе данных продуктов по сравнению с версией на устройстве
 	GetDelta(ctx context.Context, version int) ([]models.Product, error)
 	// SearchPacket ищет пакеты продуктов по их имени или ID.
@@ -65,14 +65,24 @@ func (s *Service) GetAllProducts(ctx context.Context) ([]models.Product, error) 
 	}
 }
 
+func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
+	logger := log.With(s.log, "method", "GetProductByID")
+	if product, err := s.repo.GetProductByID(ctx, id); err != nil {
+		_ = level.Error(logger).Log("err", err)
+		return models.Product{}, err
+	} else {
+		return product, nil
+	}
+}
+
 // GetCurrentVersion возвращает текущую версию базы данных продуктов.
-func (s *Service) GetCurrentVersion(ctx context.Context) (int, error) {
+func (s *Service) GetCurrentVersion(ctx context.Context) (models.Version, error) {
 	logger := log.With(s.log, "method", "GetCurrentVersion")
 	if version, err := s.repo.GetCurrentActualVersion(ctx); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return 0, err
+		return models.Version{}, err
 	} else {
-		return version.VersionID, nil
+		return version, nil
 	}
 }
 
@@ -106,7 +116,7 @@ func (s *Service) GetDelta(ctx context.Context, version int) ([]models.Change, e
 }
 
 // SearchPacket ищет пакеты продуктов по их имени или ID.
-func (s *Service) SearchPacket(ctx context.Context, searchString string, quantity int, offset int) ([]models.Package, error) {
+func (s *Service) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	logger := log.With(s.log, "method", "SearchPacket")
 	if packages, err := s.repo.SearchPacket(ctx, searchString, quantity, offset); err != nil {
 		_ = level.Error(logger).Log("err", err)
@@ -117,50 +127,46 @@ func (s *Service) SearchPacket(ctx context.Context, searchString string, quantit
 }
 
 // AddPacket добавляет новый пакет продуктов в базу данных.
-func (s *Service) AddPacket(ctx context.Context, name string, description string, packageContent []models.PackageContent) error {
+func (s *Service) AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error) {
 	logger := log.With(s.log, "method", "AddPacket")
-	packet := models.Package{
-		PackageName: name,
-		Description: description,
-	}
-	if err := s.repo.CreatePackage(ctx, &packet); err != nil {
+	if err := s.repo.CreatePackage(ctx, packet); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
 	// add products to the package
 	if err := s.repo.AddProductToPackage(ctx, packet.ID, packageContent); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return packet.ID, nil
 }
 
 // AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) error {
+func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "AddProduct")
-	if err := s.repo.AddQueryToCreateProduct(ctx, p); err != nil {
+	if changeID, err = s.repo.AddQueryToCreateProduct(ctx, p); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) error {
+func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "UpdateProduct")
-	if err := s.repo.AddQueryToUpdateProduct(ctx, data); err != nil {
+	if changeID, err = s.repo.AddQueryToUpdateProduct(ctx, data); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }
 
 // DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) error {
+func (s *Service) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
 	logger := log.With(s.log, "method", "DeleteProduct")
-	if err := s.repo.AddQueryToDeleteProduct(ctx, id); err != nil {
+	if changeID, err = s.repo.AddQueryToDeleteProduct(ctx, id); err != nil {
 		_ = level.Error(logger).Log("err", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return changeID, nil
 }

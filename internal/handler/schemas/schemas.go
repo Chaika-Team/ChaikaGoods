@@ -1,46 +1,30 @@
 package schemas
 
-type ProductSchema struct {
-	ID          int64   `json:"id,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	Description string  `json:"description,omitempty"`
-	Price       float64 `json:"price,omitempty"`
-	ImageURL    string  `json:"image_url,omitempty"`
-	SKU         string  `json:"sku,omitempty"`
-}
-
-type ChangeSchema struct {
-	ProductID int64       `json:"product_id"`
-	Operation string      `json:"operation"` // "insert", "update", "delete"
-	Details   interface{} `json:"details"`
-}
-
-type VersionSchema struct {
-	VersionID int  `json:"version_id"`
-	IsDev     bool `json:"is_dev"`
-}
-
-type PacketSchema struct {
-	PacketID    int64           `json:"packet_id"`
-	PacketName  string          `json:"packet_name"`
-	Description string          `json:"description"`
-	Products    []ProductSchema `json:"products"`
-}
+import "ChaikaGoods/internal/models"
 
 type GetAllProductsRequest struct {
 	// Фильтры, пагинация и другие параметры могут быть добавлены здесь
 }
 
 type GetAllProductsResponse struct {
-	Products []ProductSchema `json:"products"`
-	Err      string          `json:"err,omitempty"` // пустое значение означает отсутствие ошибки
+	Products []models.Product `json:"products"`
+	Err      string           `json:"err,omitempty"` // пустое значение означает отсутствие ошибки
+}
+
+type GetProductByIDRequest struct {
+	ProductID int64 `json:"product_id"`
+}
+
+type GetProductByIDResponse struct {
+	Product models.Product `json:"product"`
+	Err     string         `json:"err,omitempty"`
 }
 
 type GetCurrentVersionRequest struct{}
 
 type GetCurrentVersionResponse struct {
-	Version VersionSchema `json:"version"`
-	Err     string        `json:"err,omitempty"`
+	Version models.Version `json:"version"`
+	Err     string         `json:"err,omitempty"`
 }
 
 type GetDeltaRequest struct {
@@ -48,21 +32,24 @@ type GetDeltaRequest struct {
 }
 
 type GetDeltaResponse struct {
-	Changes []ChangeSchema `json:"changes"` // Change представляет собой структуру изменения
-	Err     string         `json:"err,omitempty"`
+	Changes []models.Change `json:"changes"` // Change представляет собой структуру изменения
+	Err     string          `json:"err,omitempty"`
 }
 
 type SearchPacketRequest struct {
-	Query string `json:"query"` // Поисковый запрос для фильтрации пакетов
+	Query  string `json:"query"` // Поисковый запрос для фильтрации пакетов
+	Limit  int64  `json:"limit"`
+	Offset int64  `json:"offset"`
 }
 
 type SearchPacketResponse struct {
-	Packets []PacketSchema `json:"packets"`
-	Err     string         `json:"err,omitempty"`
+	Packets []models.Package `json:"packets"`
+	Err     string           `json:"err,omitempty"`
 }
 
 type AddPacketRequest struct {
-	Packet PacketSchema `json:"packet"` // Сведения о новом пакете
+	Packet        models.Package          `json:"packet"`         // Сведения о новом пакете
+	PacketContent []models.PackageContent `json:"packet_content"` // Содержимое пакета
 }
 
 type AddPacketResponse struct {
@@ -71,21 +58,21 @@ type AddPacketResponse struct {
 }
 
 type AddProductRequest struct {
-	Product ProductSchema `json:"product"`
+	ProductData map[string]interface{} `json:"product_data"`
 }
 
 type AddProductResponse struct {
-	ProductID int64  `json:"product_id"`
-	Err       string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
 
 type UpdateProductRequest struct {
-	ProductID int64         `json:"product_id"`
-	Product   ProductSchema `json:"product"`
+	ProductData map[string]interface{} `json:"product_data"`
 }
 
 type UpdateProductResponse struct {
-	Err string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
 
 type DeleteProductRequest struct {
@@ -93,5 +80,6 @@ type DeleteProductRequest struct {
 }
 
 type DeleteProductResponse struct {
-	Err string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
