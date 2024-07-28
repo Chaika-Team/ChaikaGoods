@@ -11,6 +11,15 @@ type GetAllProductsResponse struct {
 	Err      string           `json:"err,omitempty"` // пустое значение означает отсутствие ошибки
 }
 
+type GetProductByIDRequest struct {
+	ProductID int64 `json:"product_id"`
+}
+
+type GetProductByIDResponse struct {
+	Product models.Product `json:"product"`
+	Err     string         `json:"err,omitempty"`
+}
+
 type GetCurrentVersionRequest struct{}
 
 type GetCurrentVersionResponse struct {
@@ -49,21 +58,21 @@ type AddPacketResponse struct {
 }
 
 type AddProductRequest struct {
-	Product models.Product `json:"product"`
+	ProductData map[string]interface{} `json:"product_data"`
 }
 
 type AddProductResponse struct {
-	ProductID int64  `json:"product_id"`
-	Err       string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
 
 type UpdateProductRequest struct {
-	ProductID int64          `json:"product_id"`
-	Product   models.Product `json:"product"`
+	ProductData map[string]interface{} `json:"product_data"`
 }
 
 type UpdateProductResponse struct {
-	Err string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
 
 type DeleteProductRequest struct {
@@ -71,5 +80,6 @@ type DeleteProductRequest struct {
 }
 
 type DeleteProductResponse struct {
-	Err string `json:"err,omitempty"`
+	ChangeID int64  `json:"change_id"`
+	Err      string `json:"err,omitempty"`
 }
