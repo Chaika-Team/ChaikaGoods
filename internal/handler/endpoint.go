@@ -14,6 +14,7 @@ import (
 type Endpoints struct {
 	// For products
 	GetAllProducts    endpoint.Endpoint
+	GetProductByID    endpoint.Endpoint
 	GetCurrentVersion endpoint.Endpoint
 	GetDelta          endpoint.Endpoint
 	// For packets
@@ -30,6 +31,7 @@ func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
 	return Endpoints{
 		// Products
 		GetAllProducts:    makeGetAllProductsEndpoint(logger, service),
+		GetProductByID:    makeGetProductByIDEndpoint(logger, service),
 		GetCurrentVersion: makeGetCurrentVersionEndpoint(logger, service),
 		GetDelta:          makeGetDeltaEndpoint(logger, service),
 		// Packets
@@ -54,6 +56,20 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.Service) endpoint.E
 		return schemas.GetAllProductsResponse{Products: products}, err
 
 	}
+}
+
+// makeGetProductByIDEndpoint constructs a GetProductByID endpoint wrapping the service.
+func makeGetProductByIDEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.GetProductByIDRequest)
+		if !ok {
+			_ = level.Error(logger).Log("msg", "invalid request type")
+			return nil, errors.New("invalid request type")
+		}
+		product, err := s.GetProductByID(ctx, req.ProductID)
+		return schemas.GetProductByIDResponse{Product: product}, err
+	}
+
 }
 
 // makeGetCurrentVersionEndpoint constructs a GetCurrentVersion endpoint wrapping the service.
@@ -105,5 +121,47 @@ func makeAddPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoi
 		}
 		id, err := s.AddPacket(ctx, &req.Packet, req.PacketContent)
 		return schemas.AddPacketResponse{PacketID: id}, err
+	}
+}
+
+// makeAddProductEndpoint constructs a AddProduct endpoint wrapping the service.
+func makeAddProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.AddProductRequest)
+		if !ok {
+			_ = level.Error(logger).Log("msg", "invalid request type")
+			return nil, errors.New("invalid request type")
+		}
+
+		changeID, err := s.AddProduct(ctx, &req.ProductData)
+		return schemas.AddProductResponse{ChangeID: changeID}, err
+	}
+}
+
+// makeUpdateProductEndpoint constructs a UpdateProduct endpoint wrapping the service.
+func makeUpdateProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.UpdateProductRequest)
+		if !ok {
+			_ = level.Error(logger).Log("msg", "invalid request type")
+			return nil, errors.New("invalid request type")
+		}
+
+		changeID, err := s.UpdateProduct(ctx, &req.ProductData)
+		return schemas.UpdateProductResponse{ChangeID: changeID}, err
+	}
+}
+
+// makeDeleteProductEndpoint constructs a DeleteProduct endpoint wrapping the service.
+func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req, ok := request.(schemas.DeleteProductRequest)
+		if !ok {
+			_ = level.Error(logger).Log("msg", "invalid request type")
+			return nil, errors.New("invalid request type")
+		}
+
+		changeID, err := s.DeleteProduct(ctx, req.ProductID)
+		return schemas.DeleteProductResponse{ChangeID: changeID}, err
 	}
 }
