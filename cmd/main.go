@@ -54,7 +54,7 @@ func main() {
 	if v, err := repository.GetCurrentDevVersion(ctx); err != nil {
 		_ = level.Error(logger).Log("message", "Failed to get current dev version", "err", err)
 	} else {
-		_ = level.Info(logger).Log("message", "Current dev version", "version", v)
+		_ = level.Info(logger).Log("message", "Current dev version", "version", v.VersionID)
 	}
 
 }
