@@ -27,7 +27,7 @@ type Endpoints struct {
 }
 
 // MakeEndpoints initializes all Go kit endpoints for all operations
-func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
+func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
 	return Endpoints{
 		// Products
 		GetAllProducts:    makeGetAllProductsEndpoint(logger, service),
@@ -45,7 +45,7 @@ func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
 }
 
 // makeGetAllProductsEndpoint constructs a GetAllProducts endpoint wrapping the service.
-func makeGetAllProductsEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeGetAllProductsEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_, ok := request.(schemas.GetAllProductsRequest)
 		if !ok {
@@ -59,7 +59,7 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.Service) endpoint.E
 }
 
 // makeGetProductByIDEndpoint constructs a GetProductByID endpoint wrapping the service.
-func makeGetProductByIDEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.GetProductByIDRequest)
 		if !ok {
@@ -73,7 +73,7 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.Service) endpoint.E
 }
 
 // makeGetCurrentVersionEndpoint constructs a GetCurrentVersion endpoint wrapping the service.
-func makeGetCurrentVersionEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeGetCurrentVersionEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_, ok := request.(schemas.GetCurrentVersionRequest)
 		if !ok {
@@ -86,7 +86,7 @@ func makeGetCurrentVersionEndpoint(logger log.Logger, s service.Service) endpoin
 }
 
 // makeGetDeltaEndpoint constructs a GetDelta endpoint wrapping the service.
-func makeGetDeltaEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeGetDeltaEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.GetDeltaRequest)
 		if !ok {
@@ -99,7 +99,7 @@ func makeGetDeltaEndpoint(logger log.Logger, s service.Service) endpoint.Endpoin
 }
 
 // makeSearchPacketEndpoint constructs a SearchPacket endpoint wrapping the service.
-func makeSearchPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeSearchPacketEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.SearchPacketRequest)
 		if !ok {
@@ -112,7 +112,7 @@ func makeSearchPacketEndpoint(logger log.Logger, s service.Service) endpoint.End
 }
 
 // makeAddPacketEndpoint constructs a AddPacket endpoint wrapping the service.
-func makeAddPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeAddPacketEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.AddPacketRequest)
 		if !ok {
@@ -125,7 +125,7 @@ func makeAddPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoi
 }
 
 // makeAddProductEndpoint constructs a AddProduct endpoint wrapping the service.
-func makeAddProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeAddProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.AddProductRequest)
 		if !ok {
@@ -139,7 +139,7 @@ func makeAddProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpo
 }
 
 // makeUpdateProductEndpoint constructs a UpdateProduct endpoint wrapping the service.
-func makeUpdateProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeUpdateProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateProductRequest)
 		if !ok {
@@ -153,7 +153,7 @@ func makeUpdateProductEndpoint(logger log.Logger, s service.Service) endpoint.En
 }
 
 // makeDeleteProductEndpoint constructs a DeleteProduct endpoint wrapping the service.
-func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeDeleteProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.DeleteProductRequest)
 		if !ok {
