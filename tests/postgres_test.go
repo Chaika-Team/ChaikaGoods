@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 	}
 }
 
-// TestAddQueryToCreateProduct tests the AddQueryToCreateProduct method of the GoodsRepository.
+// TestAddQueryToCreateProduct tests the AddQueryToCreateProduct method of the GoodsPGRepository.
 func TestAddQueryToCreateProduct(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
@@ -89,7 +89,7 @@ func TestAddQueryToCreateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete change")
 }
 
-// TestAddQueryToUpdateProduct tests the AddQueryToUpdateProduct method of the GoodsRepository.
+// TestAddQueryToUpdateProduct tests the AddQueryToUpdateProduct method of the GoodsPGRepository.
 func TestAddQueryToUpdateProduct(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
@@ -138,7 +138,7 @@ func TestAddQueryToUpdateProduct(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete change")
 }
 
-// TestAddQueryToDeleteProduct tests the AddQueryToDeleteProduct method of the GoodsRepository.
+// TestAddQueryToDeleteProduct tests the AddQueryToDeleteProduct method of the GoodsPGRepository.
 func TestGetAllChanges(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 	ctx := context.Background()
@@ -165,7 +165,7 @@ func TestGetAllChanges(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete change")
 }
 
-// TestGetCurrentDevVersion tests the GetCurrentDevVersion method of the GoodsRepository.
+// TestGetCurrentDevVersion tests the GetCurrentDevVersion method of the GoodsPGRepository.
 func TestGetCurrentDevVersion(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 	ctx := context.Background()
@@ -175,7 +175,7 @@ func TestGetCurrentDevVersion(t *testing.T) {
 	assert.True(t, version.IsDev)
 }
 
-// TestApplyChanges tests the ApplyChanges method of the GoodsRepository.
+// TestApplyChanges tests the ApplyChanges method of the GoodsPGRepository.
 func TestApplyChanges_Simple(t *testing.T) {
 	// Test create, update and delete queries with applying changes
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
@@ -282,7 +282,7 @@ func TestApplyChanges_Simple(t *testing.T) {
 	assert.NoError(t, err, "Failed to create new dev version")
 }
 
-// TestGetAllProducts tests the GetAllProducts method of the GoodsRepository.
+// TestGetAllProducts tests the GetAllProducts method of the GoodsPGRepository.
 func TestGetAllProducts(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 	products, err := repo.GetAllProducts(context.Background())
@@ -291,7 +291,7 @@ func TestGetAllProducts(t *testing.T) {
 	assert.NotEmpty(t, products)
 }
 
-// TestGetPackageByID tests the GetPackageByID method of the GoodsRepository.
+// TestGetPackageByID tests the GetPackageByID method of the GoodsPGRepository.
 func TestGetPackageByID(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
@@ -318,7 +318,7 @@ func TestGetPackageByID(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete test package")
 }
 
-// TestListPackages tests the ListPackages method of the GoodsRepository.
+// TestListPackages tests the ListPackages method of the GoodsPGRepository.
 func TestListPackages(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 	// get current packages
@@ -347,7 +347,7 @@ func TestListPackages(t *testing.T) {
 	}
 }
 
-// TestCreatePackage tests the CreatePackage method of the GoodsRepository.
+// TestCreatePackage tests the CreatePackage method of the GoodsPGRepository.
 func TestCreatePackage(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
@@ -368,7 +368,7 @@ func TestCreatePackage(t *testing.T) {
 	assert.NoError(t, err, "Failed to delete the newly created package")
 }
 
-//// TestAddProductToPackage tests the AddProductToPackage method of the GoodsRepository.
+//// TestAddProductToPackage tests the AddProductToPackage method of the GoodsPGRepository.
 //func TestAddProductToPackage(t *testing.T) {
 //	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 //
@@ -400,7 +400,7 @@ func TestCreatePackage(t *testing.T) {
 //	assert.NoError(t, err, "Failed to delete product used in package")
 //}
 
-// TestDeletePackage tests the DeletePackage method of the GoodsRepository.
+// TestDeletePackage tests the DeletePackage method of the GoodsPGRepository.
 func TestDeletePackage(t *testing.T) {
 	repo := postgresql.NewGoodsRepository(dbPool, log.NewNopLogger())
 
