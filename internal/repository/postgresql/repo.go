@@ -3,6 +3,7 @@ package postgresql
 import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/myerr"
+	"ChaikaGoods/internal/repository"
 	"ChaikaGoods/internal/utils"
 	"context"
 	"encoding/json"
@@ -13,21 +14,21 @@ import (
 	"strconv"
 )
 
-type GoodsRepository struct {
+type GoodsPGRepository struct {
 	client Client
 	log    log.Logger
 }
 
 // NewGoodsRepository создает новый экземпляр GoodsRepository.
-func NewGoodsRepository(client Client, logger log.Logger) *GoodsRepository {
-	return &GoodsRepository{
+func NewGoodsRepository(client Client, logger log.Logger) repository.GoodsRepository {
+	return &GoodsPGRepository{
 		client: client,
 		log:    logger,
 	}
 }
 
 // GetProductByID возвращает продукт по его ID.
-func (r *GoodsRepository) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
+func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
 	sql := `SELECT id, name, description, price, imageurl, sku FROM public.product WHERE id = $1;`
 	row := r.client.QueryRow(ctx, sql, id)
 
@@ -44,7 +45,7 @@ func (r *GoodsRepository) GetProductByID(ctx context.Context, id int64) (models.
 }
 
 // GetAllProducts возвращает список всех продуктов.
-func (r *GoodsRepository) GetAllProducts(ctx context.Context) ([]models.Product, error) {
+func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Product, error) {
 	sql := `SELECT id, name, description, price, imageurl, sku FROM public.product;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
@@ -70,7 +71,7 @@ func (r *GoodsRepository) GetAllProducts(ctx context.Context) ([]models.Product,
 }
 
 // AddQueryToCreateProduct добавляет запрос на создание продукта в базе данных.
-func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+func (r *GoodsPGRepository) AddQueryToCreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
 	// добавляем новое изменение в базу
 	newValue, err := json.Marshal(data)
 	if err != nil {
@@ -89,7 +90,7 @@ func (r *GoodsRepository) AddQueryToCreateProduct(ctx context.Context, data *map
 }
 
 // AddQueryToUpdateProduct добавление запроса на обновления продукта в базе данных.
-func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+func (r *GoodsPGRepository) AddQueryToUpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
 	newValue, err := json.Marshal(data)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product data: %v", err))
@@ -106,7 +107,7 @@ func (r *GoodsRepository) AddQueryToUpdateProduct(ctx context.Context, data *map
 }
 
 // AddQueryToDeleteProduct удаляет продукт из базы данных по его ID.
-func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
+func (r *GoodsPGRepository) AddQueryToDeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
 	sql := `INSERT INTO public.changes(operation, new_value) VALUES ($1, $2) RETURNING change_id;` //version_id подставляется автоматически
 	str := "{\"id\":" + strconv.FormatInt(id, 10) + "}"                                            // Преобразование id в строку
 	err = r.client.QueryRow(ctx, sql, models.OperationTypeDelete, str).Scan(&changeID)
@@ -117,7 +118,8 @@ func (r *GoodsRepository) AddQueryToDeleteProduct(ctx context.Context, id int64)
 	return changeID, nil
 }
 
-func (r *GoodsRepository) ApplyChanges(ctx context.Context, version *models.Version) error {
+func (r *GoodsPGRepository) ApplyChanges(ctx context.Context, version *models.Version) error {
+	//TODO: Переписать метод, упростить (high complexity 160%)
 
 	// Взять все изменения, которые не были применены
 	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
@@ -194,7 +196,7 @@ func (r *GoodsRepository) ApplyChanges(ctx context.Context, version *models.Vers
 }
 
 // CreateNewDevVersion создает новую версию базы данных продуктов для разработки.
-func (r *GoodsRepository) CreateNewDevVersion(ctx context.Context) (models.Version, error) {
+func (r *GoodsPGRepository) CreateNewDevVersion(ctx context.Context) (models.Version, error) {
 	sql := `INSERT INTO public.version DEFAULT VALUES  RETURNING version_id;`
 	var v models.Version
 	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID)
@@ -206,7 +208,7 @@ func (r *GoodsRepository) CreateNewDevVersion(ctx context.Context) (models.Versi
 }
 
 // GetAllChanges возвращает все изменения в базе данных продуктов за конкретную версию.
-func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Version) ([]models.Change, error) {
+func (r *GoodsPGRepository) GetAllChanges(ctx context.Context, version models.Version) ([]models.Change, error) {
 	sql := `SELECT change_id, operation, new_value, change_timestamp, considered FROM public.changes WHERE version_id = $1;`
 	rows, err := r.client.Query(ctx, sql, version.VersionID)
 	if err != nil {
@@ -233,7 +235,7 @@ func (r *GoodsRepository) GetAllChanges(ctx context.Context, version models.Vers
 }
 
 // GetCurrentDevVersion возвращает текущую версию базы данных продуктов к которой привязываются новые изменения.
-func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
+func (r *GoodsPGRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
 	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
 	var v models.Version
 	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
@@ -245,7 +247,7 @@ func (r *GoodsRepository) GetCurrentDevVersion(ctx context.Context) (models.Vers
 }
 
 // GetCurrentActualVersion возвращает текущую версию базы данных продуктов c актуальными данными
-func (r *GoodsRepository) GetCurrentActualVersion(ctx context.Context) (models.Version, error) {
+func (r *GoodsPGRepository) GetCurrentActualVersion(ctx context.Context) (models.Version, error) {
 	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = FALSE ORDER BY creation_date DESC LIMIT 1;`
 	var v models.Version
 	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
@@ -257,7 +259,7 @@ func (r *GoodsRepository) GetCurrentActualVersion(ctx context.Context) (models.V
 }
 
 // GetVersionsBetween возвращает все версии базы данных продуктов между двумя версиями.
-func (r *GoodsRepository) GetVersionsBetween(ctx context.Context, from, to int) ([]models.Version, error) {
+func (r *GoodsPGRepository) GetVersionsBetween(ctx context.Context, from, to int) ([]models.Version, error) {
 	sql := `SELECT version_id, creation_date, is_dev, applied FROM public.version WHERE version_id > $1 AND version_id < $2;`
 	//TODO: Переписать запрос, не подходит для крайних значений, когда int закончится
 	rows, err := r.client.Query(ctx, sql, from, to)
@@ -280,7 +282,7 @@ func (r *GoodsRepository) GetVersionsBetween(ctx context.Context, from, to int) 
 }
 
 // DeleteChange удаляет изменение из базы данных по его ID.
-func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
+func (r *GoodsPGRepository) DeleteChange(ctx context.Context, id int64) error {
 	sql := `DELETE FROM public.changes WHERE change_id = $1;`
 	_, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
@@ -293,7 +295,7 @@ func (r *GoodsRepository) DeleteChange(ctx context.Context, id int64) error {
 // Package queries
 
 // GetPackageByID получает полную информацию о пакете, включая его содержимое.
-func (r *GoodsRepository) GetPackageByID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
+func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
 	sqlPackage := `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
 	err := r.client.QueryRow(ctx, sqlPackage, p.ID).Scan(&p.ID, &p.PackageName, &p.Description)
 	if err != nil {
@@ -326,7 +328,7 @@ func (r *GoodsRepository) GetPackageByID(ctx context.Context, p *models.Package)
 }
 
 // GetProductsByPackageID получает список продуктов в определенном пакете.
-func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
+func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
 	sql := `SELECT packagecontentid, packageid, productid, quantity FROM public.packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sql, p.ID)
 	if err != nil {
@@ -353,7 +355,7 @@ func (r *GoodsRepository) GetProductsByPackageID(ctx context.Context, p *models.
 }
 
 // ListPackages возвращает список всех пакетов.
-func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
+func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
 	sql := `SELECT packageid, packagename, description FROM public.package;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
@@ -376,7 +378,7 @@ func (r *GoodsRepository) ListPackages(ctx context.Context) ([]models.Package, e
 }
 
 // CreatePackage добавляет новый пустой пакет в базу данных.
-func (r *GoodsRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
+func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
 	sql := `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
 	err := r.client.QueryRow(ctx, sql, &pkg.PackageName, &pkg.Description).Scan(&pkg.ID)
 	if err != nil {
@@ -387,7 +389,7 @@ func (r *GoodsRepository) CreatePackage(ctx context.Context, pkg *models.Package
 }
 
 // AddProductToPackage добавляет продукты в пакет.
-func (r *GoodsRepository) AddProductToPackage(ctx context.Context, packageID int64, products []models.PackageContent) error {
+func (r *GoodsPGRepository) AddProductToPackage(ctx context.Context, packageID int64, products []models.PackageContent) error {
 	sql := `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
 	batch := &pgx.Batch{}
 
@@ -411,7 +413,7 @@ func (r *GoodsRepository) AddProductToPackage(ctx context.Context, packageID int
 }
 
 // DeletePackage удаляет пакет и его содержимое.
-func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) error {
+func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) error {
 	sqlDeleteContents := `DELETE FROM public.packagecontent WHERE packageid = $1;`
 	sqlDeletePackage := `DELETE FROM public."package" WHERE packageid = $1;`
 
@@ -443,7 +445,7 @@ func (r *GoodsRepository) DeletePackage(ctx context.Context, packageID int64) er
 	return nil
 }
 
-func (r *GoodsRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
+func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
 	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
 	if err != nil {
@@ -465,7 +467,7 @@ func (r *GoodsRepository) SearchPacket(ctx context.Context, searchString string,
 }
 
 // insertProduct добавляет новый продукт в базу данных, только для внутреннего использования.
-func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
+func (r *GoodsPGRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
 	if err != nil {
@@ -492,7 +494,7 @@ func (r *GoodsRepository) insertProduct(ctx context.Context, data *map[string]in
 }
 
 // updateProduct обновляет информацию о продукте в базе данных, только для внутреннего использования.
-func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
+func (r *GoodsPGRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
 	// Verify that all keys in the map correspond to the fields of the models.Product structure
 	err := utils.VerifyMapFields[models.Product](*data)
 	if err != nil {
@@ -524,7 +526,7 @@ func (r *GoodsRepository) updateProduct(ctx context.Context, data *map[string]in
 }
 
 // deleteProduct удаляет продукт из базы данных по его ID, только для внутреннего использования.
-func (r *GoodsRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
+func (r *GoodsPGRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
 	// get id
 	rawId, ok := (*data)["id"]
 	if !ok {
