@@ -2,7 +2,7 @@ package service
 
 import (
 	"ChaikaGoods/internal/models"
-	repo "ChaikaGoods/internal/repository/postgresql"
+	repo "ChaikaGoods/internal/repository"
 	"context"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -26,28 +26,30 @@ import (
 type GoodsService interface {
 	// GetAllProducts возвращает список всех продуктов.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
+	// GetProductByID возвращает продукт по его ID.
+	GetProductByID(ctx context.Context, id int64) (models.Product, error)
 	// GetCurrentVersion возвращает текущую версию базы данных продуктов.
 	GetCurrentVersion(ctx context.Context) (models.Version, error)
 	// GetDelta возвращает изменения в базе данных продуктов по сравнению с версией на устройстве
-	GetDelta(ctx context.Context, version int) ([]models.Product, error)
+	GetDelta(ctx context.Context, version int) ([]models.Change, error)
 	// SearchPacket ищет пакеты продуктов по их имени или ID.
-	SearchPacket(ctx context.Context, searchString string) ([]models.Product, error)
+	SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error)
 	// AddPacket добавляет новый пакет продуктов в базу данных.
-	AddPacket(ctx context.Context, name string, description string, packageContent []models.PackageContent) error
-	// AddProduct добавляет новый продукт в базу данных.
-	AddProduct(ctx context.Context, data *map[string]interface{}) error
-	// UpdateProduct обновляет информацию о продукте в базе данных.
-	UpdateProduct(ctx context.Context, data *map[string]interface{}) error
-	// DeleteProduct удаляет продукт из базы данных.
-	DeleteProduct(ctx context.Context, id int64) error
+	AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error)
+	// AddProduct добавляет новый продукт в базу данных (добавляет запрос).
+	AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error)
+	// UpdateProduct обновляет информацию о продукте в базе данных (добавляет запрос).
+	UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error)
+	// DeleteProduct удаляет продукт из базы данных (добавляет запрос).
+	DeleteProduct(ctx context.Context, id int64) (changeID int64, err error)
 }
 type Service struct {
 	repo repo.GoodsRepository
 	log  log.Logger
 }
 
-// NewGoodsService создает новый экземпляр GoodsService.
-func NewGoodsService(repo repo.GoodsRepository, logger log.Logger) *Service {
+// NewService создает новый экземпляр GoodsService.
+func NewService(repo repo.GoodsRepository, logger log.Logger) GoodsService {
 	return &Service{
 		repo: repo,
 		log:  logger,

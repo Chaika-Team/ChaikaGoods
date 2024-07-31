@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_ "ChaikaGoods/docs"
 	"ChaikaGoods/internal/handler/schemas"
 	"context"
 	"encoding/json"
