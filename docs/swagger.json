@@ -1,0 +1,24 @@
+{
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple API to manage goods for the Chaika app.",
+        "title": "ChaikaGoods API",
+        "contact": {
+            "name": "Chaika",
+            "email": "chaika.contact@yandex.ru"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        },
+        "version": "0.0.1"
+    },
+    "basePath": "/",
+    "paths": {}
+}

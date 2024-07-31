@@ -1,0 +1,17 @@
+basePath: /
+info:
+  contact:
+    email: chaika.contact@yandex.ru
+    name: Chaika
+  description: This is a simple API to manage goods for the Chaika app.
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  title: ChaikaGoods API
+  version: 0.0.1
+paths: {}
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"
