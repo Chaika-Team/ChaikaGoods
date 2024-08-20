@@ -19,6 +19,7 @@ import (
 //	@title			ChaikaGoods API
 //	@version		0.0.1
 //	@description	This is a simple API to manage goods for the Chaika app.
+//	@host			127.0.0.1:8080
 //	@BasePath		/
 //	@schemes		http
 //	@produce		json
@@ -52,6 +53,8 @@ func main() {
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to connect to the database", "err", err)
 		return
+	} else {
+		_ = level.Info(logger).Log("message", "Connection to the database is successful")
 	}
 	defer pool.Close()
 
@@ -72,7 +75,7 @@ func main() {
 	}()
 	_ = level.Info(logger).Log("message", "Service is ready to listen and serve", "type", cfg.Listen.Type, "bind_ip", cfg.Listen.BindIP, "port", cfg.Listen.Port)
 
-	endpoints := handler.MakeEndpoints(logger, svc)
+	endpoints := handler.MakeEndpoints(log.With(logger, "endpoint"), svc)
 
 	go func() {
 		address := cfg.Listen.BindIP + ":" + cfg.Listen.Port

@@ -1,4 +1,147 @@
 basePath: /
+definitions:
+  models.Package:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      package_name:
+        type: string
+    type: object
+  models.Product:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      imageurl:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+    type: object
+  models.Version:
+    properties:
+      applied:
+        type: boolean
+      creation_date:
+        type: string
+      is_dev:
+        type: boolean
+      version_id:
+        type: integer
+    type: object
+  schemas.AddPacketResponse:
+    description: Ответ на запрос на добавление пакета
+    properties:
+      err:
+        type: string
+      packet_id:
+        description: ID созданного пакета
+        type: integer
+    type: object
+  schemas.AddProductResponse:
+    description: Ответ на запрос на добавление продукта
+    properties:
+      change_id:
+        type: integer
+      err:
+        type: string
+    type: object
+  schemas.ChangeSchema:
+    properties:
+      change_timestamp:
+        type: string
+      considered:
+        type: boolean
+      id:
+        type: integer
+      new_value:
+        description: NewValue as a JSON string
+        type: string
+      operation_type:
+        type: integer
+      version_id:
+        type: integer
+    type: object
+  schemas.DeleteProductResponse:
+    description: Ответ на запрос на удаление продукта
+    properties:
+      change_id:
+        type: integer
+      err:
+        type: string
+    type: object
+  schemas.ErrorResponse:
+    description: Represents a standard error response for the API
+    properties:
+      code:
+        description: Error code
+        type: integer
+      message:
+        description: Error message
+        type: string
+    type: object
+  schemas.GetAllProductsResponse:
+    description: Ответ на запрос на получение всех продуктов
+    properties:
+      err:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+    type: object
+  schemas.GetCurrentVersionResponse:
+    description: Ответ на запрос на получение текущей версии
+    properties:
+      err:
+        type: string
+      version:
+        $ref: '#/definitions/models.Version'
+    type: object
+  schemas.GetDeltaResponse:
+    description: Ответ на запрос на получение изменений в базе данных
+    properties:
+      changes:
+        description: Change представляет собой структуру изменения
+        items:
+          $ref: '#/definitions/schemas.ChangeSchema'
+        type: array
+      err:
+        type: string
+    type: object
+  schemas.GetProductByIDResponse:
+    description: Ответ на запрос на получение продукта по его ID
+    properties:
+      err:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+    type: object
+  schemas.SearchPacketResponse:
+    description: Ответ на запрос на поиск пакетов
+    properties:
+      err:
+        type: string
+      packets:
+        items:
+          $ref: '#/definitions/models.Package'
+        type: array
+    type: object
+  schemas.UpdateProductResponse:
+    description: Ответ на запрос на обновление продукта
+    properties:
+      change_id:
+        type: integer
+      err:
+        type: string
+    type: object
+host: 127.0.0.1:8080
 info:
   contact:
     email: chaika.contact@yandex.ru
@@ -9,7 +152,233 @@ info:
     url: http://opensource.org/licenses/MIT
   title: ChaikaGoods API
   version: 0.0.1
-paths: {}
+paths:
+  /api/v1/delta:
+    get:
+      consumes:
+      - application/json
+      description: Get the changes in the database between versions
+      parameters:
+      - description: Version ID
+        in: query
+        name: version_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GetDeltaResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Get delta
+      tags:
+      - products
+  /api/v1/packets:
+    post:
+      consumes:
+      - application/json
+      description: Add a new packet of products to the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.AddPacketResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Add packet
+      tags:
+      - packets
+  /api/v1/packets/search:
+    get:
+      consumes:
+      - application/json
+      description: Search for packets
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SearchPacketResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Search packet
+      tags:
+      - packets
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: Get all products from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GetAllProductsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Get all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Add a new product to the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.AddProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Add product
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update product details in the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.UpdateProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Update product
+      tags:
+      - products
+  /api/v1/products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product from the database
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.DeleteProductResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Delete product
+      tags:
+      - products
+    get:
+      consumes:
+      - application/json
+      description: Get product details by its ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GetProductByIDResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Get product by ID
+      tags:
+      - products
+  /api/v1/version:
+    get:
+      consumes:
+      - application/json
+      description: Get the current version of the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GetCurrentVersionResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: Get current version
+      tags:
+      - products
 produces:
 - application/json
 schemes:

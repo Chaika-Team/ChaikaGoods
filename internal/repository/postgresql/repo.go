@@ -35,7 +35,7 @@ func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (model
 	var p models.Product
 	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return p, &myerr.NotFound{ID: fmt.Sprintf("%d", id)}
+		return p, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
 	} else if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get product by ID: %v", err))
 		return p, err
@@ -64,7 +64,7 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 		products = append(products, p)
 	}
 	if err = rows.Err(); err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed during rows iteration: %v", err))
+		_ = r.log.Log("error", fmt.Sprintf("Failed to get all products: %v", err))
 		return nil, err
 	}
 	return products, nil
@@ -286,6 +286,9 @@ func (r *GoodsPGRepository) DeleteChange(ctx context.Context, id int64) error {
 	sql := `DELETE FROM public.changes WHERE change_id = $1;`
 	_, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Change with id %d not found", id), nil)
+		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to delete change: %v", err))
 		return err
 	}
@@ -300,7 +303,7 @@ func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, p *models.Packag
 	err := r.client.QueryRow(ctx, sqlPackage, p.ID).Scan(&p.ID, &p.PackageName, &p.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", p.ID)}
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", p.ID), nil)
 		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
 		return nil, err
@@ -345,10 +348,6 @@ func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *model
 			continue
 		}
 		contents = append(contents, c)
-	}
-
-	if len(contents) == 0 {
-		return nil, &myerr.NotFound{ID: fmt.Sprintf("%d", p.ID)}
 	}
 
 	return contents, nil
@@ -430,6 +429,10 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 	}(tx, ctx)
 
 	if _, err := tx.Exec(ctx, sqlDeleteContents, packageID); err != nil {
+		// Check if not found
+		if errors.Is(err, pgx.ErrNoRows) {
+			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package content with id %d not found", packageID), nil)
+		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to delete package contents: %v", err))
 		return err
 	}
@@ -449,6 +452,9 @@ func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString strin
 	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
 	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with name %s not found", searchString), nil)
+		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to search package: %v", err))
 		return nil, err
 	}
@@ -530,7 +536,7 @@ func (r *GoodsPGRepository) deleteProduct(ctx context.Context, data *map[string]
 	// get id
 	rawId, ok := (*data)["id"]
 	if !ok {
-		return fmt.Errorf("failed to get product id")
+		return myerr.NewAppError(myerr.ErrorTypeValidation, "id is required", nil)
 	}
 
 	var id = int64(rawId.(float64))

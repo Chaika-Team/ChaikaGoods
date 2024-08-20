@@ -19,6 +19,562 @@
         },
         "version": "0.0.1"
     },
+    "host": "127.0.0.1:8080",
     "basePath": "/",
-    "paths": {}
+    "paths": {
+        "/api/v1/delta": {
+            "get": {
+                "description": "Get the changes in the database between versions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get delta",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Version ID",
+                        "name": "version_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetDeltaResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/packets": {
+            "post": {
+                "description": "Add a new packet of products to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "packets"
+                ],
+                "summary": "Add packet",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AddPacketResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/packets/search": {
+            "get": {
+                "description": "Search for packets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "packets"
+                ],
+                "summary": "Search packet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SearchPacketResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products": {
+            "get": {
+                "description": "Get all products from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get all products",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetAllProductsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update product details in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new product to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Add product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AddProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{id}": {
+            "get": {
+                "description": "Get product details by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetProductByIDResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a product from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Delete product",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.DeleteProductResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/version": {
+            "get": {
+                "description": "Get the current version of the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get current version",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GetCurrentVersionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Package": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "package_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Product": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imageurl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Version": {
+            "type": "object",
+            "properties": {
+                "applied": {
+                    "type": "boolean"
+                },
+                "creation_date": {
+                    "type": "string"
+                },
+                "is_dev": {
+                    "type": "boolean"
+                },
+                "version_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.AddPacketResponse": {
+            "description": "Ответ на запрос на добавление пакета",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "packet_id": {
+                    "description": "ID созданного пакета",
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.AddProductResponse": {
+            "description": "Ответ на запрос на добавление продукта",
+            "type": "object",
+            "properties": {
+                "change_id": {
+                    "type": "integer"
+                },
+                "err": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.ChangeSchema": {
+            "type": "object",
+            "properties": {
+                "change_timestamp": {
+                    "type": "string"
+                },
+                "considered": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "new_value": {
+                    "description": "NewValue as a JSON string",
+                    "type": "string"
+                },
+                "operation_type": {
+                    "type": "integer"
+                },
+                "version_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.DeleteProductResponse": {
+            "description": "Ответ на запрос на удаление продукта",
+            "type": "object",
+            "properties": {
+                "change_id": {
+                    "type": "integer"
+                },
+                "err": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.ErrorResponse": {
+            "description": "Represents a standard error response for the API",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Error code",
+                    "type": "integer"
+                },
+                "message": {
+                    "description": "Error message",
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.GetAllProductsResponse": {
+            "description": "Ответ на запрос на получение всех продуктов",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Product"
+                    }
+                }
+            }
+        },
+        "schemas.GetCurrentVersionResponse": {
+            "description": "Ответ на запрос на получение текущей версии",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "version": {
+                    "$ref": "#/definitions/models.Version"
+                }
+            }
+        },
+        "schemas.GetDeltaResponse": {
+            "description": "Ответ на запрос на получение изменений в базе данных",
+            "type": "object",
+            "properties": {
+                "changes": {
+                    "description": "Change представляет собой структуру изменения",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ChangeSchema"
+                    }
+                },
+                "err": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.GetProductByIDResponse": {
+            "description": "Ответ на запрос на получение продукта по его ID",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "product": {
+                    "$ref": "#/definitions/models.Product"
+                }
+            }
+        },
+        "schemas.SearchPacketResponse": {
+            "description": "Ответ на запрос на поиск пакетов",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "packets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Package"
+                    }
+                }
+            }
+        },
+        "schemas.UpdateProductResponse": {
+            "description": "Ответ на запрос на обновление продукта",
+            "type": "object",
+            "properties": {
+                "change_id": {
+                    "type": "integer"
+                },
+                "err": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }
