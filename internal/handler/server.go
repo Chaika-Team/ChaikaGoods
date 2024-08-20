@@ -1,9 +1,12 @@
 package handler
 
 import (
+	_ "ChaikaGoods/docs"
 	"ChaikaGoods/internal/handler/schemas"
+	"ChaikaGoods/internal/myerr"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
@@ -11,22 +14,17 @@ import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
-	"reflect"
 )
 
 // NewHTTPServer initializes and returns a new HTTP server with all routes defined.
 func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 	r := mux.NewRouter()
 	r.Use(commonMiddleware(logger))
-
 	// Swagger UI
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
-	// Apply logging middleware to all endpoints
-	wrapEndpointsWithLogging(logger, &endpoints)
-
 	// Register file and folder routes
-	registerRoutes(logger, r, endpoints)
+	registerRoutes(logger, r.PathPrefix("/api/v1").Subrouter(), endpoints)
 
 	return r
 }
@@ -51,25 +49,6 @@ func commonMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// wrapEndpointsWithLogging applies logging middleware to all fields in the Endpoints struct using reflection.
-func wrapEndpointsWithLogging(logger log.Logger, endpoints interface{}) {
-	loggingMiddleware := makeLoggingMiddleware(logger)
-	endpointsVal := reflect.ValueOf(endpoints).Elem()
-
-	for i := 0; i < endpointsVal.NumField(); i++ {
-		field := endpointsVal.Field(i)
-		if field.CanInterface() {
-			ep, ok := field.Interface().(endpoint.Endpoint)
-			if ok {
-				wrapped := loggingMiddleware(ep)
-				if field.CanSet() {
-					field.Set(reflect.ValueOf(wrapped))
-				}
-			}
-		}
-	}
-}
-
 // makeLoggingMiddleware creates a logging middleware for an endpoint.
 func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
@@ -83,10 +62,20 @@ func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
 }
 
 // registerRoutes registers all routes for the service using go-kit transport.
-func registerRoutes(logger log.Logger, r *mux.Router, endpoints Endpoints) {
-	api := r.PathPrefix("/api/v1").Subrouter()
+func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
+	//GetAllProducts    endpoint.Endpoint
+	//GetProductByID    endpoint.Endpoint
+	//GetCurrentVersion endpoint.Endpoint
+	//GetDelta          endpoint.Endpoint
+	//// For packets
+	//SearchPacket endpoint.Endpoint
+	//AddPacket    endpoint.Endpoint
+	//// For products (admin)
+	//AddProduct    endpoint.Endpoint
+	//UpdateProduct endpoint.Endpoint
+	//DeleteProduct endpoint.Endpoint
 
-	// Register Product Endpoints
+	// Get all products
 	api.Methods("GET").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
 		decodeGetAllProductsRequest,
@@ -94,6 +83,7 @@ func registerRoutes(logger log.Logger, r *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
+	// Get product by ID
 	api.Methods("GET").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
 		decodeGetProductByIDRequest,
@@ -101,6 +91,39 @@ func registerRoutes(logger log.Logger, r *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
+	// Get current version
+	api.Methods("GET").Path("/version").Handler(httpGoKit.NewServer(
+		endpoints.GetCurrentVersion,
+		decodeGetCurrentVersionRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
+	))
+
+	// Get delta
+	api.Methods("GET").Path("/products/delta").Handler(httpGoKit.NewServer(
+		endpoints.GetDelta,
+		decodeGetDeltaRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
+	))
+
+	// Search packet
+	api.Methods("POST").Path("/packets/search").Handler(httpGoKit.NewServer(
+		endpoints.SearchPacket,
+		decodeSearchPacketRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
+	))
+
+	// Add packet
+	api.Methods("POST").Path("/packets").Handler(httpGoKit.NewServer(
+		endpoints.AddPacket,
+		decodeAddPacketRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
+	))
+
+	// Add product
 	api.Methods("POST").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.AddProduct,
 		decodeAddProductRequest,
@@ -108,6 +131,7 @@ func registerRoutes(logger log.Logger, r *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
+	// Update product
 	api.Methods("PUT").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.UpdateProduct,
 		decodeUpdateProductRequest,
@@ -115,18 +139,17 @@ func registerRoutes(logger log.Logger, r *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
+	// Delete product
 	api.Methods("DELETE").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.DeleteProduct,
 		decodeDeleteProductRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
-
-	// Register additional routes similarly
 }
 
 // Example encoder function for responses
-func encodeResponse(logger log.Logger) httpGoKit.EncodeResponseFunc {
+func encodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
 	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 		// Common response encoding logic here
 		return json.NewEncoder(w).Encode(response)
@@ -136,14 +159,31 @@ func encodeResponse(logger log.Logger) httpGoKit.EncodeResponseFunc {
 // Example error encoder function
 func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
-		// Common error encoding logic here
-		w.WriteHeader(determineHTTPError(err))
-		err = json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
-		})
-		if err != nil {
-			_ = level.Error(logger).Log("msg", "failed to encode error", "err", err)
+		var status int
+		var response interface{}
+
+		var e *myerr.AppError
+		switch {
+		case errors.As(err, &e):
+			switch e.Type {
+			case myerr.ErrorTypeNotFound:
+				status = http.StatusNotFound
+			case myerr.ErrorTypeValidation:
+				status = http.StatusBadRequest
+			case myerr.ErrorTypeDuplicate:
+				status = http.StatusConflict
+			default:
+				status = http.StatusInternalServerError
+			}
+			response = map[string]string{"error": e.Message}
+		default:
+			status = http.StatusInternalServerError
+			level.Error(logger).Log("msg", "handling error", "err", err)
+			response = map[string]string{"error": "internal server error"}
 		}
+
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -154,36 +194,64 @@ func determineHTTPError(err error) int {
 }
 
 // decodeGetAllProductsRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetAllProductsRequest(ctx context.Context, req *http.Request) (request interface{}, err error) {
+func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.GetAllProductsRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }
 
 // decodeGetProductByIDRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetProductByIDRequest(ctx context.Context, req *http.Request) (request interface{}, err error) {
+func decodeGetProductByIDRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.GetProductByIDRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }
 
 // decodeAddProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeAddProductRequest(ctx context.Context, req *http.Request) (request interface{}, err error) {
+func decodeAddProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.AddProductRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }
 
 // decodeUpdateProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeUpdateProductRequest(ctx context.Context, req *http.Request) (request interface{}, err error) {
+func decodeUpdateProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.UpdateProductRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }
 
 // decodeDeleteProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeDeleteProductRequest(ctx context.Context, req *http.Request) (request interface{}, err error) {
+func decodeDeleteProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.DeleteProductRequest
+	err = json.NewDecoder(req.Body).Decode(&r)
+	return r, err
+}
+
+// decodeGetCurrentVersionRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
+func decodeGetCurrentVersionRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
+	var r schemas.GetCurrentVersionRequest
+	err = json.NewDecoder(req.Body).Decode(&r)
+	return r, err
+}
+
+// decodeGetDeltaRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
+func decodeGetDeltaRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
+	var r schemas.GetDeltaRequest
+	err = json.NewDecoder(req.Body).Decode(&r)
+	return r, err
+}
+
+// decodeSearchPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
+func decodeSearchPacketRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
+	var r schemas.SearchPacketRequest
+	err = json.NewDecoder(req.Body).Decode(&r)
+	return r, err
+}
+
+// decodeAddPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
+func decodeAddPacketRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
+	var r schemas.AddPacketRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }

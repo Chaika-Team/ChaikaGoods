@@ -43,7 +43,7 @@ type Change struct {
 	ID              int64           `json:"id"`
 	VersionID       int             `json:"version_id"`
 	OperationType   OperationType   `json:"operation_type"`
-	NewValue        json.RawMessage `json:"new_value"`
+	NewValue        json.RawMessage `json:"new_value"` // json.RawMessage represents a raw JSON message as a byte array
 	ChangeTimestamp time.Time       `json:"change_timestamp"`
 	Considered      bool            `json:"considered"`
 }
