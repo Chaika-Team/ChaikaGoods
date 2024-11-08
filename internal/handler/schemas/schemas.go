@@ -6,17 +6,25 @@ import (
 	"time"
 )
 
+type ProductSchema struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	ImageURL    string  `json:"imageurl"`
+}
+
 // GetAllProductsRequest представляет собой запрос на получение всех продуктов
 // @Description Запрос на получение всех продуктов
 type GetAllProductsRequest struct {
-	// Фильтры, пагинация и другие параметры могут быть добавлены здесь
+	// Фильтры, пагинация и другие параметры могут быть тут)
 }
 
 // GetAllProductsResponse представляет собой ответ на запрос на получение всех продуктов
 // @Description Ответ на запрос на получение всех продуктов
 type GetAllProductsResponse struct {
-	Products []models.Product `json:"products"`
-	Err      string           `json:"err,omitempty"`
+	Products []ProductSchema `json:"products"`
+	Err      string          `json:"err,omitempty"`
 }
 
 // GetProductByIDRequest представляет собой запрос на получение продукта по его ID
@@ -28,8 +36,8 @@ type GetProductByIDRequest struct {
 // GetProductByIDResponse представляет собой ответ на запрос на получение продукта по его ID
 // @Description Ответ на запрос на получение продукта по его ID
 type GetProductByIDResponse struct {
-	Product models.Product `json:"product"`
-	Err     string         `json:"err,omitempty"`
+	Product ProductSchema `json:"product"`
+	Err     string        `json:"err,omitempty"`
 }
 
 // GetCurrentVersionRequest представляет собой запрос на получение текущей версии

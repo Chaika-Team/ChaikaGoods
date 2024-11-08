@@ -62,7 +62,18 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.GoodsService) endpo
 			return nil, errors.New("invalid request type")
 		}
 		products, err := s.GetAllProducts(ctx)
-		return schemas.GetAllProductsResponse{Products: products}, err
+		productsSchema := make([]schemas.ProductSchema, 0)
+		for _, product := range products {
+			p := schemas.ProductSchema{
+				ID:          product.ID,
+				Name:        product.Name,
+				Description: product.Description,
+				Price:       product.Price,
+				ImageURL:    product.ImageURL,
+			}
+			productsSchema = append(productsSchema, p)
+		}
+		return schemas.GetAllProductsResponse{Products: productsSchema}, err
 
 	}
 }
@@ -87,7 +98,15 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService) endpo
 			return nil, errors.New("invalid request type")
 		}
 		product, err := s.GetProductByID(ctx, req.ProductID)
-		return schemas.GetProductByIDResponse{Product: product}, err
+		// Convert product model to product schema
+		productSchema := schemas.ProductSchema{
+			ID:          product.ID,
+			Name:        product.Name,
+			Description: product.Description,
+			Price:       product.Price,
+			ImageURL:    product.ImageURL,
+		}
+		return schemas.GetProductByIDResponse{Product: productSchema}, err
 	}
 
 }
