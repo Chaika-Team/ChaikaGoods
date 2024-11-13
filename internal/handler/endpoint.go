@@ -30,10 +30,8 @@ type Endpoints struct {
 func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
 	return Endpoints{
 		// Products
-		GetAllProducts:    makeGetAllProductsEndpoint(logger, service),
-		GetProductByID:    makeGetProductByIDEndpoint(logger, service),
-		GetCurrentVersion: makeGetCurrentVersionEndpoint(logger, service),
-		GetDelta:          makeGetDeltaEndpoint(logger, service),
+		GetAllProducts: makeGetAllProductsEndpoint(logger, service),
+		GetProductByID: makeGetProductByIDEndpoint(logger, service),
 		// Packets
 		SearchPacket: makeSearchPacketEndpoint(logger, service),
 		AddPacket:    makeAddPacketEndpoint(logger, service),
@@ -109,66 +107,6 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService) endpo
 		return schemas.GetProductByIDResponse{Product: productSchema}, err
 	}
 
-}
-
-// makeGetCurrentVersionEndpoint constructs a GetCurrentVersion endpoint wrapping the service.
-//
-//	@Summary		Get current version
-//	@Description	Get the current version of the database
-//	@Tags			products
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	schemas.GetCurrentVersionResponse
-//	@Failure		500	{object}	schemas.ErrorResponse
-//	@Router			/api/v1/version [get]
-func makeGetCurrentVersionEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		_, ok := request.(schemas.GetCurrentVersionRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
-		version, err := s.GetCurrentVersion(ctx)
-		return schemas.GetCurrentVersionResponse{Version: version}, err
-	}
-}
-
-// makeGetDeltaEndpoint constructs a GetDelta endpoint wrapping the service.
-//
-//	@Summary		Get delta
-//	@Description	Get the changes in the database between versions
-//	@Tags			products
-//	@Accept			json
-//	@Produce		json
-//	@Param			version_id	query		int	true	"Version ID"
-//	@Success		200			{object}	schemas.GetDeltaResponse
-//	@Failure		404			{object}	schemas.ErrorResponse
-//	@Failure		500			{object}	schemas.ErrorResponse
-//	@Router			/api/v1/delta [get]
-func makeGetDeltaEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.GetDeltaRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
-		changes, err := s.GetDelta(ctx, req.VersionID)
-		var changeSchemas []schemas.ChangeSchema
-		// Convert change model to change schema
-		for _, change := range changes {
-			c := schemas.ChangeSchema{
-				ID:            change.ID,
-				VersionID:     change.VersionID,
-				OperationType: int(change.OperationType),
-				// Convert json raw data to string
-				NewValue:        string(change.NewValue),
-				ChangeTimestamp: change.ChangeTimestamp,
-				Considered:      change.Considered,
-			}
-			changeSchemas = append(changeSchemas, c)
-		}
-		return schemas.GetDeltaResponse{Changes: changeSchemas}, err
-	}
 }
 
 // makeSearchPacketEndpoint constructs a SearchPacket endpoint wrapping the service.

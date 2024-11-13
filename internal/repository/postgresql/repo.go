@@ -6,7 +6,6 @@ import (
 	"ChaikaGoods/internal/repository"
 	"ChaikaGoods/internal/utils"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/log"
@@ -70,229 +69,19 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	return products, nil
 }
 
-// AddQueryToCreateProduct добавляет запрос на создание продукта в базе данных.
-func (r *GoodsPGRepository) AddQueryToCreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
-	// добавляем новое изменение в базу
-	newValue, err := json.Marshal(data)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product data: %v", err))
-		return 0, err
-	}
-	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
-	jsonValue := string(newValue)
-	err = r.client.QueryRow(ctx, sql, models.OperationTypeInsert, jsonValue).Scan(&changeID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
-		return 0, err
-
-	}
-	return changeID, nil
-}
-
-// AddQueryToUpdateProduct добавление запроса на обновления продукта в базе данных.
-func (r *GoodsPGRepository) AddQueryToUpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
-	newValue, err := json.Marshal(data)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to marshal product data: %v", err))
-		return 0, err
-	}
-	jsonValue := string(newValue)
-	sql := `INSERT INTO public.changes(operation, new_value) VALUES ( $1, $2) RETURNING change_id;` //version_id подставляется автоматически
-	err = r.client.QueryRow(ctx, sql, models.OperationTypeUpdate, jsonValue).Scan(&changeID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
-		return 0, err
-	}
-	return changeID, nil
-}
-
-// AddQueryToDeleteProduct удаляет продукт из базы данных по его ID.
-func (r *GoodsPGRepository) AddQueryToDeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
-	sql := `INSERT INTO public.changes(operation, new_value) VALUES ($1, $2) RETURNING change_id;` //version_id подставляется автоматически
-	str := "{\"id\":" + strconv.FormatInt(id, 10) + "}"                                            // Преобразование id в строку
-	err = r.client.QueryRow(ctx, sql, models.OperationTypeDelete, str).Scan(&changeID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to add change: %v", err))
-		return 0, err
-	}
-	return changeID, nil
-}
-
-func (r *GoodsPGRepository) ApplyChanges(ctx context.Context, version *models.Version) error {
-	//TODO: Переписать метод, упростить (high complexity 160%)
-
-	// Взять все изменения, которые не были применены
-	sql := `SELECT change_id, new_value, operation FROM public.changes WHERE version_id = $1 AND considered = FALSE;`
-	rows, err := r.client.Query(ctx, sql, &version.VersionID)
-	if err != nil {
-		return fmt.Errorf("failed to get changes: %v", err)
-	}
-	defer rows.Close()
-
-	// Начало транзакции
-	tx, err := r.client.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
-	}
-
-	// Завершение транзакции в случае ошибки или при успешном выполнении
-	defer func() {
-		if p := recover(); p != nil {
-			err := tx.Rollback(ctx)
-			if err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to rollback transaction: %v", err))
-			}
-			panic(p) // Re-throw panic after rollback
-		} else if err != nil {
-			err := tx.Rollback(ctx)
-			if err != nil {
-				_ = r.log.Log("error", fmt.Sprintf("Failed to rollback transaction: %v", err))
-			} // Rollback transaction if error occurred
-		} else {
-			err = tx.Commit(ctx) // Commit transaction if all is good
-		}
-	}()
-
-	// Применить все изменения
-	for rows.Next() {
-		var changeID int
-		var productDataRaw *json.RawMessage
-		var operation models.OperationType
-		if err := rows.Scan(&changeID, &productDataRaw, &operation); err != nil {
-			return fmt.Errorf("failed to scan change: %v", err)
-		}
-		// Распаковка нового значения
-		var productData map[string]interface{}
-		if err := json.Unmarshal(*productDataRaw, &productData); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("failed to unmarshal new value: %v", err))
-			return err
-		}
-		// Обработка изменений в зависимости от типа операции
-		switch operation {
-		case models.OperationTypeInsert:
-			err = r.insertProduct(ctx, &productData)
-		case models.OperationTypeUpdate:
-			err = r.updateProduct(ctx, &productData)
-		case models.OperationTypeDelete:
-			err = r.deleteProduct(ctx, &productData)
-		default:
-			return fmt.Errorf("unknown operation type: %v", operation)
-		}
-		if err != nil {
-			return fmt.Errorf("failed to apply change: %v", err)
-		}
-		// Отметить изменение как применённое
-		_, err = tx.Exec(ctx, `UPDATE public.changes SET considered = TRUE WHERE change_id = $1`, changeID)
-		if err != nil {
-			return fmt.Errorf("failed to mark change as considered: %v", err)
-		}
-	}
-	// Пометить версию как применённую и не dev
-	_, err = tx.Exec(ctx, `UPDATE public.version SET applied = TRUE, is_dev = FALSE WHERE version_id = $1`, version.VersionID)
-	if err != nil {
-		return fmt.Errorf("failed to mark version as applied: %v", err)
-	}
-	return nil
-}
-
-// CreateNewDevVersion создает новую версию базы данных продуктов для разработки.
-func (r *GoodsPGRepository) CreateNewDevVersion(ctx context.Context) (models.Version, error) {
-	sql := `INSERT INTO public.version DEFAULT VALUES  RETURNING version_id;`
-	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to create new dev version: %v", err))
-		return models.Version{}, err
-	}
-	return v, nil
-}
-
-// GetAllChanges возвращает все изменения в базе данных продуктов за конкретную версию.
-func (r *GoodsPGRepository) GetAllChanges(ctx context.Context, version models.Version) ([]models.Change, error) {
-	sql := `SELECT change_id, operation, new_value, change_timestamp, considered FROM public.changes WHERE version_id = $1;`
-	rows, err := r.client.Query(ctx, sql, version.VersionID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get all changes: %v", err))
-		return nil, err
-	}
-	defer rows.Close()
-	var changes []models.Change
-	for rows.Next() {
-		var c models.Change
-		if err := rows.Scan(&c.ID, &c.OperationType, &c.NewValue, &c.ChangeTimestamp, &c.Considered); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan change: %v", err))
-			continue
-		}
-		var product models.Product
-		if err := json.Unmarshal(c.NewValue, &product); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to unmarshal new value: %v", err))
-			continue
-		}
-		c.VersionID = version.VersionID
-		changes = append(changes, c)
-	}
-	return changes, nil
-}
-
-// GetCurrentDevVersion возвращает текущую версию базы данных продуктов к которой привязываются новые изменения.
-func (r *GoodsPGRepository) GetCurrentDevVersion(ctx context.Context) (models.Version, error) {
-	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = TRUE ORDER BY creation_date DESC LIMIT 1;`
-	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get current dev version: %v", err))
-		return models.Version{}, err
-	}
-	return v, nil
-}
-
-// GetCurrentActualVersion возвращает текущую версию базы данных продуктов c актуальными данными
-func (r *GoodsPGRepository) GetCurrentActualVersion(ctx context.Context) (models.Version, error) {
-	sql := `SELECT version_id, is_dev FROM public.version WHERE is_dev = FALSE ORDER BY creation_date DESC LIMIT 1;`
-	var v models.Version
-	err := r.client.QueryRow(ctx, sql).Scan(&v.VersionID, &v.IsDev)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get current actual version: %v", err))
-		return models.Version{}, err
-	}
-	return v, nil
-}
-
-// GetVersionsBetween возвращает все версии базы данных продуктов между двумя версиями.
-func (r *GoodsPGRepository) GetVersionsBetween(ctx context.Context, from, to int) ([]models.Version, error) {
-	sql := `SELECT version_id, creation_date, is_dev, applied FROM public.version WHERE version_id > $1 AND version_id < $2;`
-	//TODO: Переписать запрос, не подходит для крайних значений, когда int закончится
-	rows, err := r.client.Query(ctx, sql, from, to)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get versions between: %v", err))
-		return nil, err
-	}
-	defer rows.Close()
-	var versions []models.Version
-	for rows.Next() {
-		var v models.Version
-		if err := rows.Scan(&v.VersionID, &v.CreationDate, &v.IsDev, &v.Applied); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan version: %v", err))
-			continue
-		}
-		versions = append(versions, v)
-	}
-	return versions, nil
+// CreateProduct создание продукта в базе данных.
+func (r *GoodsPGRepository) CreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
 
 }
 
-// DeleteChange удаляет изменение из базы данных по его ID.
-func (r *GoodsPGRepository) DeleteChange(ctx context.Context, id int64) error {
-	sql := `DELETE FROM public.changes WHERE change_id = $1;`
-	_, err := r.client.Exec(ctx, sql, id)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Change with id %d not found", id), nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete change: %v", err))
-		return err
-	}
-	return nil
+// UpdateProduct обновление продукта в базе данных.
+func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+
+}
+
+// DeleteProduct удаляет продукт из базы данных по его ID.
+func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
+
 }
 
 // Package queries
