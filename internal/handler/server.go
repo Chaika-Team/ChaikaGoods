@@ -65,8 +65,6 @@ func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	//GetAllProducts    endpoint.Endpoint
 	//GetProductByID    endpoint.Endpoint
-	//GetCurrentVersion endpoint.Endpoint
-	//GetDelta          endpoint.Endpoint
 	//// For packets
 	//SearchPacket endpoint.Endpoint
 	//AddPacket    endpoint.Endpoint
@@ -87,22 +85,6 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	api.Methods("GET").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
 		decodeGetProductByIDRequest,
-		encodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
-	))
-
-	// Get current version
-	api.Methods("GET").Path("/version").Handler(httpGoKit.NewServer(
-		endpoints.GetCurrentVersion,
-		decodeGetCurrentVersionRequest,
-		encodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
-	))
-
-	// Get delta
-	api.Methods("GET").Path("/products/delta").Handler(httpGoKit.NewServer(
-		endpoints.GetDelta,
-		decodeGetDeltaRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -178,7 +160,7 @@ func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 			response = map[string]string{"error": e.Message}
 		default:
 			status = http.StatusInternalServerError
-			level.Error(logger).Log("msg", "handling error", "err", err)
+			_ = level.Error(logger).Log("msg", "handling error", "err", err)
 			response = map[string]string{"error": "internal server error"}
 		}
 
@@ -224,20 +206,6 @@ func decodeUpdateProductRequest(_ context.Context, req *http.Request) (request i
 // decodeDeleteProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
 func decodeDeleteProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
 	var r schemas.DeleteProductRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
-
-// decodeGetCurrentVersionRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetCurrentVersionRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.GetCurrentVersionRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
-
-// decodeGetDeltaRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetDeltaRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.GetDeltaRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }

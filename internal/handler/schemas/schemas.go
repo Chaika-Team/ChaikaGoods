@@ -3,7 +3,6 @@ package schemas
 import (
 	_ "ChaikaGoods/docs"
 	"ChaikaGoods/internal/models"
-	"time"
 )
 
 type ProductSchema struct {
@@ -40,39 +39,6 @@ type GetProductByIDResponse struct {
 	Err     string        `json:"err,omitempty"`
 }
 
-// GetCurrentVersionRequest представляет собой запрос на получение текущей версии
-// @Description Запрос на получение текущей версии
-type GetCurrentVersionRequest struct{}
-
-// GetCurrentVersionResponse представляет собой ответ на запрос на получение текущей версии
-// @Description Ответ на запрос на получение текущей версии
-type GetCurrentVersionResponse struct {
-	Version models.Version `json:"version"`
-	Err     string         `json:"err,omitempty"`
-}
-
-// GetDeltaRequest представляет собой запрос на получение изменений в базе данных
-// @Description Запрос на получение изменений в базе данных
-type GetDeltaRequest struct {
-	VersionID int `json:"version_id"`
-}
-
-// GetDeltaResponse представляет собой ответ на запрос на получение изменений в базе данных
-// @Description Ответ на запрос на получение изменений в базе данных
-type GetDeltaResponse struct {
-	Changes []ChangeSchema `json:"changes"` // Change представляет собой структуру изменения
-	Err     string         `json:"err,omitempty"`
-}
-
-type ChangeSchema struct {
-	ID              int64     `json:"id"`
-	VersionID       int       `json:"version_id"`
-	OperationType   int       `json:"operation_type"`
-	NewValue        string    `json:"new_value"` // NewValue as a JSON string
-	ChangeTimestamp time.Time `json:"change_timestamp"`
-	Considered      bool      `json:"considered"`
-}
-
 // SearchPacketRequest представляет собой запрос на поиск пакетов
 // @Description Запрос на поиск пакетов
 type SearchPacketRequest struct {
@@ -105,27 +71,26 @@ type AddPacketResponse struct {
 // AddProductRequest представляет собой запрос на добавление продукта
 // @Description Запрос на добавление продукта
 type AddProductRequest struct {
-	ProductData map[string]interface{} `json:"product_data"`
+	Product ProductSchema `json:"product"`
 }
 
 // AddProductResponse представляет собой ответ на запрос на добавление продукта
 // @Description Ответ на запрос на добавление продукта
 type AddProductResponse struct {
-	ChangeID int64  `json:"change_id"`
-	Err      string `json:"err,omitempty"`
+	ProductID int64  `json:"product_id"`
+	Err       string `json:"err,omitempty"`
 }
 
 // UpdateProductRequest представляет собой запрос на обновление продукта
 // @Description Запрос на обновление продукта
 type UpdateProductRequest struct {
-	ProductData map[string]interface{} `json:"product_data"`
+	Product ProductSchema `json:"product"`
 }
 
 // UpdateProductResponse представляет собой ответ на запрос на обновление продукта
 // @Description Ответ на запрос на обновление продукта
 type UpdateProductResponse struct {
-	ChangeID int64  `json:"change_id"`
-	Err      string `json:"err,omitempty"`
+	Err string `json:"err,omitempty"`
 }
 
 // DeleteProductRequest представляет собой запрос на удаление продукта
@@ -137,6 +102,5 @@ type DeleteProductRequest struct {
 // DeleteProductResponse представляет собой ответ на запрос на удаление продукта
 // @Description Ответ на запрос на удаление продукта
 type DeleteProductResponse struct {
-	ChangeID int64  `json:"change_id"`
-	Err      string `json:"err,omitempty"`
+	Err string `json:"err,omitempty"`
 }
