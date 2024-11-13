@@ -34,11 +34,11 @@ type GoodsService interface {
 	// AddPacket добавляет новый пакет продуктов в базу данных.
 	AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error)
 	// AddProduct добавляет новый продукт в базу данных.
-	AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error)
+	AddProduct(ctx context.Context, p *models.Product) (productId int64, err error)
 	// UpdateProduct обновляет информацию о продукте в базе данных.
-	UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error)
+	UpdateProduct(ctx context.Context, p *models.Product) (err error)
 	// DeleteProduct удаляет продукт из базы данных.
-	DeleteProduct(ctx context.Context, id int64) (changeID int64, err error)
+	DeleteProduct(ctx context.Context, id int64) (err error)
 }
 type Service struct {
 	repo repo.GoodsRepository
@@ -105,19 +105,34 @@ func (s *Service) AddPacket(ctx context.Context, packet *models.Package, package
 }
 
 // AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error) {
+func (s *Service) AddProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
 	logger := log.With(s.log, "method", "AddProduct")
-
+	productId, err = s.repo.CreateProduct(ctx, p)
+	if myerr.ToAppError(logger, err, "Error to create product") != nil {
+		_ = level.Error(logger).Log("err", err)
+		return 0, err
+	}
+	return productId, nil
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+func (s *Service) UpdateProduct(ctx context.Context, p *models.Product) (err error) {
 	logger := log.With(s.log, "method", "UpdateProduct")
-
+	err = s.repo.UpdateProduct(ctx, p)
+	if myerr.ToAppError(logger, err, "Error to update product") != nil {
+		_ = level.Error(logger).Log("err", err)
+		return err
+	}
+	return nil
 }
 
 // DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
+func (s *Service) DeleteProduct(ctx context.Context, id int64) (err error) {
 	logger := log.With(s.log, "method", "DeleteProduct")
-
+	err = s.repo.DeleteProduct(ctx, id)
+	if myerr.ToAppError(logger, err, "Error to delete product") != nil {
+		_ = level.Error(logger).Log("err", err)
+		return err
+	}
+	return nil
 }
