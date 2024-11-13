@@ -70,18 +70,43 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 }
 
 // CreateProduct создание продукта в базе данных.
-func (r *GoodsPGRepository) CreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+func (r *GoodsPGRepository) CreateProduct(ctx context.Context, p *models.Product) (int64, error) {
+	sql := `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+	err := r.client.QueryRow(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU).Scan(&p.ID)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to create product: %v", err))
+		return 0, err
+	}
+	return p.ID, nil
 
 }
 
 // UpdateProduct обновление продукта в базе данных.
-func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
-
+func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product) error {
+	sql := `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
+	_, err := r.client.Exec(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU, p.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", p.ID), nil)
+		}
+		_ = r.log.Log("error", fmt.Sprintf("Failed to update product: %v", err))
+		return err
+	}
+	return nil
 }
 
 // DeleteProduct удаляет продукт из базы данных по его ID.
-func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
-
+func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
+	sql := `DELETE FROM public.product WHERE id = $1;`
+	_, err := r.client.Exec(ctx, sql, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
+		}
+		_ = r.log.Log("error", fmt.Sprintf("Failed to delete product: %v", err))
+		return err
+	}
+	return nil
 }
 
 // Package queries

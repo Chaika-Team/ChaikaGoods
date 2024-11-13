@@ -10,9 +10,13 @@ type GoodsRepository interface {
 	GetProductByID(ctx context.Context, id int64) (models.Product, error)
 	// GetAllProducts returns all products.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
-	CreateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error)
-	UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error)
-	DeleteProduct(ctx context.Context, id int64) (changeID int64, err error)
+	// CreateProduct creates a new product.
+	CreateProduct(ctx context.Context, p *models.Product) (int64, error)
+	// UpdateProduct updates a product by its ID.
+	UpdateProduct(ctx context.Context, p *models.Product) error
+	// DeleteProduct deletes a product by its ID.
+	DeleteProduct(ctx context.Context, id int64) error
+	// GetPackageByID returns a package by its ID.
 	GetPackageByID(ctx context.Context, p *models.Package) ([]models.PackageContent, error)
 	// GetProductsByPackageID returns all products in a package.
 	GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error)
