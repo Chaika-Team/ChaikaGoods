@@ -17,7 +17,7 @@ import (
 )
 
 //	@title			ChaikaGoods API
-//	@version		0.0.1
+//	@version		0.0.2
 //	@description	This is a simple API to manage goods for the Chaika app.
 //	@host			127.0.0.1:8080
 //	@BasePath		/
@@ -28,7 +28,7 @@ import (
 //	@contact.name	Chaika
 //	@contact.email	chaika.contact@yandex.ru
 //	@license.name	MIT
-//	@license.url	http://opensource.org/licenses/MIT
+//	@license.url	https://opensource.org/licenses/MIT
 
 func main() {
 	var logger log.Logger
