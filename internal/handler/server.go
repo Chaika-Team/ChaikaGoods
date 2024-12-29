@@ -7,13 +7,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"net/http"
 )
 
 // NewHTTPServer initializes and returns a new HTTP server with all routes defined.
@@ -63,15 +64,15 @@ func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
 
 // registerRoutes registers all routes for the service using go-kit transport.
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
-	//GetAllProducts    endpoint.Endpoint
-	//GetProductByID    endpoint.Endpoint
-	//// For packets
-	//SearchPacket endpoint.Endpoint
-	//AddPacket    endpoint.Endpoint
-	//// For products (admin)
-	//AddProduct    endpoint.Endpoint
-	//UpdateProduct endpoint.Endpoint
-	//DeleteProduct endpoint.Endpoint
+	// GetAllProducts    endpoint.Endpoint
+	// GetProductByID    endpoint.Endpoint
+	// For packets
+	// SearchPacket endpoint.Endpoint
+	// AddPacket    endpoint.Endpoint
+	// For products (admin)
+	// AddProduct    endpoint.Endpoint
+	// UpdateProduct endpoint.Endpoint
+	// DeleteProduct endpoint.Endpoint
 
 	// Get all products
 	api.Methods("GET").Path("/products").Handler(httpGoKit.NewServer(

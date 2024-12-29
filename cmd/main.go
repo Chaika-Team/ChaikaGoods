@@ -8,12 +8,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 //	@title			ChaikaGoods API
@@ -48,7 +49,7 @@ func main() {
 	// Корневой контекст
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	//Init database client
+	// Init database client
 	pool, err := repo.NewClient(ctx, cfg.Storage, 5)
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to connect to the database", "err", err)

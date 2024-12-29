@@ -8,9 +8,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-kit/kit/log"
-	"github.com/jackc/pgx/v5"
 	"strconv"
+
+	"github.com/go-kit/log"
+	"github.com/jackc/pgx/v5"
 )
 
 type GoodsPGRepository struct {

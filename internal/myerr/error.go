@@ -3,6 +3,7 @@ package myerr
 import (
 	"errors"
 	"fmt"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 )
@@ -48,7 +49,7 @@ func ToAppError(log log.Logger, err error, description string) error {
 	if errors.As(err, &appErr) {
 		return appErr
 	}
-	level.Error(log).Log("msg", description, "err", err)
+	_ = level.Error(log).Log("msg", description, "err", err)
 	// Log the error and return an internal error, without exposing the original error to security risks
 	return NewAppError(ErrorTypeInternal, "internal error", nil)
 }
