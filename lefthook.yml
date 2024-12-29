@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: false
+  commands:
+    tidy:
+      run: go mod tidy
+    format:
+      run: gofmt -s -w .
+    check-imports:
+      run: goimports -l -w .
+    lint:
+      run: golangci-lint run --config .golangci.yml
+
+pre-push:
+  commands:
+    docs:
+      run: swag init --generalInfo ./cmd/main.go --output ./docs --parseDependency --parseInternal

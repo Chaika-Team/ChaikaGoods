@@ -3,8 +3,9 @@ package tests
 import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/utils"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCheckMap(t *testing.T) {

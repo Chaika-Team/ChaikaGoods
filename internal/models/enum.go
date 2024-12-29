@@ -5,7 +5,7 @@ type OperationType int
 
 const (
 	OperationTypeUnknown OperationType = 0
-	OperationTypeInsert                = 1
-	OperationTypeUpdate                = 2
-	OperationTypeDelete                = 3
+	OperationTypeInsert  OperationType = 1
+	OperationTypeUpdate  OperationType = 2
+	OperationTypeDelete  OperationType = 3
 )

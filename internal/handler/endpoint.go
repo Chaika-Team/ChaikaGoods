@@ -2,9 +2,11 @@ package handler
 
 import (
 	"ChaikaGoods/internal/handler/schemas"
+	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/service"
 	"context"
 	"errors"
+
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -27,13 +29,11 @@ type Endpoints struct {
 }
 
 // MakeEndpoints initializes all Go kit endpoints for all operations
-func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
+func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
 	return Endpoints{
 		// Products
-		GetAllProducts:    makeGetAllProductsEndpoint(logger, service),
-		GetProductByID:    makeGetProductByIDEndpoint(logger, service),
-		GetCurrentVersion: makeGetCurrentVersionEndpoint(logger, service),
-		GetDelta:          makeGetDeltaEndpoint(logger, service),
+		GetAllProducts: makeGetAllProductsEndpoint(logger, service),
+		GetProductByID: makeGetProductByIDEndpoint(logger, service),
 		// Packets
 		SearchPacket: makeSearchPacketEndpoint(logger, service),
 		AddPacket:    makeAddPacketEndpoint(logger, service),
@@ -45,7 +45,16 @@ func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
 }
 
 // makeGetAllProductsEndpoint constructs a GetAllProducts endpoint wrapping the service.
-func makeGetAllProductsEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Get all products
+//	@Description	Get all products from the database
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	schemas.GetAllProductsResponse
+//	@Failure		500	{object}	schemas.ErrorResponse
+//	@Router			/api/v1/products [get]
+func makeGetAllProductsEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_, ok := request.(schemas.GetAllProductsRequest)
 		if !ok {
@@ -53,13 +62,35 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.Service) endpoint.E
 			return nil, errors.New("invalid request type")
 		}
 		products, err := s.GetAllProducts(ctx)
-		return schemas.GetAllProductsResponse{Products: products}, err
+		productsSchema := make([]schemas.ProductSchema, 0)
+		for _, product := range products {
+			p := schemas.ProductSchema{
+				ID:          product.ID,
+				Name:        product.Name,
+				Description: product.Description,
+				Price:       product.Price,
+				ImageURL:    product.ImageURL,
+			}
+			productsSchema = append(productsSchema, p)
+		}
+		return schemas.GetAllProductsResponse{Products: productsSchema}, err
 
 	}
 }
 
 // makeGetProductByIDEndpoint constructs a GetProductByID endpoint wrapping the service.
-func makeGetProductByIDEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Get product by ID
+//	@Description	Get product details by its ID
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Product ID"
+//	@Success		200	{object}	schemas.GetProductByIDResponse
+//	@Failure		404	{object}	schemas.ErrorResponse
+//	@Failure		500	{object}	schemas.ErrorResponse
+//	@Router			/api/v1/products/{id} [get]
+func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.GetProductByIDRequest)
 		if !ok {
@@ -67,39 +98,33 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.Service) endpoint.E
 			return nil, errors.New("invalid request type")
 		}
 		product, err := s.GetProductByID(ctx, req.ProductID)
-		return schemas.GetProductByIDResponse{Product: product}, err
-	}
-
-}
-
-// makeGetCurrentVersionEndpoint constructs a GetCurrentVersion endpoint wrapping the service.
-func makeGetCurrentVersionEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		_, ok := request.(schemas.GetCurrentVersionRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
+		// Convert product model to product schema
+		productSchema := schemas.ProductSchema{
+			ID:          product.ID,
+			Name:        product.Name,
+			Description: product.Description,
+			Price:       product.Price,
+			ImageURL:    product.ImageURL,
 		}
-		version, err := s.GetCurrentVersion(ctx)
-		return schemas.GetCurrentVersionResponse{Version: version}, err
+		return schemas.GetProductByIDResponse{Product: productSchema}, err
 	}
-}
 
-// makeGetDeltaEndpoint constructs a GetDelta endpoint wrapping the service.
-func makeGetDeltaEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.GetDeltaRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
-		changes, err := s.GetDelta(ctx, req.VersionID)
-		return schemas.GetDeltaResponse{Changes: changes}, err
-	}
 }
 
 // makeSearchPacketEndpoint constructs a SearchPacket endpoint wrapping the service.
-func makeSearchPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Search packet
+//	@Description	Search for packets
+//	@Tags			packets
+//	@Accept			json
+//	@Produce		json
+//	@Param			query	query		string	true	"Search query"
+//	@Param			limit	query		int		true	"Limit"
+//	@Param			offset	query		int		true	"Offset"
+//	@Success		200		{object}	schemas.SearchPacketResponse
+//	@Failure		500		{object}	schemas.ErrorResponse
+//	@Router			/api/v1/packets/search [get]
+func makeSearchPacketEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.SearchPacketRequest)
 		if !ok {
@@ -112,7 +137,18 @@ func makeSearchPacketEndpoint(logger log.Logger, s service.Service) endpoint.End
 }
 
 // makeAddPacketEndpoint constructs a AddPacket endpoint wrapping the service.
-func makeAddPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Add packet
+//	@Description	Add a new packet of products to the database
+//	@Tags			packets
+//	@Accept			json
+//	@Produce		json
+//	@Param			packet	body		schemas.AddPacketRequest	true	"Packet details"
+//	@Success		200		{object}	schemas.AddPacketResponse
+//	@Failure		400		{object}	schemas.ErrorResponse
+//	@Failure		500		{object}	schemas.ErrorResponse
+//	@Router			/api/v1/packets [post]
+func makeAddPacketEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.AddPacketRequest)
 		if !ok {
@@ -125,21 +161,48 @@ func makeAddPacketEndpoint(logger log.Logger, s service.Service) endpoint.Endpoi
 }
 
 // makeAddProductEndpoint constructs a AddProduct endpoint wrapping the service.
-func makeAddProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Add product
+//	@Description	Add a new product to the database
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			product	body		schemas.AddProductRequest	true	"Product details"
+//	@Success		200		{object}	schemas.AddProductResponse
+//	@Failure		400		{object}	schemas.ErrorResponse
+//	@Failure		500		{object}	schemas.ErrorResponse
+//	@Router			/api/v1/products [post]
+func makeAddProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.AddProductRequest)
 		if !ok {
 			_ = level.Error(logger).Log("msg", "invalid request type")
 			return nil, errors.New("invalid request type")
 		}
-
-		changeID, err := s.AddProduct(ctx, &req.ProductData)
-		return schemas.AddProductResponse{ChangeID: changeID}, err
+		product := models.Product{
+			Name:        req.Product.Name,
+			Description: req.Product.Description,
+			Price:       req.Product.Price,
+			ImageURL:    req.Product.ImageURL,
+		}
+		id, err := s.AddProduct(ctx, &product)
+		return schemas.AddProductResponse{ProductID: id}, err
 	}
 }
 
 // makeUpdateProductEndpoint constructs a UpdateProduct endpoint wrapping the service.
-func makeUpdateProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Update product
+//	@Description	Update product details in the database
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			product	body		schemas.UpdateProductRequest	true	"Product details"
+//	@Success		200		{object}	schemas.UpdateProductResponse
+//	@Failure		400		{object}	schemas.ErrorResponse
+//	@Failure		500		{object}	schemas.ErrorResponse
+//	@Router			/api/v1/products [put]
+func makeUpdateProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateProductRequest)
 		if !ok {
@@ -147,13 +210,31 @@ func makeUpdateProductEndpoint(logger log.Logger, s service.Service) endpoint.En
 			return nil, errors.New("invalid request type")
 		}
 
-		changeID, err := s.UpdateProduct(ctx, &req.ProductData)
-		return schemas.UpdateProductResponse{ChangeID: changeID}, err
+		product := models.Product{
+			ID:          req.Product.ID,
+			Name:        req.Product.Name,
+			Description: req.Product.Description,
+			Price:       req.Product.Price,
+			ImageURL:    req.Product.ImageURL,
+		}
+		err := s.UpdateProduct(ctx, &product)
+		return schemas.UpdateProductResponse{}, err
 	}
 }
 
 // makeDeleteProductEndpoint constructs a DeleteProduct endpoint wrapping the service.
-func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+//
+//	@Summary		Delete product
+//	@Description	Delete a product from the database
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Product ID"
+//	@Success		200	{object}	schemas.DeleteProductResponse
+//	@Failure		404	{object}	schemas.ErrorResponse
+//	@Failure		500	{object}	schemas.ErrorResponse
+//	@Router			/api/v1/products/{id} [delete]
+func makeDeleteProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.DeleteProductRequest)
 		if !ok {
@@ -161,7 +242,7 @@ func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.En
 			return nil, errors.New("invalid request type")
 		}
 
-		changeID, err := s.DeleteProduct(ctx, req.ProductID)
-		return schemas.DeleteProductResponse{ChangeID: changeID}, err
+		err := s.DeleteProduct(ctx, req.ProductID)
+		return schemas.DeleteProductResponse{}, err
 	}
 }

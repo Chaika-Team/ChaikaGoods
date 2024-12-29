@@ -1,9 +1,10 @@
 package config
 
 import (
+	"sync"
+
 	"github.com/go-kit/log"
 	"github.com/ilyakaznacheev/cleanenv"
-	"sync"
 )
 
 // Config is the application configuration structure that is read from the config file.
@@ -45,7 +46,7 @@ func GetConfigWithPath(logger log.Logger, path string) *Config {
 		if err := cleanenv.ReadConfig(path, instance); err != nil {
 			help, _ := cleanenv.GetDescription(instance, nil)
 			_ = logger.Log("message", "Failed to read configuration", "err", err, "help", help)
-			//Fatal err, as the application cannot start without a valid configuration
+			// Fatal err, as the application cannot start without a valid configuration
 			panic(err)
 		} else {
 			_ = logger.Log("message", "Configuration read successfully")

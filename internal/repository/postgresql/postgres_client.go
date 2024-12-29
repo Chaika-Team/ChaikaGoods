@@ -4,11 +4,12 @@ import (
 	"ChaikaGoods/internal/config"
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
-	"time"
 )
 
 // Client is a subset of the pgx.Conn interface.
@@ -41,10 +42,10 @@ func NewClient(ctx context.Context, conn config.StorageConfig, maxAttempts int) 
 		return nil, fmt.Errorf("unable to parse DSN: %v", err)
 	}
 	//
-	//// Настройка дополнительных параметров конфигурации, если необходимо
-	//connConfig.MaxConns = 10                        // Максимальное количество соединений
-	//connConfig.MinConns = 2                         // Минимальное количество соединений
-	//connConfig.HealthCheckPeriod = 30 * time.Second // Период проверки состояния соединений
+	// Настройка дополнительных параметров конфигурации, если необходимо
+	// connConfig.MaxConns = 10                        // Максимальное количество соединений
+	// connConfig.MinConns = 2                         // Минимальное количество соединений
+	// connConfig.HealthCheckPeriod = 30 * time.Second // Период проверки состояния соединений
 
 	for i := 1; i <= maxAttempts; i++ {
 		pool, err = pgxpool.NewWithConfig(ctx, connConfig)

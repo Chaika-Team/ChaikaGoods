@@ -2,8 +2,10 @@ package service
 
 import (
 	"ChaikaGoods/internal/models"
-	repo "ChaikaGoods/internal/repository/postgresql"
+	"ChaikaGoods/internal/myerr"
+	repo "ChaikaGoods/internal/repository"
 	"context"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 )
@@ -26,28 +28,26 @@ import (
 type GoodsService interface {
 	// GetAllProducts возвращает список всех продуктов.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
-	// GetCurrentVersion возвращает текущую версию базы данных продуктов.
-	GetCurrentVersion(ctx context.Context) (models.Version, error)
-	// GetDelta возвращает изменения в базе данных продуктов по сравнению с версией на устройстве
-	GetDelta(ctx context.Context, version int) ([]models.Product, error)
+	// GetProductByID возвращает продукт по его ID.
+	GetProductByID(ctx context.Context, id int64) (models.Product, error)
 	// SearchPacket ищет пакеты продуктов по их имени или ID.
-	SearchPacket(ctx context.Context, searchString string) ([]models.Product, error)
+	SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error)
 	// AddPacket добавляет новый пакет продуктов в базу данных.
-	AddPacket(ctx context.Context, name string, description string, packageContent []models.PackageContent) error
+	AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error)
 	// AddProduct добавляет новый продукт в базу данных.
-	AddProduct(ctx context.Context, data *map[string]interface{}) error
+	AddProduct(ctx context.Context, p *models.Product) (productId int64, err error)
 	// UpdateProduct обновляет информацию о продукте в базе данных.
-	UpdateProduct(ctx context.Context, data *map[string]interface{}) error
+	UpdateProduct(ctx context.Context, p *models.Product) (err error)
 	// DeleteProduct удаляет продукт из базы данных.
-	DeleteProduct(ctx context.Context, id int64) error
+	DeleteProduct(ctx context.Context, id int64) (err error)
 }
 type Service struct {
 	repo repo.GoodsRepository
 	log  log.Logger
 }
 
-// NewGoodsService создает новый экземпляр GoodsService.
-func NewGoodsService(repo repo.GoodsRepository, logger log.Logger) *Service {
+// NewService создает новый экземпляр GoodsService.
+func NewService(repo repo.GoodsRepository, logger log.Logger) GoodsService {
 	return &Service{
 		repo: repo,
 		log:  logger,
@@ -57,84 +57,48 @@ func NewGoodsService(repo repo.GoodsRepository, logger log.Logger) *Service {
 // GetAllProducts возвращает список всех продуктов.
 func (s *Service) GetAllProducts(ctx context.Context) ([]models.Product, error) {
 	logger := log.With(s.log, "method", "GetAllProducts")
-	if products, err := s.repo.GetAllProducts(ctx); err != nil {
+	products, err := s.repo.GetAllProducts(ctx)
+
+	if myerr.ToAppError(logger, err, "Error to get all products") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return nil, err
-	} else {
-		return products, nil
 	}
+	return products, nil
 }
 
 func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
 	logger := log.With(s.log, "method", "GetProductByID")
-	if product, err := s.repo.GetProductByID(ctx, id); err != nil {
+	product, err := s.repo.GetProductByID(ctx, id)
+	if myerr.ToAppError(logger, err, "Error to get product by ID") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return models.Product{}, err
-	} else {
-		return product, nil
 	}
-}
-
-// GetCurrentVersion возвращает текущую версию базы данных продуктов.
-func (s *Service) GetCurrentVersion(ctx context.Context) (models.Version, error) {
-	logger := log.With(s.log, "method", "GetCurrentVersion")
-	if version, err := s.repo.GetCurrentActualVersion(ctx); err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return models.Version{}, err
-	} else {
-		return version, nil
-	}
-}
-
-// GetDelta возвращает изменения в базе данных продуктов по сравнению с версией на устройстве
-func (s *Service) GetDelta(ctx context.Context, version int) ([]models.Change, error) {
-	logger := log.With(s.log, "method", "GetDelta")
-	// get actual version
-	actualVersion, err := s.repo.GetCurrentActualVersion(ctx)
-	if err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return nil, err
-
-	}
-	// get all versions between the device version and the actual version
-	versions, err := s.repo.GetVersionsBetween(ctx, version, actualVersion.VersionID)
-	if err != nil {
-		_ = level.Error(logger).Log("err", err)
-		return nil, err
-	}
-	// get all changes between the device version and the actual version
-	changes := make([]models.Change, 0)
-	for _, v := range versions {
-		c, err := s.repo.GetAllChanges(ctx, v)
-		if err != nil {
-			_ = level.Error(logger).Log("err", err)
-			return nil, err
-		}
-		changes = append(changes, c...)
-	}
-	return changes, nil
+	return product, nil
 }
 
 // SearchPacket ищет пакеты продуктов по их имени или ID.
 func (s *Service) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	logger := log.With(s.log, "method", "SearchPacket")
-	if packages, err := s.repo.SearchPacket(ctx, searchString, quantity, offset); err != nil {
+	packages, err := s.repo.SearchPacket(ctx, searchString, quantity, offset)
+	if myerr.ToAppError(logger, err, "Error to search packet") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return nil, err
-	} else {
-		return packages, nil
 	}
+	return packages, nil
+
 }
 
 // AddPacket добавляет новый пакет продуктов в базу данных.
 func (s *Service) AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error) {
 	logger := log.With(s.log, "method", "AddPacket")
-	if err := s.repo.CreatePackage(ctx, packet); err != nil {
+	err := s.repo.CreatePackage(ctx, packet)
+	if myerr.ToAppError(logger, err, "Error to create package") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return 0, err
 	}
 	// add products to the package
-	if err := s.repo.AddProductToPackage(ctx, packet.ID, packageContent); err != nil {
+	err = s.repo.AddProductToPackage(ctx, packet.ID, packageContent)
+	if myerr.ToAppError(logger, err, "Error to add product to package") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return 0, err
 	}
@@ -142,31 +106,34 @@ func (s *Service) AddPacket(ctx context.Context, packet *models.Package, package
 }
 
 // AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, p *map[string]interface{}) (changeID int64, err error) {
+func (s *Service) AddProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
 	logger := log.With(s.log, "method", "AddProduct")
-	if changeID, err = s.repo.AddQueryToCreateProduct(ctx, p); err != nil {
+	productId, err = s.repo.CreateProduct(ctx, p)
+	if myerr.ToAppError(logger, err, "Error to create product") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return 0, err
 	}
-	return changeID, nil
+	return productId, nil
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, data *map[string]interface{}) (changeID int64, err error) {
+func (s *Service) UpdateProduct(ctx context.Context, p *models.Product) (err error) {
 	logger := log.With(s.log, "method", "UpdateProduct")
-	if changeID, err = s.repo.AddQueryToUpdateProduct(ctx, data); err != nil {
+	err = s.repo.UpdateProduct(ctx, p)
+	if myerr.ToAppError(logger, err, "Error to update product") != nil {
 		_ = level.Error(logger).Log("err", err)
-		return 0, err
+		return err
 	}
-	return changeID, nil
+	return nil
 }
 
 // DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) (changeID int64, err error) {
+func (s *Service) DeleteProduct(ctx context.Context, id int64) (err error) {
 	logger := log.With(s.log, "method", "DeleteProduct")
-	if changeID, err = s.repo.AddQueryToDeleteProduct(ctx, id); err != nil {
+	err = s.repo.DeleteProduct(ctx, id)
+	if myerr.ToAppError(logger, err, "Error to delete product") != nil {
 		_ = level.Error(logger).Log("err", err)
-		return 0, err
+		return err
 	}
-	return changeID, nil
+	return nil
 }
