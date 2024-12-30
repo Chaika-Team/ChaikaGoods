@@ -178,9 +178,8 @@ func determineHTTPError(err error) int {
 
 // decodeGetAllProductsRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
 func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.GetAllProductsRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
+	// Since GET requests typically do not have a body, return an empty request
+	return schemas.GetAllProductsRequest{}, nil
 }
 
 // decodeGetProductByIDRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.

@@ -16,7 +16,7 @@ type ProductSchema struct {
 // GetAllProductsRequest представляет собой запрос на получение всех продуктов
 // @Description Запрос на получение всех продуктов
 type GetAllProductsRequest struct {
-	// Фильтры, пагинация и другие параметры могут быть тут)
+	// TODO: Фильтры, пагинация и другие параметры могут быть тут
 }
 
 // GetAllProductsResponse представляет собой ответ на запрос на получение всех продуктов
