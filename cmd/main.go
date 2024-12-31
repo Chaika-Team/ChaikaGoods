@@ -32,6 +32,11 @@ import (
 //	@license.url	https://opensource.org/licenses/MIT
 
 func main() {
+	// Определение флага -config
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.yml", "Path to configuration file")
+	flag.Parse()
+
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -43,41 +48,48 @@ func main() {
 		_ = info.Log(keyvals)
 	}(level.Info(logger), "message", "Service ended")
 
-	flag.Parse()
-	cfg := config.GetConfig(logger)
+	// Загрузка конфигурации
+	cfg := config.GetConfigWithPath(logger, configPath)
 
 	// Корневой контекст
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// Init database client
+
+	// Инициализация клиента базы данных
 	pool, err := repo.NewClient(ctx, cfg.Storage, 5)
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to connect to the database", "err", err)
 		return
-	} else {
-		_ = level.Info(logger).Log("message", "Connection to the database is successful")
 	}
 	defer pool.Close()
+	_ = level.Info(logger).Log("message", "Connection to the database is successful")
 
-	// Create new service
+	// Создание нового сервиса
 	var svc service.GoodsService
 	{
 		rep := repo.NewGoodsRepository(pool, logger)
 		svc = service.NewService(rep, logger)
 	}
+
+	// Канал для ошибок
 	errs := make(chan error)
+
+	// Горутин для обработки сигналов завершения
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-c
 		_ = level.Info(logger).Log("message", "Received signal", "signal", sig)
-		cancel() // Cancel context if needed
+		cancel() // Отмена контекста при необходимости
 		errs <- fmt.Errorf("service stopped due to received signal: %s", sig)
 	}()
+
 	_ = level.Info(logger).Log("message", "Service is ready to listen and serve", "type", cfg.Listen.Type, "bind_ip", cfg.Listen.BindIP, "port", cfg.Listen.Port)
 
+	// Создание эндпоинтов
 	endpoints := handler.MakeEndpoints(log.With(logger, "endpoint"), svc)
 
+	// Запуск HTTP-сервера в отдельной горутине
 	go func() {
 		address := cfg.Listen.BindIP + ":" + cfg.Listen.Port
 		_ = level.Info(logger).Log("message", "HTTP server is starting", "address", address)
@@ -87,6 +99,7 @@ func main() {
 			errs <- serverErr
 		}
 	}()
-	_ = level.Error(logger).Log("exit", <-errs)
 
+	// Ожидание ошибок или сигналов завершения
+	_ = level.Error(logger).Log("exit", <-errs)
 }

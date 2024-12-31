@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      - IS_DEBUG=${IS_DEBUG}
+      - STORAGE_HOST=${DB_HOST}
+      - STORAGE_PORT=${DB_PORT}
+      - STORAGE_DATABASE=${DB_NAME}
+      - STORAGE_USER=${DB_USER}
+      - STORAGE_PASSWORD=${DB_PASSWORD}
+      - STORAGE_MAX_CONNS=${DB_MAX_CONNS}
+      - STORAGE_MIN_CONNS=${DB_MIN_CONNS}
+    volumes:
+      - ./config.yml:/config/config.yml:ro
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
