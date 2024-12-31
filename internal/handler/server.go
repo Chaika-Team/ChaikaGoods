@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
@@ -92,7 +93,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Search packet
-	api.Methods("POST").Path("/packets/search").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path("/packets/search").Handler(httpGoKit.NewServer(
 		endpoints.SearchPacket,
 		decodeSearchPacketRequest,
 		encodeResponse(logger),
@@ -226,11 +227,25 @@ func decodeUpdateProductRequest(_ context.Context, req *http.Request) (request i
 	return r, err
 }
 
-// decodeSearchPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeSearchPacketRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.SearchPacketRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
+func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{}, error) {
+	query := req.URL.Query()
+
+	searchString := query.Get("query")
+	limit, err := strconv.ParseInt(query.Get("limit"), 10, 64)
+	if err != nil || limit <= 0 {
+		return nil, errors.New("invalid or missing limit parameter")
+	}
+
+	offset, err := strconv.ParseInt(query.Get("offset"), 10, 64)
+	if err != nil || offset < 0 {
+		return nil, errors.New("invalid or missing offset parameter")
+	}
+
+	return schemas.SearchPacketRequest{
+		Query:  searchString,
+		Limit:  limit,
+		Offset: offset,
+	}, nil
 }
 
 // decodeAddPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.

@@ -124,7 +124,7 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService, mappe
 //	@Tags			packets
 //	@Accept			json
 //	@Produce		json
-//	@Param			query	query		string	true	"Search query"
+//	@Param			query	query		string	false	"Search query"
 //	@Param			limit	query		int		true	"Limit"
 //	@Param			offset	query		int		true	"Offset"
 //	@Success		200		{object}	schemas.SearchPacketResponse

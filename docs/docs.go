@@ -89,8 +89,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Search query",
                         "name": "query",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",

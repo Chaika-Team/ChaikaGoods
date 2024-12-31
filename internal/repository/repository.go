@@ -28,4 +28,6 @@ type GoodsRepository interface {
 	DeletePackage(ctx context.Context, packageID int64) error
 	// SearchPacket searches for a packet by its name.
 	SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error)
+	// GetAllPackages returns all packages with pagination.
+	GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error)
 }

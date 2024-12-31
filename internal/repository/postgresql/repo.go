@@ -281,11 +281,15 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 }
 
 func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
-	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
-	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
+	searchPattern := "%" + searchString + "%"
+	sql := `SELECT packageid, packagename, description FROM public."package" 
+	        WHERE packagename LIKE $1 OR description LIKE $1 
+	        LIMIT $2 OFFSET $3;`
+
+	rows, err := r.client.Query(ctx, sql, searchPattern, quantity, offset)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with name %s not found", searchString), nil)
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("No packages matching query '%s' found", searchString), nil)
 		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to search package: %v", err))
 		return nil, err
@@ -301,5 +305,42 @@ func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString strin
 		}
 		packages = append(packages, p)
 	}
+
+	if rows.Err() != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
+		return nil, rows.Err()
+	}
+
+	return packages, nil
+}
+
+func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error) {
+	sql := `SELECT packageid, packagename, description FROM public."package" LIMIT $1 OFFSET $2;`
+
+	rows, err := r.client.Query(ctx, sql, quantity, offset)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, "No packages found", nil)
+		}
+		_ = r.log.Log("error", fmt.Sprintf("Failed to retrieve all packages: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var packages []models.Package
+	for rows.Next() {
+		var p models.Package
+		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
+			continue
+		}
+		packages = append(packages, p)
+	}
+
+	if rows.Err() != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
+		return nil, rows.Err()
+	}
+
 	return packages, nil
 }

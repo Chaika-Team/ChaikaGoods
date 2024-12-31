@@ -53,7 +53,7 @@ type GetProductByIDResponse struct {
 // SearchPacketRequest представляет собой запрос на поиск пакетов
 // @Description Запрос на поиск пакетов
 type SearchPacketRequest struct {
-	Query  string `json:"query"` // Поисковый запрос для фильтрации пакетов
+	Query  string `json:"query,omitempty"`
 	Limit  int64  `json:"limit"`
 	Offset int64  `json:"offset"`
 }

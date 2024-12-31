@@ -78,15 +78,28 @@ func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product,
 }
 
 // SearchPacket ищет пакеты продуктов по их имени или ID.
+// TODO переделать через поисковые системы типа ElasticSearch
 func (s *Service) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	logger := log.With(s.log, "method", "SearchPacket")
+
+	if searchString == "" {
+		// Пустая строка поиска, возвращаем все пакеты с пагинацией
+		packages, err := s.repo.GetAllPackages(ctx, quantity, offset)
+		if myerr.ToAppError(logger, err, "Error to retrieve all packages") != nil {
+			_ = level.Error(logger).Log("err", err)
+			return nil, err
+		}
+		return packages, nil
+	}
+
+	// Поиск пакетов по строке
 	packages, err := s.repo.SearchPacket(ctx, searchString, quantity, offset)
 	if myerr.ToAppError(logger, err, "Error to search packet") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return nil, err
 	}
-	return packages, nil
 
+	return packages, nil
 }
 
 // AddPacket добавляет новый пакет продуктов в базу данных.

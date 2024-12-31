@@ -208,7 +208,6 @@ paths:
       - description: Search query
         in: query
         name: query
-        required: true
         type: string
       - description: Limit
         in: query
