@@ -221,7 +221,7 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 
 	// Добавляем содержимое пакета
 	for _, content := range pkg.Content {
-		err = r.addProductToPackage(ctx, tx, pkg.ID, content)
+		err = r.CreateProductToPackage(ctx, tx, pkg.ID, content)
 		if err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to add product to package: %v", err))
 			return err
@@ -231,8 +231,8 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 	return nil
 }
 
-// addProductToPackage добавляет одну запись содержимого пакета.
-func (r *GoodsPGRepository) addProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
+// CreateProductToPackage добавляет одну запись содержимого пакета.
+func (r *GoodsPGRepository) CreateProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
 	sqlInsertContent := `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
 
 	// Выполняем запрос

@@ -35,8 +35,8 @@ type GoodsService interface {
 	AddPacket(ctx context.Context, packet *models.Package) (int64, error)
 	// GetPacketByID возвращает пакет продуктов по его ID.
 	GetPacketByID(ctx context.Context, id int64) (models.Package, error)
-	// AddProduct добавляет новый продукт в базу данных.
-	AddProduct(ctx context.Context, p *models.Product) (productId int64, err error)
+	// CreateProduct добавляет новый продукт в базу данных.
+	CreateProduct(ctx context.Context, p *models.Product) (productId int64, err error)
 	// UpdateProduct обновляет информацию о продукте в базе данных.
 	UpdateProduct(ctx context.Context, p *models.Product) (err error)
 	// DeleteProduct удаляет продукт из базы данных.
@@ -113,9 +113,9 @@ func (s *Service) AddPacket(ctx context.Context, packet *models.Package) (int64,
 	return packet.ID, nil
 }
 
-// AddProduct добавляет новый продукт в базу данных.
-func (s *Service) AddProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
-	logger := log.With(s.log, "method", "AddProduct")
+// CreateProduct добавляет новый продукт в базу данных.
+func (s *Service) CreateProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
+	logger := log.With(s.log, "method", "CreateProduct")
 	productId, err = s.repo.CreateProduct(ctx, p)
 	if myerr.ToAppError(logger, err, "Error to create product") != nil {
 		_ = level.Error(logger).Log("err", err)

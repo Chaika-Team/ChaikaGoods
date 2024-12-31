@@ -72,7 +72,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// SearchPacket endpoint.Endpoint
 	// AddPacket    endpoint.Endpoint
 	// For products (admin)
-	// AddProduct    endpoint.Endpoint
+	// CreateProduct    endpoint.Endpoint
 	// UpdateProduct endpoint.Endpoint
 	// DeleteProduct endpoint.Endpoint
 
@@ -118,8 +118,8 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 
 	// Add product
 	api.Methods("POST").Path("/products").Handler(httpGoKit.NewServer(
-		endpoints.AddProduct,
-		decodeAddProductRequest,
+		endpoints.CreateProduct,
+		decodeCreateProductRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -213,9 +213,9 @@ func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (request 
 	return schemas.GetAllProductsRequest{}, nil
 }
 
-// decodeAddProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeAddProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.AddProductRequest
+// decodeCreateProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
+func decodeCreateProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
+	var r schemas.CreateProductRequest
 	err = json.NewDecoder(req.Body).Decode(&r)
 	return r, err
 }

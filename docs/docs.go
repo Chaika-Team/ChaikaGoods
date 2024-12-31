@@ -257,7 +257,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.AddProductRequest"
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.CreateProductRequest"
                         }
                     }
                 ],
@@ -265,7 +265,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.AddProductResponse"
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.CreateProductResponse"
                         }
                     },
                     "400": {
@@ -398,7 +398,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.AddProductRequest": {
+        "ChaikaGoods_internal_handler_schemas.CreateProductRequest": {
             "description": "Запрос на добавление продукта",
             "type": "object",
             "properties": {
@@ -407,7 +407,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.AddProductResponse": {
+        "ChaikaGoods_internal_handler_schemas.CreateProductResponse": {
             "description": "Ответ на запрос на добавление продукта",
             "type": "object",
             "properties": {

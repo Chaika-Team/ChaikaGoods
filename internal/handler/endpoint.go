@@ -23,7 +23,7 @@ type Endpoints struct {
 	AddPacket     endpoint.Endpoint
 	GetPacketByID endpoint.Endpoint
 	// For products (admin)
-	AddProduct    endpoint.Endpoint
+	CreateProduct endpoint.Endpoint
 	UpdateProduct endpoint.Endpoint
 	DeleteProduct endpoint.Endpoint
 }
@@ -53,7 +53,7 @@ func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
 		AddPacket:     makeAddPacketEndpoint(logger, service, packageMapper),
 		GetPacketByID: makeGetPacketByIDEndpoint(logger, service, packageMapper),
 		// Products (admin)
-		AddProduct:    makeAddProductEndpoint(logger, service, productMapper),
+		CreateProduct: makeCreateProductEndpoint(logger, service, productMapper),
 		UpdateProduct: makeUpdateProductEndpoint(logger, service, productMapper),
 		DeleteProduct: makeDeleteProductEndpoint(logger, service),
 	}
@@ -209,21 +209,21 @@ func makeGetPacketByIDEndpoint(logger log.Logger, s service.GoodsService, mapper
 	}
 }
 
-// makeAddProductEndpoint constructs a AddProduct endpoint wrapping the service.
+// makeCreateProductEndpoint constructs a CreateProduct endpoint wrapping the service.
 //
 //	@Summary		Add product
 //	@Description	Add a new product to the database
 //	@Tags			products
 //	@Accept			json
 //	@Produce		json
-//	@Param			product	body		schemas.AddProductRequest	true	"Product details"
-//	@Success		200		{object}	schemas.AddProductResponse
+//	@Param			product	body		schemas.CreateProductRequest	true	"Product details"
+//	@Success		200		{object}	schemas.CreateProductResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [post]
-func makeAddProductEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeCreateProductEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.AddProductRequest)
+		req, ok := request.(schemas.CreateProductRequest)
 		if !ok {
 			_ = level.Error(logger).Log("msg", "invalid request type")
 			return nil, errors.New("invalid request type")
@@ -231,12 +231,12 @@ func makeAddProductEndpoint(logger log.Logger, s service.GoodsService, mapper *s
 
 		productModel := mapper.ToModel(req.Product)
 
-		id, err := s.AddProduct(ctx, &productModel)
+		id, err := s.CreateProduct(ctx, &productModel)
 		if err != nil {
 			return nil, err
 		}
 
-		return schemas.AddProductResponse{ProductID: id}, nil
+		return schemas.CreateProductResponse{ProductID: id}, nil
 	}
 }
 

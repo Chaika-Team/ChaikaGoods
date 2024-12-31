@@ -91,15 +91,15 @@ type GetPacketByIDResponse struct {
 	Err    string        `json:"err,omitempty"`
 }
 
-// AddProductRequest представляет собой запрос на добавление продукта
+// CreateProductRequest представляет собой запрос на добавление продукта
 // @Description Запрос на добавление продукта
-type AddProductRequest struct {
+type CreateProductRequest struct {
 	Product ProductSchema `json:"product"`
 }
 
-// AddProductResponse представляет собой ответ на запрос на добавление продукта
+// CreateProductResponse представляет собой ответ на запрос на добавление продукта
 // @Description Ответ на запрос на добавление продукта
-type AddProductResponse struct {
+type CreateProductResponse struct {
 	ProductID int64  `json:"id"`
 	Err       string `json:"err,omitempty"`
 }
