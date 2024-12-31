@@ -2,7 +2,6 @@ package schemas
 
 import (
 	_ "ChaikaGoods/docs"
-	"ChaikaGoods/internal/models"
 )
 
 type ProductSchema struct {
@@ -13,10 +12,22 @@ type ProductSchema struct {
 	ImageURL    string  `json:"imageurl"`
 }
 
+type PackageSchema struct {
+	ID          int64                  `json:"id"`
+	PackageName string                 `json:"package_name"`
+	Description string                 `json:"description"`
+	Content     []PackageContentSchema `json:"content"`
+}
+
+type PackageContentSchema struct {
+	ProductID int64 `json:"product_id"`
+	Quantity  int   `json:"quantity"`
+}
+
 // GetAllProductsRequest представляет собой запрос на получение всех продуктов
 // @Description Запрос на получение всех продуктов
 type GetAllProductsRequest struct {
-	// Фильтры, пагинация и другие параметры могут быть тут)
+	// TODO: Фильтры, пагинация и другие параметры могут быть тут
 }
 
 // GetAllProductsResponse представляет собой ответ на запрос на получение всех продуктов
@@ -29,7 +40,7 @@ type GetAllProductsResponse struct {
 // GetProductByIDRequest представляет собой запрос на получение продукта по его ID
 // @Description Запрос на получение продукта по его ID
 type GetProductByIDRequest struct {
-	ProductID int64 `json:"product_id"`
+	ProductID int64 `json:"id"`
 }
 
 // GetProductByIDResponse представляет собой ответ на запрос на получение продукта по его ID
@@ -42,7 +53,7 @@ type GetProductByIDResponse struct {
 // SearchPacketRequest представляет собой запрос на поиск пакетов
 // @Description Запрос на поиск пакетов
 type SearchPacketRequest struct {
-	Query  string `json:"query"` // Поисковый запрос для фильтрации пакетов
+	Query  string `json:"query,omitempty"`
 	Limit  int64  `json:"limit"`
 	Offset int64  `json:"offset"`
 }
@@ -50,22 +61,34 @@ type SearchPacketRequest struct {
 // SearchPacketResponse представляет собой ответ на запрос на поиск пакетов
 // @Description Ответ на запрос на поиск пакетов
 type SearchPacketResponse struct {
-	Packets []models.Package `json:"packets"`
-	Err     string           `json:"err,omitempty"`
+	Packets []PackageSchema `json:"packets"`
+	Err     string          `json:"err,omitempty"`
 }
 
 // AddPacketRequest представляет собой запрос на добавление пакета
 // @Description Запрос на добавление пакета
 type AddPacketRequest struct {
-	Packet        models.Package          `json:"packet"`         // Сведения о новом пакете
-	PacketContent []models.PackageContent `json:"packet_content"` // Содержимое пакета
+	Packet PackageSchema `json:"packet"` // Сведения о новом пакете
 }
 
 // AddPacketResponse представляет собой ответ на запрос на добавление пакета
 // @Description Ответ на запрос на добавление пакета
 type AddPacketResponse struct {
-	PacketID int64  `json:"packet_id"` // ID созданного пакета
+	PacketID int64  `json:"id"` // ID созданного пакета
 	Err      string `json:"err,omitempty"`
+}
+
+// GetPacketByIDRequest представляет собой запрос на получение пакета по его ID
+// @Description Запрос на получение пакета по его ID
+type GetPacketByIDRequest struct {
+	PacketID int64 `json:"id"`
+}
+
+// GetPacketByIDResponse представляет собой ответ на запрос на получение пакета по его ID
+// @Description Ответ на запрос на получение пакета по его ID
+type GetPacketByIDResponse struct {
+	Packet PackageSchema `json:"packet"`
+	Err    string        `json:"err,omitempty"`
 }
 
 // AddProductRequest представляет собой запрос на добавление продукта
@@ -77,7 +100,7 @@ type AddProductRequest struct {
 // AddProductResponse представляет собой ответ на запрос на добавление продукта
 // @Description Ответ на запрос на добавление продукта
 type AddProductResponse struct {
-	ProductID int64  `json:"product_id"`
+	ProductID int64  `json:"id"`
 	Err       string `json:"err,omitempty"`
 }
 
@@ -96,7 +119,7 @@ type UpdateProductResponse struct {
 // DeleteProductRequest представляет собой запрос на удаление продукта
 // @Description Запрос на удаление продукта
 type DeleteProductRequest struct {
-	ProductID int64 `json:"product_id"`
+	ProductID int64 `json:"id"`
 }
 
 // DeleteProductResponse представляет собой ответ на запрос на удаление продукта

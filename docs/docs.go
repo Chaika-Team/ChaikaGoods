@@ -89,8 +89,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Search query",
                         "name": "query",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -112,6 +111,50 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.SearchPacketResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/packets/{id}": {
+            "get": {
+                "description": "Get packet details by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "packets"
+                ],
+                "summary": "Get packet by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Packet ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
@@ -336,16 +379,9 @@ const docTemplate = `{
                     "description": "Сведения о новом пакете",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/ChaikaGoods_internal_models.Package"
+                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
                         }
                     ]
-                },
-                "packet_content": {
-                    "description": "Содержимое пакета",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ChaikaGoods_internal_models.PackageContent"
-                    }
                 }
             }
         },
@@ -356,7 +392,7 @@ const docTemplate = `{
                 "err": {
                     "type": "string"
                 },
-                "packet_id": {
+                "id": {
                     "description": "ID созданного пакета",
                     "type": "integer"
                 }
@@ -378,7 +414,7 @@ const docTemplate = `{
                 "err": {
                     "type": "string"
                 },
-                "product_id": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -421,6 +457,18 @@ const docTemplate = `{
                 }
             }
         },
+        "ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse": {
+            "description": "Ответ на запрос на получение пакета по его ID",
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "packet": {
+                    "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
+                }
+            }
+        },
         "ChaikaGoods_internal_handler_schemas.GetProductByIDResponse": {
             "description": "Ответ на запрос на получение продукта по его ID",
             "type": "object",
@@ -430,6 +478,37 @@ const docTemplate = `{
                 },
                 "product": {
                     "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema"
+                }
+            }
+        },
+        "ChaikaGoods_internal_handler_schemas.PackageContentSchema": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "ChaikaGoods_internal_handler_schemas.PackageSchema": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageContentSchema"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "package_name": {
+                    "type": "string"
                 }
             }
         },
@@ -463,7 +542,7 @@ const docTemplate = `{
                 "packets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/ChaikaGoods_internal_models.Package"
+                        "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
                     }
                 }
             }
@@ -483,37 +562,6 @@ const docTemplate = `{
             "properties": {
                 "err": {
                     "type": "string"
-                }
-            }
-        },
-        "ChaikaGoods_internal_models.Package": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "package_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "ChaikaGoods_internal_models.PackageContent": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "package_id": {
-                    "type": "integer"
-                },
-                "product_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer"
                 }
             }
         }

@@ -7,7 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
@@ -85,13 +87,13 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Get product by ID
 	api.Methods("GET").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
-		decodeGetProductByIDRequest,
+		decodeRequestWithID(logger, "id", &schemas.GetProductByIDRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Search packet
-	api.Methods("POST").Path("/packets/search").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path("/packets/search").Handler(httpGoKit.NewServer(
 		endpoints.SearchPacket,
 		decodeSearchPacketRequest,
 		encodeResponse(logger),
@@ -102,6 +104,14 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	api.Methods("POST").Path("/packets").Handler(httpGoKit.NewServer(
 		endpoints.AddPacket,
 		decodeAddPacketRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
+	))
+
+	// Get packet by ID
+	api.Methods("GET").Path("/packets/{id}").Handler(httpGoKit.NewServer(
+		endpoints.GetPacketByID,
+		decodeRequestWithID(logger, "id", &schemas.GetPacketByIDRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -125,7 +135,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Delete product
 	api.Methods("DELETE").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.DeleteProduct,
-		decodeDeleteProductRequest,
+		decodeRequestWithID(logger, "id", &schemas.DeleteProductRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -170,24 +180,37 @@ func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	}
 }
 
-// Helper function to determine HTTP status code from error
-func determineHTTPError(err error) int {
-	// Implement error to HTTP status code mapping
-	return http.StatusInternalServerError
+// decodeRequestWithID генерирует DecodeRequestFunc для запросов с ID в пути.
+func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}) httpGoKit.DecodeRequestFunc {
+	return func(ctx context.Context, req *http.Request) (interface{}, error) {
+		id, err := extractID(req, paramName)
+		if err != nil {
+			return nil, err
+		}
+
+		switch s := schema.(type) {
+		case *schemas.GetProductByIDRequest:
+			s.ProductID = id
+			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+			return s, nil
+		case *schemas.GetPacketByIDRequest:
+			s.PacketID = id
+			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+			return s, nil
+		case *schemas.DeleteProductRequest:
+			s.ProductID = id
+			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+			return s, nil
+		default:
+			return nil, errors.New("unsupported schema type")
+		}
+	}
 }
 
 // decodeGetAllProductsRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
 func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.GetAllProductsRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
-
-// decodeGetProductByIDRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetProductByIDRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.GetProductByIDRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
+	// Since GET requests typically do not have a body, return an empty request
+	return schemas.GetAllProductsRequest{}, nil
 }
 
 // decodeAddProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
@@ -204,18 +227,25 @@ func decodeUpdateProductRequest(_ context.Context, req *http.Request) (request i
 	return r, err
 }
 
-// decodeDeleteProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeDeleteProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.DeleteProductRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
+func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{}, error) {
+	query := req.URL.Query()
 
-// decodeSearchPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeSearchPacketRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.SearchPacketRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
+	searchString := query.Get("query")
+	limit, err := strconv.ParseInt(query.Get("limit"), 10, 64)
+	if err != nil || limit <= 0 {
+		return nil, errors.New("invalid or missing limit parameter")
+	}
+
+	offset, err := strconv.ParseInt(query.Get("offset"), 10, 64)
+	if err != nil || offset < 0 {
+		return nil, errors.New("invalid or missing offset parameter")
+	}
+
+	return schemas.SearchPacketRequest{
+		Query:  searchString,
+		Limit:  limit,
+		Offset: offset,
+	}, nil
 }
 
 // decodeAddPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.

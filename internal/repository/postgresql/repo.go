@@ -4,11 +4,9 @@ import (
 	"ChaikaGoods/internal/models"
 	"ChaikaGoods/internal/myerr"
 	"ChaikaGoods/internal/repository"
-	"ChaikaGoods/internal/utils"
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/go-kit/log"
 	"github.com/jackc/pgx/v5"
@@ -113,41 +111,42 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 // Package queries
 
 // GetPackageByID получает полную информацию о пакете, включая его содержимое.
-func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
+func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, p *models.Package) error {
 	sqlPackage := `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
 	err := r.client.QueryRow(ctx, sqlPackage, p.ID).Scan(&p.ID, &p.PackageName, &p.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", p.ID), nil)
+			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", p.ID), nil)
 		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
-		return nil, err
+		return err
 	}
 
-	sqlContents := `SELECT packagecontentid, packageid, productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	sqlContents := `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sqlContents, p.ID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get package contents: %v", err))
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
+		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
-			return nil, err
+			return err
 		}
 		contents = append(contents, c)
 	}
+	p.Content = contents
 
-	return contents, nil
+	return nil
 }
 
 // GetProductsByPackageID получает список продуктов в определенном пакете.
 func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
-	sql := `SELECT packagecontentid, packageid, productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	sql := `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sql, p.ID)
 	if err != nil {
 		_ = r.log.Log("error", fmt.Sprintf("Failed to get products by package ID: %v", err))
@@ -158,7 +157,7 @@ func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *model
 	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
-		if err := rows.Scan(&c.ID, &c.PackageID, &c.ProductID, &c.Quantity); err != nil {
+		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
 			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
 			continue
 		}
@@ -191,39 +190,57 @@ func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package,
 	return packages, nil
 }
 
-// CreatePackage добавляет новый пустой пакет в базу данных.
+// CreatePackage добавляет новый пакет в базу данных вместе с его содержимым.
 func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
-	sql := `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
-	err := r.client.QueryRow(ctx, sql, &pkg.PackageName, &pkg.Description).Scan(&pkg.ID)
+	// Начинаем транзакцию
+	tx, err := r.client.Begin(ctx)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to create package: %v", err))
+		_ = r.log.Log("error", fmt.Sprintf("Failed to start transaction: %v", err))
 		return err
 	}
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		} else if err != nil {
+			_ = tx.Rollback(ctx)
+		} else {
+			err = tx.Commit(ctx)
+		}
+	}()
+
+	// SQL-запрос для вставки пакета
+	sqlInsertPackage := `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
+
+	// Добавляем пакет
+	err = tx.QueryRow(ctx, sqlInsertPackage, pkg.PackageName, pkg.Description).Scan(&pkg.ID)
+	if err != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Failed to insert package: %v", err))
+		return err
+	}
+
+	// Добавляем содержимое пакета
+	for _, content := range pkg.Content {
+		err = r.addProductToPackage(ctx, tx, pkg.ID, content)
+		if err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to add product to package: %v", err))
+			return err
+		}
+	}
+
 	return nil
 }
 
-// AddProductToPackage добавляет продукты в пакет.
-func (r *GoodsPGRepository) AddProductToPackage(ctx context.Context, packageID int64, products []models.PackageContent) error {
-	sql := `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
-	batch := &pgx.Batch{}
+// addProductToPackage добавляет одну запись содержимого пакета.
+func (r *GoodsPGRepository) addProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
+	sqlInsertContent := `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
 
-	for _, product := range products {
-		batch.Queue(sql, packageID, product.ProductID, product.Quantity)
-	}
-
-	br := r.client.SendBatch(ctx, batch)
-	defer func(br pgx.BatchResults) {
-		err := br.Close()
-		if err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to close batch results: %v", err))
-		}
-	}(br)
-	_, err := br.Exec()
+	// Выполняем запрос
+	_, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to add products to package: %v", err))
-		return err
+		_ = r.log.Log("error", fmt.Sprintf("Failed to insert package content: %v", err))
 	}
-	return nil
+	return err
 }
 
 // DeletePackage удаляет пакет и его содержимое.
@@ -264,11 +281,15 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 }
 
 func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
-	sql := `SELECT packageid, packagename, description FROM public."package" WHERE packagename LIKE $1 OR description LIKE $1 LIMIT $2 OFFSET $3;`
-	rows, err := r.client.Query(ctx, sql, searchString, quantity, offset)
+	searchPattern := "%" + searchString + "%"
+	sql := `SELECT packageid, packagename, description FROM public."package" 
+	        WHERE packagename LIKE $1 OR description LIKE $1 
+	        LIMIT $2 OFFSET $3;`
+
+	rows, err := r.client.Query(ctx, sql, searchPattern, quantity, offset)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with name %s not found", searchString), nil)
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("No packages matching query '%s' found", searchString), nil)
 		}
 		_ = r.log.Log("error", fmt.Sprintf("Failed to search package: %v", err))
 		return nil, err
@@ -284,82 +305,42 @@ func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString strin
 		}
 		packages = append(packages, p)
 	}
+
+	if rows.Err() != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
+		return nil, rows.Err()
+	}
+
 	return packages, nil
 }
 
-// insertProduct добавляет новый продукт в базу данных, только для внутреннего использования.
-func (r *GoodsPGRepository) insertProduct(ctx context.Context, data *map[string]interface{}) error {
-	// Verify that all keys in the map correspond to the fields of the models.Product structure
-	err := utils.VerifyMapFields[models.Product](*data)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to verify product fields: %v", err))
-		return err
-	}
-	// Generate sql query with all fields in the map
-	sql := `INSERT INTO public.product (`
-	values := `) VALUES (`
-	var args []interface{}
-	idx := 1
-	for key, value := range *data {
-		sql += key + ", "
-		values += "$" + strconv.Itoa(idx) + ", "
-		args = append(args, value) // Добавление значения в список аргументов
-		idx++
-	}
-	sql = sql[:len(sql)-2] + values[:len(values)-2] + ");"
-	_, err = r.client.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to insert product: %v", err)
-	}
-	return nil
-}
+func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error) {
+	sql := `SELECT packageid, packagename, description FROM public."package" LIMIT $1 OFFSET $2;`
 
-// updateProduct обновляет информацию о продукте в базе данных, только для внутреннего использования.
-func (r *GoodsPGRepository) updateProduct(ctx context.Context, data *map[string]interface{}) error {
-	// Verify that all keys in the map correspond to the fields of the models.Product structure
-	err := utils.VerifyMapFields[models.Product](*data)
+	rows, err := r.client.Query(ctx, sql, quantity, offset)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to verify product fields: %v", err))
-		return err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, "No packages found", nil)
+		}
+		_ = r.log.Log("error", fmt.Sprintf("Failed to retrieve all packages: %v", err))
+		return nil, err
 	}
-	// Generate sql query with all fields in the map
-	sql := `UPDATE public.product SET `
-	var args []interface{}
-	idx := 1
-	for key, value := range *data {
-		if key == "id" {
+	defer rows.Close()
+
+	var packages []models.Package
+	for rows.Next() {
+		var p models.Package
+		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
+			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
 			continue
 		}
-		sql += key + " = $" + strconv.Itoa(idx) + ", "
-		args = append(args, value) // Добавление значения в список аргументов
-		idx++
-	}
-	if len(args) == 0 {
-		return fmt.Errorf("no fields to update")
-	}
-	args = append(args, (*data)["id"]) // Добавление id в список аргументов
-	sql = sql[:len(sql)-2] + " WHERE id = $" + strconv.Itoa(idx) + ";"
-	_, err = r.client.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to update product: %v", err)
-	}
-	return nil
-}
-
-// deleteProduct удаляет продукт из базы данных по его ID, только для внутреннего использования.
-func (r *GoodsPGRepository) deleteProduct(ctx context.Context, data *map[string]interface{}) error {
-	// get id
-	rawId, ok := (*data)["id"]
-	if !ok {
-		return myerr.NewAppError(myerr.ErrorTypeValidation, "id is required", nil)
+		packages = append(packages, p)
 	}
 
-	var id = int64(rawId.(float64))
-
-	sql := `DELETE FROM public.product WHERE id = $1;`
-	_, err := r.client.Exec(ctx, sql, id)
-	if err != nil {
-		return fmt.Errorf("failed to delete product: %v", err)
+	if rows.Err() != nil {
+		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
+		return nil, rows.Err()
 	}
-	return nil
+
+	return packages, nil
 }

@@ -13,4 +13,4 @@ pre-commit:
 pre-push:
   commands:
     docs:
-      run: swag init --generalInfo ./cmd/main.go --output ./docs --parseDependency --parseInternal
+      run: swag init --generalInfo ./cmd/main.go --output ./docs --parseDependency --parseInternal && git add ./docs
