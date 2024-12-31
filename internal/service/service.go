@@ -12,8 +12,7 @@ import (
 
 /* Бизнес задачи для микросервиса продуктов продаваемых в вагонах поезда:
 Со стороны проводника поезда:
-1. Проводник запрашивает синхронизацию своей базы данных с центральной базой данных продуктов.
-2. Проводник запрашивает текущую версию базы продуктов, чтобы проверить актуальность своей базы.
+1. Проводник запрашивает список продуктов для своей базы данных с центральной базой данных продуктов.
 3. Проводник ищет пакеты продуктов по их имени или ID.
 4. Проводник добавляет новый пакет продуктов в базу данных.
 5. Проводник обновляет информацию о пакете продуктов в базе данных.
@@ -33,7 +32,9 @@ type GoodsService interface {
 	// SearchPacket ищет пакеты продуктов по их имени или ID.
 	SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error)
 	// AddPacket добавляет новый пакет продуктов в базу данных.
-	AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error)
+	AddPacket(ctx context.Context, packet *models.Package) (int64, error)
+	// GetPacketByID возвращает пакет продуктов по его ID.
+	GetPacketByID(ctx context.Context, id int64) (models.Package, error)
 	// AddProduct добавляет новый продукт в базу данных.
 	AddProduct(ctx context.Context, p *models.Product) (productId int64, err error)
 	// UpdateProduct обновляет информацию о продукте в базе данных.
@@ -89,16 +90,10 @@ func (s *Service) SearchPacket(ctx context.Context, searchString string, quantit
 }
 
 // AddPacket добавляет новый пакет продуктов в базу данных.
-func (s *Service) AddPacket(ctx context.Context, packet *models.Package, packageContent []models.PackageContent) (int64, error) {
+func (s *Service) AddPacket(ctx context.Context, packet *models.Package) (int64, error) {
 	logger := log.With(s.log, "method", "AddPacket")
 	err := s.repo.CreatePackage(ctx, packet)
 	if myerr.ToAppError(logger, err, "Error to create package") != nil {
-		_ = level.Error(logger).Log("err", err)
-		return 0, err
-	}
-	// add products to the package
-	err = s.repo.AddProductToPackage(ctx, packet.ID, packageContent)
-	if myerr.ToAppError(logger, err, "Error to add product to package") != nil {
 		_ = level.Error(logger).Log("err", err)
 		return 0, err
 	}
@@ -114,6 +109,17 @@ func (s *Service) AddProduct(ctx context.Context, p *models.Product) (productId 
 		return 0, err
 	}
 	return productId, nil
+}
+
+func (s *Service) GetPacketByID(ctx context.Context, id int64) (models.Package, error) {
+	logger := log.With(s.log, "method", "GetPacketByID")
+	packet := models.Package{ID: id}
+	err := s.repo.GetPackageByID(ctx, &packet)
+	if myerr.ToAppError(logger, err, "Error to get packet by ID") != nil {
+		_ = level.Error(logger).Log("err", err)
+		return models.Package{}, err
+	}
+	return packet, nil
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.

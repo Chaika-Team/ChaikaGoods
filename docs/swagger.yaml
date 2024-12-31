@@ -5,20 +5,15 @@ definitions:
     properties:
       packet:
         allOf:
-        - $ref: '#/definitions/ChaikaGoods_internal_models.Package'
+        - $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema'
         description: Сведения о новом пакете
-      packet_content:
-        description: Содержимое пакета
-        items:
-          $ref: '#/definitions/ChaikaGoods_internal_models.PackageContent'
-        type: array
     type: object
   ChaikaGoods_internal_handler_schemas.AddPacketResponse:
     description: Ответ на запрос на добавление пакета
     properties:
       err:
         type: string
-      packet_id:
+      id:
         description: ID созданного пакета
         type: integer
     type: object
@@ -33,7 +28,7 @@ definitions:
     properties:
       err:
         type: string
-      product_id:
+      id:
         type: integer
     type: object
   ChaikaGoods_internal_handler_schemas.DeleteProductResponse:
@@ -62,6 +57,14 @@ definitions:
           $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema'
         type: array
     type: object
+  ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse:
+    description: Ответ на запрос на получение пакета по его ID
+    properties:
+      err:
+        type: string
+      packet:
+        $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema'
+    type: object
   ChaikaGoods_internal_handler_schemas.GetProductByIDResponse:
     description: Ответ на запрос на получение продукта по его ID
     properties:
@@ -69,6 +72,26 @@ definitions:
         type: string
       product:
         $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema'
+    type: object
+  ChaikaGoods_internal_handler_schemas.PackageContentSchema:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  ChaikaGoods_internal_handler_schemas.PackageSchema:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.PackageContentSchema'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      package_name:
+        type: string
     type: object
   ChaikaGoods_internal_handler_schemas.ProductSchema:
     properties:
@@ -90,7 +113,7 @@ definitions:
         type: string
       packets:
         items:
-          $ref: '#/definitions/ChaikaGoods_internal_models.Package'
+          $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema'
         type: array
     type: object
   ChaikaGoods_internal_handler_schemas.UpdateProductRequest:
@@ -104,26 +127,6 @@ definitions:
     properties:
       err:
         type: string
-    type: object
-  ChaikaGoods_internal_models.Package:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      package_name:
-        type: string
-    type: object
-  ChaikaGoods_internal_models.PackageContent:
-    properties:
-      id:
-        type: integer
-      package_id:
-        type: integer
-      product_id:
-        type: integer
-      quantity:
-        type: integer
     type: object
 host: 127.0.0.1:8080
 info:
@@ -165,6 +168,35 @@ paths:
           schema:
             $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Add packet
+      tags:
+      - packets
+  /api/v1/packets/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get packet details by its ID
+      parameters:
+      - description: Packet ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse'
+      summary: Get packet by ID
       tags:
       - packets
   /api/v1/packets/search:
