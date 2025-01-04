@@ -45,7 +45,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.AddPacketRequest"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest"
                         }
                     }
                 ],
@@ -53,19 +53,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.AddPacketResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -110,13 +110,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.SearchPacketResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -148,19 +148,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -183,13 +183,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.GetAllProductsResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetAllProductsResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -213,7 +213,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.UpdateProductRequest"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductRequest"
                         }
                     }
                 ],
@@ -221,19 +221,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.UpdateProductResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -257,7 +257,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.CreateProductRequest"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductRequest"
                         }
                     }
                 ],
@@ -265,19 +265,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.CreateProductResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -309,19 +309,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.GetProductByIDResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -351,19 +351,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.DeleteProductResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -371,7 +371,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "ChaikaGoods_internal_handler_schemas.AddPacketRequest": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest": {
             "description": "Запрос на добавление пакета",
             "type": "object",
             "properties": {
@@ -379,13 +379,13 @@ const docTemplate = `{
                     "description": "Сведения о новом пакете",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
                         }
                     ]
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.AddPacketResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse": {
             "description": "Ответ на запрос на добавление пакета",
             "type": "object",
             "properties": {
@@ -398,16 +398,16 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.CreateProductRequest": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductRequest": {
             "description": "Запрос на добавление продукта",
             "type": "object",
             "properties": {
                 "product": {
-                    "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema"
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema"
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.CreateProductResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductResponse": {
             "description": "Ответ на запрос на добавление продукта",
             "type": "object",
             "properties": {
@@ -419,7 +419,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.DeleteProductResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse": {
             "description": "Ответ на запрос на удаление продукта",
             "type": "object",
             "properties": {
@@ -428,7 +428,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.ErrorResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse": {
             "description": "Represents a standard error response for the API",
             "type": "object",
             "properties": {
@@ -442,7 +442,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.GetAllProductsResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetAllProductsResponse": {
             "description": "Ответ на запрос на получение всех продуктов",
             "type": "object",
             "properties": {
@@ -452,12 +452,12 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema"
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema"
                     }
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse": {
             "description": "Ответ на запрос на получение пакета по его ID",
             "type": "object",
             "properties": {
@@ -465,11 +465,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "packet": {
-                    "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.GetProductByIDResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse": {
             "description": "Ответ на запрос на получение продукта по его ID",
             "type": "object",
             "properties": {
@@ -477,11 +477,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "product": {
-                    "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema"
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema"
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.PackageContentSchema": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema": {
             "type": "object",
             "properties": {
                 "product_id": {
@@ -492,13 +492,13 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.PackageSchema": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema": {
             "type": "object",
             "properties": {
                 "content": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageContentSchema"
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema"
                     }
                 },
                 "description": {
@@ -512,7 +512,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.ProductSchema": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema": {
             "type": "object",
             "properties": {
                 "description": {
@@ -532,7 +532,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.SearchPacketResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse": {
             "description": "Ответ на запрос на поиск пакетов",
             "type": "object",
             "properties": {
@@ -542,21 +542,21 @@ const docTemplate = `{
                 "packets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.PackageSchema"
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
                     }
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.UpdateProductRequest": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductRequest": {
             "description": "Запрос на обновление продукта",
             "type": "object",
             "properties": {
                 "product": {
-                    "$ref": "#/definitions/ChaikaGoods_internal_handler_schemas.ProductSchema"
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema"
                 }
             }
         },
-        "ChaikaGoods_internal_handler_schemas.UpdateProductResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse": {
             "description": "Ответ на запрос на обновление продукта",
             "type": "object",
             "properties": {
