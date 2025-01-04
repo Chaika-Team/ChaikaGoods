@@ -24,8 +24,8 @@ import (
 4. Все изменения продуктов происходят через CQRS и создание версий базы продуктов.
 */
 
-// GoodsService описывает сервис для работы с продуктами.
-type GoodsService interface {
+// Service описывает сервис для работы с продуктами.
+type Service interface {
 	// GetAllProducts возвращает список всех продуктов.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
 	// GetProductByID возвращает продукт по его ID.
@@ -43,21 +43,21 @@ type GoodsService interface {
 	// DeleteProduct удаляет продукт из базы данных.
 	DeleteProduct(ctx context.Context, id int64) (err error)
 }
-type Service struct {
+type GoodsService struct {
 	repo repo.GoodsRepository
 	log  log.Logger
 }
 
-// NewService создает новый экземпляр GoodsService.
-func NewService(repo repo.GoodsRepository, logger log.Logger) GoodsService {
-	return &Service{
+// NewService создает новый экземпляр Service.
+func NewService(repo repo.GoodsRepository, logger log.Logger) Service {
+	return &GoodsService{
 		repo: repo,
 		log:  logger,
 	}
 }
 
 // GetAllProducts возвращает список всех продуктов.
-func (s *Service) GetAllProducts(ctx context.Context) ([]models.Product, error) {
+func (s *GoodsService) GetAllProducts(ctx context.Context) ([]models.Product, error) {
 	logger := log.With(s.log, "method", "GetAllProducts")
 	products, err := s.repo.GetAllProducts(ctx)
 
@@ -68,7 +68,7 @@ func (s *Service) GetAllProducts(ctx context.Context) ([]models.Product, error) 
 	return products, nil
 }
 
-func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
+func (s *GoodsService) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
 	logger := log.With(s.log, "method", "GetProductByID")
 	product, err := s.repo.GetProductByID(ctx, id)
 	if myerr.ToAppError(logger, err, "Error to get product by ID") != nil {
@@ -80,7 +80,7 @@ func (s *Service) GetProductByID(ctx context.Context, id int64) (models.Product,
 
 // SearchPacket ищет пакеты продуктов по их имени или ID.
 // TODO переделать через поисковые системы типа ElasticSearch
-func (s *Service) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
+func (s *GoodsService) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
 	logger := log.With(s.log, "method", "SearchPacket")
 
 	if searchString == "" {
@@ -104,7 +104,7 @@ func (s *Service) SearchPacket(ctx context.Context, searchString string, quantit
 }
 
 // AddPacket добавляет новый пакет продуктов в базу данных.
-func (s *Service) AddPacket(ctx context.Context, packet *models.Package) (int64, error) {
+func (s *GoodsService) AddPacket(ctx context.Context, packet *models.Package) (int64, error) {
 	logger := log.With(s.log, "method", "AddPacket")
 	err := s.repo.CreatePackage(ctx, packet)
 	if myerr.ToAppError(logger, err, "Error to create package") != nil {
@@ -115,7 +115,7 @@ func (s *Service) AddPacket(ctx context.Context, packet *models.Package) (int64,
 }
 
 // CreateProduct добавляет новый продукт в базу данных.
-func (s *Service) CreateProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
+func (s *GoodsService) CreateProduct(ctx context.Context, p *models.Product) (productId int64, err error) {
 	logger := log.With(s.log, "method", "CreateProduct")
 	productId, err = s.repo.CreateProduct(ctx, p)
 	if myerr.ToAppError(logger, err, "Error to create product") != nil {
@@ -125,7 +125,7 @@ func (s *Service) CreateProduct(ctx context.Context, p *models.Product) (product
 	return productId, nil
 }
 
-func (s *Service) GetPacketByID(ctx context.Context, id int64) (models.Package, error) {
+func (s *GoodsService) GetPacketByID(ctx context.Context, id int64) (models.Package, error) {
 	logger := log.With(s.log, "method", "GetPacketByID")
 	packet := models.Package{ID: id}
 	err := s.repo.GetPackageByID(ctx, &packet)
@@ -137,7 +137,7 @@ func (s *Service) GetPacketByID(ctx context.Context, id int64) (models.Package, 
 }
 
 // UpdateProduct обновляет информацию о продукте в базе данных.
-func (s *Service) UpdateProduct(ctx context.Context, p *models.Product) (err error) {
+func (s *GoodsService) UpdateProduct(ctx context.Context, p *models.Product) (err error) {
 	logger := log.With(s.log, "method", "UpdateProduct")
 	err = s.repo.UpdateProduct(ctx, p)
 	if myerr.ToAppError(logger, err, "Error to update product") != nil {
@@ -148,7 +148,7 @@ func (s *Service) UpdateProduct(ctx context.Context, p *models.Product) (err err
 }
 
 // DeleteProduct удаляет продукт из базы данных.
-func (s *Service) DeleteProduct(ctx context.Context, id int64) (err error) {
+func (s *GoodsService) DeleteProduct(ctx context.Context, id int64) (err error) {
 	logger := log.With(s.log, "method", "DeleteProduct")
 	err = s.repo.DeleteProduct(ctx, id)
 	if myerr.ToAppError(logger, err, "Error to delete product") != nil {

@@ -30,7 +30,7 @@ type Endpoints struct {
 }
 
 // MakeEndpoints initializes all Go kit endpoints for all operations
-func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
+func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
 	// Инициализируем мапперы
 	productMapper := &schemas.ProductMapper{}
 	productsMapper := &schemas.ProductsMapper{
@@ -70,7 +70,7 @@ func MakeEndpoints(logger log.Logger, service service.GoodsService) Endpoints {
 //	@Success		200	{object}	schemas.GetAllProductsResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [get]
-func makeGetAllProductsEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductsMapper) endpoint.Endpoint {
+func makeGetAllProductsEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductsMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_, ok := request.(schemas.GetAllProductsRequest)
 		if !ok {
@@ -100,7 +100,7 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.GoodsService, mappe
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products/{id} [get]
-func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeGetProductByIDEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(*schemas.GetProductByIDRequest)
 		if !ok {
@@ -131,7 +131,7 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.GoodsService, mappe
 //	@Success		200		{object}	schemas.SearchPacketResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets/search [get]
-func makeSearchPacketEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.PackagesMapper) endpoint.Endpoint {
+func makeSearchPacketEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.SearchPacketRequest)
 		if !ok {
@@ -161,7 +161,7 @@ func makeSearchPacketEndpoint(logger log.Logger, s service.GoodsService, mapper 
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets [post]
-func makeAddPacketEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.PackageMapper) endpoint.Endpoint {
+func makeAddPacketEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.AddPacketRequest)
 		if !ok {
@@ -192,7 +192,7 @@ func makeAddPacketEndpoint(logger log.Logger, s service.GoodsService, mapper *sc
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets/{id} [get]
-func makeGetPacketByIDEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.PackageMapper) endpoint.Endpoint {
+func makeGetPacketByIDEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(*schemas.GetPacketByIDRequest)
 		if !ok {
@@ -222,7 +222,7 @@ func makeGetPacketByIDEndpoint(logger log.Logger, s service.GoodsService, mapper
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [post]
-func makeCreateProductEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeCreateProductEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.CreateProductRequest)
 		if !ok {
@@ -253,7 +253,7 @@ func makeCreateProductEndpoint(logger log.Logger, s service.GoodsService, mapper
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [put]
-func makeUpdateProductEndpoint(logger log.Logger, s service.GoodsService, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeUpdateProductEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(schemas.UpdateProductRequest)
 		if !ok {
@@ -284,7 +284,7 @@ func makeUpdateProductEndpoint(logger log.Logger, s service.GoodsService, mapper
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products/{id} [delete]
-func makeDeleteProductEndpoint(logger log.Logger, s service.GoodsService) endpoint.Endpoint {
+func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, ok := request.(*schemas.DeleteProductRequest)
 		if !ok {

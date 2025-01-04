@@ -66,7 +66,7 @@ func main() {
 	_ = level.Info(logger).Log("message", "Connection to the database is successful")
 
 	// Создание нового сервиса
-	var svc service.GoodsService
+	var svc service.Service
 	{
 		rep := repo.NewGoodsRepository(pool, logger)
 		svc = service.NewService(rep, logger)
