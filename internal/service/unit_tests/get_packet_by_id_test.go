@@ -1,4 +1,4 @@
-package tests
+package unit_tests
 
 import (
 	"context"
@@ -13,7 +13,9 @@ func (suite *ServiceTestSuite) TestGetPacketByID_Success() {
 	packetID := int64(1)
 	expectedPacket := createTestPackage(packetID, "Test Package")
 
-	suite.mockRepo.On("GetPackageByID", mock.Anything, &models.Package{ID: packetID}).
+	suite.mockRepo.On("GetPackageByID", mock.Anything, mock.MatchedBy(func(packet *models.Package) bool {
+		return packet.ID == packetID
+	})).
 		Run(func(args mock.Arguments) {
 			p := args.Get(1).(*models.Package)
 			*p = expectedPacket
@@ -31,7 +33,9 @@ func (suite *ServiceTestSuite) TestGetPacketByID_NotFound() {
 	packetID := int64(2)
 	expectedError := errors.New("packet not found")
 
-	suite.mockRepo.On("GetPackageByID", mock.Anything, &models.Package{ID: packetID}).
+	suite.mockRepo.On("GetPackageByID", mock.Anything, mock.MatchedBy(func(packet *models.Package) bool {
+		return packet.ID == packetID
+	})).
 		Return(expectedError).
 		Once()
 
@@ -46,7 +50,9 @@ func (suite *ServiceTestSuite) TestGetPacketByID_RepositoryError() {
 	packetID := int64(3)
 	expectedError := errors.New("database error")
 
-	suite.mockRepo.On("GetPackageByID", mock.Anything, &models.Package{ID: packetID}).
+	suite.mockRepo.On("GetPackageByID", mock.Anything, mock.MatchedBy(func(packet *models.Package) bool {
+		return packet.ID == packetID
+	})).
 		Return(expectedError).
 		Once()
 

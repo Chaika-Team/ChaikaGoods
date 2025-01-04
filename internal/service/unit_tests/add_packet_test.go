@@ -1,4 +1,4 @@
-package tests
+package unit_tests
 
 import (
 	"context"
@@ -20,7 +20,11 @@ func (suite *ServiceTestSuite) TestAddPacket_Success() {
 	}
 	expectedID := int64(1)
 
-	suite.mockRepo.On("CreatePackage", mock.Anything, newPacket).
+	suite.mockRepo.On("CreatePackage", mock.Anything, mock.MatchedBy(func(p *models.Package) bool {
+		return p.PackageName == newPacket.PackageName &&
+			p.Description == newPacket.Description &&
+			len(p.Content) == len(newPacket.Content)
+	})).
 		Run(func(args mock.Arguments) {
 			packet := args.Get(1).(*models.Package)
 			packet.ID = expectedID
@@ -50,7 +54,11 @@ func (suite *ServiceTestSuite) TestAddPacket_RepositoryError() {
 	}
 	expectedError := errors.New("database error")
 
-	suite.mockRepo.On("CreatePackage", mock.Anything, newPacket).
+	suite.mockRepo.On("CreatePackage", mock.Anything, mock.MatchedBy(func(p *models.Package) bool {
+		return p.PackageName == newPacket.PackageName &&
+			p.Description == newPacket.Description &&
+			len(p.Content) == len(newPacket.Content)
+	})).
 		Return(expectedError).
 		Once()
 

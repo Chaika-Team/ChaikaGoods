@@ -1,5 +1,5 @@
 // internal/service/update_product_test.go
-package tests
+package unit_tests
 
 import (
 	"context"
