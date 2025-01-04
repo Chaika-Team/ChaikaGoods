@@ -1,12 +1,13 @@
 package postgresql
 
 import (
-	"ChaikaGoods/internal/models"
-	"ChaikaGoods/internal/myerr"
-	"ChaikaGoods/internal/repository"
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/models"
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
+	"github.com/Chaika-Team/ChaikaGoods/internal/repository"
 
 	"github.com/go-kit/log"
 	"github.com/jackc/pgx/v5"

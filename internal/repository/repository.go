@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"ChaikaGoods/internal/models"
 	"context"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 )
 
 type GoodsRepository interface {

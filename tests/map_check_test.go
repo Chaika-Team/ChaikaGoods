@@ -1,9 +1,10 @@
 package tests
 
 import (
-	"ChaikaGoods/internal/models"
-	"ChaikaGoods/internal/utils"
 	"testing"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/models"
+	"github.com/Chaika-Team/ChaikaGoods/internal/utils"
 
 	"github.com/stretchr/testify/assert"
 )

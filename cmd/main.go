@@ -1,10 +1,6 @@
 package main
 
 import (
-	"ChaikaGoods/internal/config"
-	"ChaikaGoods/internal/handler"
-	repo "ChaikaGoods/internal/repository/postgresql"
-	"ChaikaGoods/internal/service"
 	"context"
 	"flag"
 	"fmt"
@@ -12,6 +8,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/config"
+	"github.com/Chaika-Team/ChaikaGoods/internal/handler"
+	repo "github.com/Chaika-Team/ChaikaGoods/internal/repository/postgresql"
+	"github.com/Chaika-Team/ChaikaGoods/internal/service"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"

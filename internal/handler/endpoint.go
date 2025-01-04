@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"ChaikaGoods/internal/handler/schemas"
-	"ChaikaGoods/internal/service"
 	"context"
 	"errors"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
+	"github.com/Chaika-Team/ChaikaGoods/internal/service"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"

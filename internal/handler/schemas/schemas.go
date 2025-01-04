@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	_ "ChaikaGoods/docs"
+	_ "github.com/Chaika-Team/ChaikaGoods/docs"
 )
 
 type ProductSchema struct {

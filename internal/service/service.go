@@ -1,10 +1,11 @@
 package service
 
 import (
-	"ChaikaGoods/internal/models"
-	"ChaikaGoods/internal/myerr"
-	repo "ChaikaGoods/internal/repository"
 	"context"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/models"
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
+	repo "github.com/Chaika-Team/ChaikaGoods/internal/repository"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"

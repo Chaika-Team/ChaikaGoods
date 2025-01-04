@@ -1,15 +1,16 @@
 package handler
 
 import (
-	_ "ChaikaGoods/docs"
-	"ChaikaGoods/internal/handler/schemas"
-	"ChaikaGoods/internal/myerr"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	_ "github.com/Chaika-Team/ChaikaGoods/docs"
+	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 
 	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"

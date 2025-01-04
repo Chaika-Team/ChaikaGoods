@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"ChaikaGoods/internal/models"
+	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 )
 
 // ProductMapper содержит методы для преобразования между models.Product и schemas.ProductSchema.

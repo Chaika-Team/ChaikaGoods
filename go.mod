@@ -1,4 +1,4 @@
-module ChaikaGoods
+module github.com/Chaika-Team/ChaikaGoods
 
 go 1.23.4
 

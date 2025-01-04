@@ -1,11 +1,12 @@
 package postgresql
 
 import (
-	"ChaikaGoods/internal/config"
 	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/config"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
