@@ -20,7 +20,7 @@ jobs:
     steps:
       # 1. Checkout код
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Установить нужную версию Go
       - name: Set up Go
@@ -30,7 +30,7 @@ jobs:
 
       # 3. Кэширование модулей Go
       - name: Cache Go modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -63,7 +63,7 @@ jobs:
 
       # 8. Сохранение артефактов покрытия
       - name: Upload coverage to artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.out
@@ -80,11 +80,11 @@ jobs:
     steps:
       # 1. Checkout код
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Установить нужную версию Go
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23.4'
 
@@ -95,7 +95,7 @@ jobs:
 
       # 4. SonarQube Scan
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
