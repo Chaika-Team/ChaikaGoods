@@ -34,7 +34,6 @@ type GetAllProductsRequest struct {
 // @Description Ответ на запрос на получение всех продуктов
 type GetAllProductsResponse struct {
 	Products []ProductSchema `json:"products"`
-	Err      string          `json:"err,omitempty"`
 }
 
 // GetProductByIDRequest представляет собой запрос на получение продукта по его ID
@@ -47,7 +46,6 @@ type GetProductByIDRequest struct {
 // @Description Ответ на запрос на получение продукта по его ID
 type GetProductByIDResponse struct {
 	Product ProductSchema `json:"product"`
-	Err     string        `json:"err,omitempty"`
 }
 
 // SearchPacketRequest представляет собой запрос на поиск пакетов
@@ -62,7 +60,6 @@ type SearchPacketRequest struct {
 // @Description Ответ на запрос на поиск пакетов
 type SearchPacketResponse struct {
 	Packets []PackageSchema `json:"packets"`
-	Err     string          `json:"err,omitempty"`
 }
 
 // AddPacketRequest представляет собой запрос на добавление пакета
@@ -74,8 +71,7 @@ type AddPacketRequest struct {
 // AddPacketResponse представляет собой ответ на запрос на добавление пакета
 // @Description Ответ на запрос на добавление пакета
 type AddPacketResponse struct {
-	PacketID int64  `json:"id"` // ID созданного пакета
-	Err      string `json:"err,omitempty"`
+	PacketID int64 `json:"id"` // ID созданного пакета
 }
 
 // GetPacketByIDRequest представляет собой запрос на получение пакета по его ID
@@ -88,7 +84,6 @@ type GetPacketByIDRequest struct {
 // @Description Ответ на запрос на получение пакета по его ID
 type GetPacketByIDResponse struct {
 	Packet PackageSchema `json:"packet"`
-	Err    string        `json:"err,omitempty"`
 }
 
 // CreateProductRequest представляет собой запрос на добавление продукта
@@ -100,8 +95,7 @@ type CreateProductRequest struct {
 // CreateProductResponse представляет собой ответ на запрос на добавление продукта
 // @Description Ответ на запрос на добавление продукта
 type CreateProductResponse struct {
-	ProductID int64  `json:"id"`
-	Err       string `json:"err,omitempty"`
+	ProductID int64 `json:"id"`
 }
 
 // UpdateProductRequest представляет собой запрос на обновление продукта
@@ -113,7 +107,6 @@ type UpdateProductRequest struct {
 // UpdateProductResponse представляет собой ответ на запрос на обновление продукта
 // @Description Ответ на запрос на обновление продукта
 type UpdateProductResponse struct {
-	Err string `json:"err,omitempty"`
 }
 
 // DeleteProductRequest представляет собой запрос на удаление продукта
@@ -125,5 +118,4 @@ type DeleteProductRequest struct {
 // DeleteProductResponse представляет собой ответ на запрос на удаление продукта
 // @Description Ответ на запрос на удаление продукта
 type DeleteProductResponse struct {
-	Err string `json:"err,omitempty"`
 }

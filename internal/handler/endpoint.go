@@ -2,17 +2,15 @@ package handler
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/service"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 )
 
-// Endpoints holds all Go kit endpoints for all operations
+// Endpoints содержит все Go kit эндпоинты для всех операций
 type Endpoints struct {
 	// For products
 	GetAllProducts    endpoint.Endpoint
@@ -29,35 +27,36 @@ type Endpoints struct {
 	DeleteProduct endpoint.Endpoint
 }
 
-// MakeEndpoints initializes all Go kit endpoints for all operations
-func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
-	// Инициализируем мапперы
-	productMapper := &schemas.ProductMapper{}
-	productsMapper := &schemas.ProductsMapper{
-		ProductMapper: productMapper,
-	}
-	packageContentMapper := &schemas.PackageContentMapper{}
-	packageMapper := &schemas.PackageMapper{
-		ContentMapper: packageContentMapper,
-		ProductMapper: productMapper,
-	}
-	packagesMapper := &schemas.PackagesMapper{
-		PackageMapper: packageMapper,
-	}
+// MakeEndpoints инициализирует все Go kit эндпоинты для всех операций
+func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
+	// Инициализируем мапперы через конструкторы
+	productMapper := schemas.NewProductMapper()
+	productsMapper := schemas.NewProductsMapper(productMapper)
+	packageContentMapper := schemas.NewPackageContentMapper()
+	packageMapper := schemas.NewPackageMapper(packageContentMapper, productMapper)
+	packagesMapper := schemas.NewPackagesMapper(packageMapper)
+
+	// Создаем middleware для логирования и обработки ошибок
+	logMiddleware := LoggingMiddleware(logger)
 
 	return Endpoints{
 		// Products
-		GetAllProducts: makeGetAllProductsEndpoint(logger, service, productsMapper),
-		GetProductByID: makeGetProductByIDEndpoint(logger, service, productMapper),
+		GetAllProducts: logMiddleware(makeGetAllProductsEndpoint(svc, productsMapper)),
+		GetProductByID: logMiddleware(makeGetProductByIDEndpoint(svc, productMapper)),
 		// Packets
-		SearchPacket:  makeSearchPacketEndpoint(logger, service, packagesMapper),
-		AddPacket:     makeAddPacketEndpoint(logger, service, packageMapper),
-		GetPacketByID: makeGetPacketByIDEndpoint(logger, service, packageMapper),
+		SearchPacket:  logMiddleware(makeSearchPacketEndpoint(svc, packagesMapper)),
+		AddPacket:     logMiddleware(makeAddPacketEndpoint(svc, packageMapper)),
+		GetPacketByID: logMiddleware(makeGetPacketByIDEndpoint(svc, packageMapper)),
 		// Products (admin)
-		CreateProduct: makeCreateProductEndpoint(logger, service, productMapper),
-		UpdateProduct: makeUpdateProductEndpoint(logger, service, productMapper),
-		DeleteProduct: makeDeleteProductEndpoint(logger, service),
+		CreateProduct: logMiddleware(makeCreateProductEndpoint(svc, productMapper)),
+		UpdateProduct: logMiddleware(makeUpdateProductEndpoint(svc, productMapper)),
+		DeleteProduct: logMiddleware(makeDeleteProductEndpoint(svc)),
 	}
+}
+
+// Типизированная функция для приведения типов без проверки
+func mustCast[T any](req interface{}) T {
+	return req.(T) // Паникует, если приведение неудачно
 }
 
 // makeGetAllProductsEndpoint constructs a GetAllProducts endpoint wrapping the service.
@@ -70,14 +69,8 @@ func MakeEndpoints(logger log.Logger, service service.Service) Endpoints {
 //	@Success		200	{object}	schemas.GetAllProductsResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [get]
-func makeGetAllProductsEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductsMapper) endpoint.Endpoint {
+func makeGetAllProductsEndpoint(s service.Service, mapper *schemas.ProductsMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		_, ok := request.(schemas.GetAllProductsRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
-
 		products, err := s.GetAllProducts(ctx)
 		if err != nil {
 			return nil, err
@@ -100,13 +93,9 @@ func makeGetAllProductsEndpoint(logger log.Logger, s service.Service, mapper *sc
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products/{id} [get]
-func makeGetProductByIDEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(*schemas.GetProductByIDRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[*schemas.GetProductByIDRequest](request)
 
 		product, err := s.GetProductByID(ctx, req.ProductID)
 		if err != nil {
@@ -131,13 +120,9 @@ func makeGetProductByIDEndpoint(logger log.Logger, s service.Service, mapper *sc
 //	@Success		200		{object}	schemas.SearchPacketResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets/search [get]
-func makeSearchPacketEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
+func makeSearchPacketEndpoint(s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.SearchPacketRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[schemas.SearchPacketRequest](request)
 
 		packets, err := s.SearchPacket(ctx, req.Query, req.Limit, req.Offset)
 		if err != nil {
@@ -161,13 +146,9 @@ func makeSearchPacketEndpoint(logger log.Logger, s service.Service, mapper *sche
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets [post]
-func makeAddPacketEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+func makeAddPacketEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.AddPacketRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[schemas.AddPacketRequest](request)
 
 		packetModel := mapper.ToModel(req.Packet)
 
@@ -192,13 +173,9 @@ func makeAddPacketEndpoint(logger log.Logger, s service.Service, mapper *schemas
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/packets/{id} [get]
-func makeGetPacketByIDEndpoint(logger log.Logger, s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+func makeGetPacketByIDEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(*schemas.GetPacketByIDRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[*schemas.GetPacketByIDRequest](request)
 
 		packet, err := s.GetPacketByID(ctx, req.PacketID)
 		if err != nil {
@@ -222,13 +199,9 @@ func makeGetPacketByIDEndpoint(logger log.Logger, s service.Service, mapper *sch
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [post]
-func makeCreateProductEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.CreateProductRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[schemas.CreateProductRequest](request)
 
 		productModel := mapper.ToModel(req.Product)
 
@@ -253,13 +226,9 @@ func makeCreateProductEndpoint(logger log.Logger, s service.Service, mapper *sch
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products [put]
-func makeUpdateProductEndpoint(logger log.Logger, s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
+func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(schemas.UpdateProductRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[schemas.UpdateProductRequest](request)
 
 		productModel := mapper.ToModel(req.Product)
 
@@ -284,13 +253,9 @@ func makeUpdateProductEndpoint(logger log.Logger, s service.Service, mapper *sch
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
 //	@Router			/api/v1/products/{id} [delete]
-func makeDeleteProductEndpoint(logger log.Logger, s service.Service) endpoint.Endpoint {
+func makeDeleteProductEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(*schemas.DeleteProductRequest)
-		if !ok {
-			_ = level.Error(logger).Log("msg", "invalid request type")
-			return nil, errors.New("invalid request type")
-		}
+		req := mustCast[*schemas.DeleteProductRequest](request)
 
 		err := s.DeleteProduct(ctx, req.ProductID)
 		if err != nil {
