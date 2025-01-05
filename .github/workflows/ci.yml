@@ -70,7 +70,7 @@ jobs:
 
       # 9. Сборка приложения
       - name: Build
-        run: go build -v -o chaika-goods ./cmd/main
+        run: go build -v -o chaika-goods ./cmd
 
   sonarqube:
     name: SonarQube Analysis
