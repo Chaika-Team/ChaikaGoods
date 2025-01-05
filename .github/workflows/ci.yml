@@ -88,25 +88,21 @@ jobs:
         with:
           go-version: '1.23.4'
 
-      # 3. Установить SonarQube Scanner
-      - name: Install SonarQube Scanner
+      # 3. Run tests and generate coverage
+      - name: Run Tests
         run: |
-          curl -sL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip -o sonar-scanner.zip
-          unzip sonar-scanner.zip -d $HOME
-          mv $HOME/sonar-scanner-4.8.0.2856-linux $HOME/sonar-scanner
-          echo "PATH=$HOME/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
+          go test ./... -coverprofile=coverage.out
 
-      # 4. Запуск анализа SonarQube
+      # 4. SonarQube Scan
       - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4.1.0
         env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=ChaikaGoods \
-            -Dsonar.sources=./internal \
-            -Dsonar.exclusions=**/tests/**,**/*.mock.go \
-            -Dsonar.go.coverage.reportPaths=coverage.out \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=ChaikaGoods
+            -Dsonar.sources=./internal
+            -Dsonar.exclusions=**/tests/**,**/*.mock.go
+            -Dsonar.go.coverage.reportPaths=coverage.out
   
