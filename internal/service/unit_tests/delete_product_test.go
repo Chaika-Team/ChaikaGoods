@@ -1,4 +1,4 @@
-package tests
+package unit_tests
 
 import (
 	"context"
@@ -11,7 +11,9 @@ import (
 func (suite *ServiceTestSuite) TestDeleteProduct_Success() {
 	productID := int64(1)
 
-	suite.mockRepo.On("DeleteProduct", mock.Anything, productID).
+	suite.mockRepo.On("DeleteProduct", mock.Anything, mock.MatchedBy(func(id int64) bool {
+		return id == productID
+	})).
 		Return(nil).
 		Once()
 
@@ -24,7 +26,9 @@ func (suite *ServiceTestSuite) TestDeleteProduct_RepositoryError() {
 	productID := int64(2)
 	expectedError := errors.New("database error")
 
-	suite.mockRepo.On("DeleteProduct", mock.Anything, productID).
+	suite.mockRepo.On("DeleteProduct", mock.Anything, mock.MatchedBy(func(id int64) bool {
+		return id == productID
+	})).
 		Return(expectedError).
 		Once()
 

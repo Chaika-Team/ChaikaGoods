@@ -1,4 +1,4 @@
-package tests
+package unit_tests
 
 import (
 	"context"
@@ -19,7 +19,13 @@ func (suite *ServiceTestSuite) TestCreateProduct_Success() {
 	}
 	expectedID := int64(3)
 
-	suite.mockRepo.On("CreateProduct", mock.Anything, newProduct).
+	suite.mockRepo.On("CreateProduct", mock.Anything, mock.MatchedBy(func(p *models.Product) bool {
+		return p.Name == newProduct.Name &&
+			p.Description == newProduct.Description &&
+			p.Price == newProduct.Price &&
+			p.ImageURL == newProduct.ImageURL &&
+			p.SKU == newProduct.SKU
+	})).
 		Run(func(args mock.Arguments) {
 			product := args.Get(1).(*models.Product)
 			product.ID = expectedID
@@ -47,7 +53,13 @@ func (suite *ServiceTestSuite) TestCreateProduct_RepositoryError() {
 	}
 	expectedError := errors.New("database error")
 
-	suite.mockRepo.On("CreateProduct", mock.Anything, newProduct).
+	suite.mockRepo.On("CreateProduct", mock.Anything, mock.MatchedBy(func(p *models.Product) bool {
+		return p.Name == newProduct.Name &&
+			p.Description == newProduct.Description &&
+			p.Price == newProduct.Price &&
+			p.ImageURL == newProduct.ImageURL &&
+			p.SKU == newProduct.SKU
+	})).
 		Return(int64(0), expectedError).
 		Once()
 
