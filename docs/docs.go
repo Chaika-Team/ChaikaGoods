@@ -389,9 +389,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на добавление пакета",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "id": {
                     "description": "ID созданного пакета",
                     "type": "integer"
@@ -411,9 +408,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на добавление продукта",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 }
@@ -421,23 +415,17 @@ const docTemplate = `{
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse": {
             "description": "Ответ на запрос на удаление продукта",
-            "type": "object",
-            "properties": {
-                "err": {
-                    "type": "string"
-                }
-            }
+            "type": "object"
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse": {
-            "description": "Represents a standard error response for the API",
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "Error code",
+                    "description": "Код ошибки",
                     "type": "integer"
                 },
                 "message": {
-                    "description": "Error message",
+                    "description": "Сообщение об ошибке",
                     "type": "string"
                 }
             }
@@ -446,9 +434,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на получение всех продуктов",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "products": {
                     "type": "array",
                     "items": {
@@ -461,9 +446,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на получение пакета по его ID",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "packet": {
                     "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
                 }
@@ -473,9 +455,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на получение продукта по его ID",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "product": {
                     "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema"
                 }
@@ -536,9 +515,6 @@ const docTemplate = `{
             "description": "Ответ на запрос на поиск пакетов",
             "type": "object",
             "properties": {
-                "err": {
-                    "type": "string"
-                },
                 "packets": {
                     "type": "array",
                     "items": {
@@ -558,12 +534,7 @@ const docTemplate = `{
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse": {
             "description": "Ответ на запрос на обновление продукта",
-            "type": "object",
-            "properties": {
-                "err": {
-                    "type": "string"
-                }
-            }
+            "type": "object"
         }
     }
 }`
