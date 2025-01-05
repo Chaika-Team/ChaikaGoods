@@ -12,7 +12,6 @@ import (
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 
-	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -50,18 +49,6 @@ func commonMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 				"url", r.URL.String(),
 			)
 		})
-	}
-}
-
-// makeLoggingMiddleware creates a logging middleware for an endpoint.
-func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			_ = level.Info(logger).Log("msg", "calling endpoint", "request", request)
-			response, err = next(ctx, request)
-			_ = level.Info(logger).Log("msg", "called endpoint", "response", response, "err", err)
-			return
-		}
 	}
 }
 
