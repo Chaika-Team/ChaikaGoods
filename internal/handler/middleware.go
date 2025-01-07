@@ -14,7 +14,7 @@ import (
 func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (interface{}, error) {
-			_ = level.Info(logger).Log(
+			_ = level.Debug(logger).Log(
 				"msg", "received request",
 				"request", fmt.Sprintf("%+v", request),
 			)
@@ -22,7 +22,7 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 			if err != nil {
 				_ = level.Error(logger).Log("error", err, "request", fmt.Sprintf("%+v", request))
 			} else {
-				_ = level.Info(logger).Log("msg", "handled request", "response", fmt.Sprintf("%+v", response))
+				_ = level.Debug(logger).Log("msg", "handled request", "response", fmt.Sprintf("%+v", response))
 			}
 			return response, err
 		}
@@ -32,13 +32,13 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 func HTTPLoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_ = level.Info(logger).Log(
+			_ = level.Debug(logger).Log(
 				"msg", "received request",
 				"method", r.Method,
 				"url", r.URL.String(),
 			)
 			next.ServeHTTP(w, r)
-			_ = level.Info(logger).Log(
+			_ = level.Debug(logger).Log(
 				"msg", "handled request",
 				"method", r.Method,
 				"url", r.URL.String(),
