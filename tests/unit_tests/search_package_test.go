@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
+
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func (suite *ServiceTestSuite) TestSearchPacket_WithQuery_Success() {
+func (suite *ServiceTestSuite) TestSearchPackages_WithQuery_Success() {
 	searchString := "Test"
 	limit := int64(10)
 	offset := int64(0)
@@ -17,17 +19,17 @@ func (suite *ServiceTestSuite) TestSearchPacket_WithQuery_Success() {
 		createTestPackage(1, "Test Package 1"),
 	}
 
-	suite.mockRepo.On("SearchPacket", mock.Anything, searchString, limit, offset).
+	suite.mockRepo.On("SearchPackages", mock.Anything, searchString, limit, offset).
 		Return(expectedPackages, nil).
 		Once()
 
-	packages, err := suite.svc.SearchPacket(context.Background(), searchString, limit, offset)
+	packages, err := suite.svc.SearchPackages(context.Background(), searchString, limit, offset)
 
-	assert.NoError(suite.T(), err, "Expected no error when searching packets with query")
+	assert.NoError(suite.T(), err, "Expected no error when searching Packages with query")
 	assert.Equal(suite.T(), expectedPackages, packages, "Expected packages to match the mocked packages")
 }
 
-func (suite *ServiceTestSuite) TestSearchPacket_EmptyQuery_Success() {
+func (suite *ServiceTestSuite) TestSearchPackages_EmptyQuery_Success() {
 	searchString := ""
 	limit := int64(5)
 	offset := int64(0)
@@ -40,42 +42,44 @@ func (suite *ServiceTestSuite) TestSearchPacket_EmptyQuery_Success() {
 		Return(expectedPackages, nil).
 		Once()
 
-	packages, err := suite.svc.SearchPacket(context.Background(), searchString, limit, offset)
+	packages, err := suite.svc.SearchPackages(context.Background(), searchString, limit, offset)
 
-	assert.NoError(suite.T(), err, "Expected no error when searching packets with empty query")
+	assert.NoError(suite.T(), err, "Expected no error when searching Packages with empty query")
 	assert.Equal(suite.T(), expectedPackages, packages, "Expected packages to match the mocked packages")
 }
 
-func (suite *ServiceTestSuite) TestSearchPacket_WithQuery_RepositoryError() {
+func (suite *ServiceTestSuite) TestSearchPackages_WithQuery_RepositoryError() {
 	searchString := "NonExistent"
 	limit := int64(10)
 	offset := int64(0)
-	expectedError := errors.New("database error")
+	expectedError := myerr.Internal("Database error", errors.New("connection failed"))
 
-	suite.mockRepo.On("SearchPacket", mock.Anything, searchString, limit, offset).
+	suite.mockRepo.On("SearchPackages", mock.Anything, searchString, limit, offset).
 		Return(nil, expectedError).
 		Once()
 
-	packages, err := suite.svc.SearchPacket(context.Background(), searchString, limit, offset)
+	packages, err := suite.svc.SearchPackages(context.Background(), searchString, limit, offset)
 
 	assert.Error(suite.T(), err, "Expected error when repository returns an error during search")
+	assert.True(suite.T(), myerr.IsInternal(err), "Expected error to be of type Internal")
 	assert.Equal(suite.T(), expectedError, err, "Expected error to match the mocked error")
 	assert.Nil(suite.T(), packages, "Expected packages to be nil on error")
 }
 
-func (suite *ServiceTestSuite) TestSearchPacket_EmptyQuery_RepositoryError() {
+func (suite *ServiceTestSuite) TestSearchPackages_EmptyQuery_RepositoryError() {
 	searchString := ""
 	limit := int64(5)
 	offset := int64(0)
-	expectedError := errors.New("database error")
+	expectedError := myerr.Internal("Database error", errors.New("connection failed"))
 
 	suite.mockRepo.On("GetAllPackages", mock.Anything, limit, offset).
 		Return(nil, expectedError).
 		Once()
 
-	packages, err := suite.svc.SearchPacket(context.Background(), searchString, limit, offset)
+	packages, err := suite.svc.SearchPackages(context.Background(), searchString, limit, offset)
 
 	assert.Error(suite.T(), err, "Expected error when repository returns an error during GetAllPackages")
+	assert.True(suite.T(), myerr.IsInternal(err), "Expected error to be of type Internal")
 	assert.Equal(suite.T(), expectedError, err, "Expected error to match the mocked error")
 	assert.Nil(suite.T(), packages, "Expected packages to be nil on error")
 }

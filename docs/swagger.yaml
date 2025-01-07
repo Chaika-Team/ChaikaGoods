@@ -1,18 +1,16 @@
 basePath: /
 definitions:
-  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest:
     description: Запрос на добавление пакета
     properties:
-      packet:
+      Package:
         allOf:
         - $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema'
         description: Сведения о новом пакете
     type: object
-  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse:
     description: Ответ на запрос на добавление пакета
     properties:
-      err:
-        type: string
       id:
         description: ID созданного пакета
         type: integer
@@ -26,50 +24,38 @@ definitions:
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductResponse:
     description: Ответ на запрос на добавление продукта
     properties:
-      err:
-        type: string
       id:
         type: integer
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse:
     description: Ответ на запрос на удаление продукта
-    properties:
-      err:
-        type: string
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse:
-    description: Represents a standard error response for the API
     properties:
       code:
-        description: Error code
+        description: Код ошибки
         type: integer
       message:
-        description: Error message
+        description: Сообщение об ошибке
         type: string
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetAllProductsResponse:
     description: Ответ на запрос на получение всех продуктов
     properties:
-      err:
-        type: string
       products:
         items:
           $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
         type: array
     type: object
-  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse:
     description: Ответ на запрос на получение пакета по его ID
     properties:
-      err:
-        type: string
-      packet:
+      Package:
         $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema'
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse:
     description: Ответ на запрос на получение продукта по его ID
     properties:
-      err:
-        type: string
       product:
         $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
     type: object
@@ -106,12 +92,10 @@ definitions:
       price:
         type: number
     type: object
-  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse:
     description: Ответ на запрос на поиск пакетов
     properties:
-      err:
-        type: string
-      packets:
+      Packages:
         items:
           $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema'
         type: array
@@ -124,9 +108,6 @@ definitions:
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse:
     description: Ответ на запрос на обновление продукта
-    properties:
-      err:
-        type: string
     type: object
 host: 127.0.0.1:8080
 info:
@@ -140,25 +121,25 @@ info:
   title: ChaikaGoods API
   version: 0.0.2
 paths:
-  /api/v1/packets:
+  /api/v1/Packages:
     post:
       consumes:
       - application/json
-      description: Add a new packet of products to the database
+      description: Add a new Package of products to the database
       parameters:
-      - description: Packet details
+      - description: Package details
         in: body
-        name: packet
+        name: Package
         required: true
         schema:
-          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse'
         "400":
           description: Bad Request
           schema:
@@ -167,16 +148,16 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
-      summary: Add packet
+      summary: Add Package
       tags:
-      - packets
-  /api/v1/packets/{id}:
+      - Packages
+  /api/v1/Packages/{id}:
     get:
       consumes:
       - application/json
-      description: Get packet details by its ID
+      description: Get Package details by its ID
       parameters:
-      - description: Packet ID
+      - description: Package ID
         in: path
         name: id
         required: true
@@ -187,7 +168,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse'
         "404":
           description: Not Found
           schema:
@@ -196,14 +177,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
-      summary: Get packet by ID
+      summary: Get Package by ID
       tags:
-      - packets
-  /api/v1/packets/search:
+      - Packages
+  /api/v1/Packages/search:
     get:
       consumes:
       - application/json
-      description: Search for packets
+      description: Search for Packages
       parameters:
       - description: Search query
         in: query
@@ -225,14 +206,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
-      summary: Search packet
+      summary: Search Package
       tags:
-      - packets
+      - Packages
   /api/v1/products:
     get:
       consumes:

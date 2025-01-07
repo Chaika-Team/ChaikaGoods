@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
+
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +28,7 @@ func (suite *ServiceTestSuite) TestGetAllProducts_Success() {
 }
 
 func (suite *ServiceTestSuite) TestGetAllProducts_RepositoryError() {
-	expectedError := errors.New("database error")
+	expectedError := myerr.Internal("Database error", errors.New("connection failed"))
 
 	suite.mockRepo.On("GetAllProducts", mock.Anything).
 		Return(nil, expectedError).

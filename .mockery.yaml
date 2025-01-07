@@ -6,7 +6,7 @@ packages:
   github.com/Chaika-Team/ChaikaGoods/internal/repository:
     config:
       mockname: "Mock{{.InterfaceName}}"
-      filename: "mock_{{.InterfaceName}}.go"
+      filename: "{{.InterfaceName}}.mock.go"
       dir: "internal/repository/mocks"
       outpkg: "mocks"
       inpackage: false

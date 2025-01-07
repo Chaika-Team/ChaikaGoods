@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 
-	"github.com/go-kit/kit/endpoint"
 	httpGoKit "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -20,10 +20,15 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// Constants for logging messages
+const (
+	decoderReturningMsg = "decoder returning"
+)
+
 // NewHTTPServer initializes and returns a new HTTP server with all routes defined.
 func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 	r := mux.NewRouter()
-	r.Use(commonMiddleware(logger))
+	r.Use(HTTPLoggingMiddleware(logger), HeaderMiddleware)
 	// Swagger UI
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
@@ -33,45 +38,13 @@ func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 	return r
 }
 
-// commonMiddleware adds common HTTP headers to all responses.
-func commonMiddleware(logger log.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_ = level.Info(logger).Log(
-				"msg", "received request",
-				"method", r.Method,
-				"url", r.URL.String(),
-			)
-			w.Header().Set("Content-Type", "application/json")
-			next.ServeHTTP(w, r)
-			_ = level.Info(logger).Log(
-				"msg", "handled request",
-				"method", r.Method,
-				"url", r.URL.String(),
-			)
-		})
-	}
-}
-
-// makeLoggingMiddleware creates a logging middleware for an endpoint.
-func makeLoggingMiddleware(logger log.Logger) endpoint.Middleware {
-	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			_ = level.Info(logger).Log("msg", "calling endpoint", "request", request)
-			response, err = next(ctx, request)
-			_ = level.Info(logger).Log("msg", "called endpoint", "response", response, "err", err)
-			return
-		}
-	}
-}
-
 // registerRoutes registers all routes for the service using go-kit transport.
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// GetAllProducts    endpoint.Endpoint
 	// GetProductByID    endpoint.Endpoint
-	// For packets
-	// SearchPacket endpoint.Endpoint
-	// AddPacket    endpoint.Endpoint
+	// For Packages
+	// SearchPackages endpoint.Endpoint
+	// AddPackage    endpoint.Endpoint
 	// For products (admin)
 	// CreateProduct    endpoint.Endpoint
 	// UpdateProduct endpoint.Endpoint
@@ -80,7 +53,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Get all products
 	api.Methods("GET").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
-		decodeGetAllProductsRequest,
+		decodeJSONRequest(&schemas.GetAllProductsRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -93,26 +66,26 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Search packet
-	api.Methods("GET").Path("/packets/search").Handler(httpGoKit.NewServer(
-		endpoints.SearchPacket,
-		decodeSearchPacketRequest,
+	// Search Package
+	api.Methods("GET").Path("/Packages/search").Handler(httpGoKit.NewServer(
+		endpoints.SearchPackages,
+		decodeSearchPackagesRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Add packet
-	api.Methods("POST").Path("/packets").Handler(httpGoKit.NewServer(
-		endpoints.AddPacket,
-		decodeAddPacketRequest,
+	// Add Package
+	api.Methods("POST").Path("/Packages").Handler(httpGoKit.NewServer(
+		endpoints.AddPackage,
+		decodeJSONRequest(&schemas.AddPackageRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Get packet by ID
-	api.Methods("GET").Path("/packets/{id}").Handler(httpGoKit.NewServer(
-		endpoints.GetPacketByID,
-		decodeRequestWithID(logger, "id", &schemas.GetPacketByIDRequest{}),
+	// Get Package by ID
+	api.Methods("GET").Path("/Packages/{id}").Handler(httpGoKit.NewServer(
+		endpoints.GetPackageByID,
+		decodeRequestWithID(logger, "id", &schemas.GetPackageByIDRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -120,7 +93,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Add product
 	api.Methods("POST").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.CreateProduct,
-		decodeCreateProductRequest,
+		decodeJSONRequest(&schemas.CreateProductRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -128,7 +101,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Update product
 	api.Methods("PUT").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.UpdateProduct,
-		decodeUpdateProductRequest,
+		decodeJSONRequest(&schemas.UpdateProductRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -142,7 +115,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 }
 
-// Example encoder function for responses
+// encodeResponse encodes the response as JSON.
 func encodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
 	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 		// Common response encoding logic here
@@ -150,7 +123,7 @@ func encodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
 	}
 }
 
-// Example error encoder function
+// encodeErrorResponse encodes the error response as JSON with appropriate status code.
 func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		var status int
@@ -181,6 +154,25 @@ func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	}
 }
 
+func decodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
+	return func(ctx context.Context, req *http.Request) (interface{}, error) {
+		if req.Body == nil {
+			return nil, errors.New("empty request body")
+		}
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				_ = level.Error(log.NewNopLogger()).Log("msg", "error closing request body", "err", err)
+			}
+		}(req.Body)
+
+		if err := json.NewDecoder(req.Body).Decode(schema); err != nil {
+			return nil, err
+		}
+		return schema, nil
+	}
+}
+
 // decodeRequestWithID генерирует DecodeRequestFunc для запросов с ID в пути.
 func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}) httpGoKit.DecodeRequestFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
@@ -192,15 +184,15 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 		switch s := schema.(type) {
 		case *schemas.GetProductByIDRequest:
 			s.ProductID = id
-			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
-		case *schemas.GetPacketByIDRequest:
-			s.PacketID = id
-			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+		case *schemas.GetPackageByIDRequest:
+			s.PackageID = id
+			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
 		case *schemas.DeleteProductRequest:
 			s.ProductID = id
-			_ = level.Debug(logger).Log("msg", "decoder returning", "type", fmt.Sprintf("%T", s))
+			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
 		default:
 			return nil, errors.New("unsupported schema type")
@@ -208,27 +200,8 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 	}
 }
 
-// decodeGetAllProductsRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	// Since GET requests typically do not have a body, return an empty request
-	return schemas.GetAllProductsRequest{}, nil
-}
-
-// decodeCreateProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeCreateProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.CreateProductRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
-
-// decodeUpdateProductRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeUpdateProductRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.UpdateProductRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
-}
-
-func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{}, error) {
+// decodeSearchPackagesRequest декодирует GET запрос с параметрами query, limit и offset.
+func decodeSearchPackagesRequest(_ context.Context, req *http.Request) (interface{}, error) {
 	query := req.URL.Query()
 
 	searchString := query.Get("query")
@@ -242,16 +215,9 @@ func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{
 		return nil, errors.New("invalid or missing offset parameter")
 	}
 
-	return schemas.SearchPacketRequest{
+	return schemas.SearchPackagesRequest{
 		Query:  searchString,
 		Limit:  limit,
 		Offset: offset,
 	}, nil
-}
-
-// decodeAddPacketRequest is a transport/http.DecodeRequestFunc that decodes a JSON-encoded request from the HTTP request body.
-func decodeAddPacketRequest(_ context.Context, req *http.Request) (request interface{}, err error) {
-	var r schemas.AddPacketRequest
-	err = json.NewDecoder(req.Body).Decode(&r)
-	return r, err
 }
