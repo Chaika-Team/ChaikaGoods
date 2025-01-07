@@ -10,8 +10,6 @@ import (
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
-	"github.com/Chaika-Team/ChaikaGoods/internal/repository"
-
 	"github.com/go-kit/log"
 	"github.com/jackc/pgx/v5"
 )
@@ -28,7 +26,7 @@ type GoodsPGRepository struct {
 }
 
 // NewGoodsRepository creates a new instance of GoodsRepository.
-func NewGoodsRepository(client Client, logger log.Logger) repository.GoodsRepository {
+func NewGoodsRepository(client Client, logger log.Logger) models.GoodsRepository {
 	return &GoodsPGRepository{
 		client: client,
 		logger: logger,

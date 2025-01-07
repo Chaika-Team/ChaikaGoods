@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
-	repo "github.com/Chaika-Team/ChaikaGoods/internal/repository"
-
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 )
@@ -32,12 +30,12 @@ type Service interface {
 
 // GoodsService реализует интерфейс Service.
 type GoodsService struct {
-	repo repo.GoodsRepository
+	repo models.GoodsRepository
 	log  log.Logger
 }
 
 // NewService создает новый экземпляр Service.
-func NewService(repo repo.GoodsRepository, logger log.Logger) Service {
+func NewService(repo models.GoodsRepository, logger log.Logger) Service {
 	return &GoodsService{
 		repo: repo,
 		log:  logger,
