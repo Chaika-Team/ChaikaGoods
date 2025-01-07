@@ -220,9 +220,9 @@ func (_c *MockGoodsRepository_DeleteProduct_Call) RunAndReturn(run func(context.
 	return _c
 }
 
-// GetAllPackages provides a mock function with given fields: ctx, quantity, offset
-func (_m *MockGoodsRepository) GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error) {
-	ret := _m.Called(ctx, quantity, offset)
+// GetAllPackages provides a mock function with given fields: ctx, limit, offset
+func (_m *MockGoodsRepository) GetAllPackages(ctx context.Context, limit int64, offset int64) ([]models.Package, error) {
+	ret := _m.Called(ctx, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllPackages")
@@ -231,10 +231,10 @@ func (_m *MockGoodsRepository) GetAllPackages(ctx context.Context, quantity int6
 	var r0 []models.Package
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) ([]models.Package, error)); ok {
-		return rf(ctx, quantity, offset)
+		return rf(ctx, limit, offset)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) []models.Package); ok {
-		r0 = rf(ctx, quantity, offset)
+		r0 = rf(ctx, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Package)
@@ -242,7 +242,7 @@ func (_m *MockGoodsRepository) GetAllPackages(ctx context.Context, quantity int6
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = rf(ctx, quantity, offset)
+		r1 = rf(ctx, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -257,13 +257,13 @@ type MockGoodsRepository_GetAllPackages_Call struct {
 
 // GetAllPackages is a helper method to define mock.On call
 //   - ctx context.Context
-//   - quantity int64
+//   - limit int64
 //   - offset int64
-func (_e *MockGoodsRepository_Expecter) GetAllPackages(ctx interface{}, quantity interface{}, offset interface{}) *MockGoodsRepository_GetAllPackages_Call {
-	return &MockGoodsRepository_GetAllPackages_Call{Call: _e.mock.On("GetAllPackages", ctx, quantity, offset)}
+func (_e *MockGoodsRepository_Expecter) GetAllPackages(ctx interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_GetAllPackages_Call {
+	return &MockGoodsRepository_GetAllPackages_Call{Call: _e.mock.On("GetAllPackages", ctx, limit, offset)}
 }
 
-func (_c *MockGoodsRepository_GetAllPackages_Call) Run(run func(ctx context.Context, quantity int64, offset int64)) *MockGoodsRepository_GetAllPackages_Call {
+func (_c *MockGoodsRepository_GetAllPackages_Call) Run(run func(ctx context.Context, limit int64, offset int64)) *MockGoodsRepository_GetAllPackages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(int64), args[2].(int64))
 	})
@@ -338,22 +338,32 @@ func (_c *MockGoodsRepository_GetAllProducts_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// GetPackageByID provides a mock function with given fields: ctx, p
-func (_m *MockGoodsRepository) GetPackageByID(ctx context.Context, p *models.Package) error {
-	ret := _m.Called(ctx, p)
+// GetPackageByID provides a mock function with given fields: ctx, id
+func (_m *MockGoodsRepository) GetPackageByID(ctx context.Context, id int64) (models.Package, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPackageByID")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Package) error); ok {
-		r0 = rf(ctx, p)
+	var r0 models.Package
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (models.Package, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) models.Package); ok {
+		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Package)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockGoodsRepository_GetPackageByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPackageByID'
@@ -363,24 +373,24 @@ type MockGoodsRepository_GetPackageByID_Call struct {
 
 // GetPackageByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - p *models.Package
-func (_e *MockGoodsRepository_Expecter) GetPackageByID(ctx interface{}, p interface{}) *MockGoodsRepository_GetPackageByID_Call {
-	return &MockGoodsRepository_GetPackageByID_Call{Call: _e.mock.On("GetPackageByID", ctx, p)}
+//   - id int64
+func (_e *MockGoodsRepository_Expecter) GetPackageByID(ctx interface{}, id interface{}) *MockGoodsRepository_GetPackageByID_Call {
+	return &MockGoodsRepository_GetPackageByID_Call{Call: _e.mock.On("GetPackageByID", ctx, id)}
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) Run(run func(ctx context.Context, p *models.Package)) *MockGoodsRepository_GetPackageByID_Call {
+func (_c *MockGoodsRepository_GetPackageByID_Call) Run(run func(ctx context.Context, id int64)) *MockGoodsRepository_GetPackageByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Package))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) Return(_a0 error) *MockGoodsRepository_GetPackageByID_Call {
-	_c.Call.Return(_a0)
+func (_c *MockGoodsRepository_GetPackageByID_Call) Return(_a0 models.Package, _a1 error) *MockGoodsRepository_GetPackageByID_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) RunAndReturn(run func(context.Context, *models.Package) error) *MockGoodsRepository_GetPackageByID_Call {
+func (_c *MockGoodsRepository_GetPackageByID_Call) RunAndReturn(run func(context.Context, int64) (models.Package, error)) *MockGoodsRepository_GetPackageByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -442,9 +452,9 @@ func (_c *MockGoodsRepository_GetProductByID_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// GetProductsByPackageID provides a mock function with given fields: ctx, p
-func (_m *MockGoodsRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
-	ret := _m.Called(ctx, p)
+// GetProductsByPackageID provides a mock function with given fields: ctx, packageID
+func (_m *MockGoodsRepository) GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error) {
+	ret := _m.Called(ctx, packageID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProductsByPackageID")
@@ -452,19 +462,19 @@ func (_m *MockGoodsRepository) GetProductsByPackageID(ctx context.Context, p *mo
 
 	var r0 []models.PackageContent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Package) ([]models.PackageContent, error)); ok {
-		return rf(ctx, p)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]models.PackageContent, error)); ok {
+		return rf(ctx, packageID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Package) []models.PackageContent); ok {
-		r0 = rf(ctx, p)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []models.PackageContent); ok {
+		r0 = rf(ctx, packageID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.PackageContent)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Package) error); ok {
-		r1 = rf(ctx, p)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, packageID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -479,14 +489,14 @@ type MockGoodsRepository_GetProductsByPackageID_Call struct {
 
 // GetProductsByPackageID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - p *models.Package
-func (_e *MockGoodsRepository_Expecter) GetProductsByPackageID(ctx interface{}, p interface{}) *MockGoodsRepository_GetProductsByPackageID_Call {
-	return &MockGoodsRepository_GetProductsByPackageID_Call{Call: _e.mock.On("GetProductsByPackageID", ctx, p)}
+//   - packageID int64
+func (_e *MockGoodsRepository_Expecter) GetProductsByPackageID(ctx interface{}, packageID interface{}) *MockGoodsRepository_GetProductsByPackageID_Call {
+	return &MockGoodsRepository_GetProductsByPackageID_Call{Call: _e.mock.On("GetProductsByPackageID", ctx, packageID)}
 }
 
-func (_c *MockGoodsRepository_GetProductsByPackageID_Call) Run(run func(ctx context.Context, p *models.Package)) *MockGoodsRepository_GetProductsByPackageID_Call {
+func (_c *MockGoodsRepository_GetProductsByPackageID_Call) Run(run func(ctx context.Context, packageID int64)) *MockGoodsRepository_GetProductsByPackageID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Package))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
@@ -496,7 +506,7 @@ func (_c *MockGoodsRepository_GetProductsByPackageID_Call) Return(_a0 []models.P
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetProductsByPackageID_Call) RunAndReturn(run func(context.Context, *models.Package) ([]models.PackageContent, error)) *MockGoodsRepository_GetProductsByPackageID_Call {
+func (_c *MockGoodsRepository_GetProductsByPackageID_Call) RunAndReturn(run func(context.Context, int64) ([]models.PackageContent, error)) *MockGoodsRepository_GetProductsByPackageID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -559,21 +569,21 @@ func (_c *MockGoodsRepository_ListPackages_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// SearchPacket provides a mock function with given fields: ctx, searchString, quantity, offset
-func (_m *MockGoodsRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
-	ret := _m.Called(ctx, searchString, quantity, offset)
+// SearchPackages provides a mock function with given fields: ctx, searchString, limit, offset
+func (_m *MockGoodsRepository) SearchPackages(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Package, error) {
+	ret := _m.Called(ctx, searchString, limit, offset)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchPacket")
+		panic("no return value specified for SearchPackages")
 	}
 
 	var r0 []models.Package
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) ([]models.Package, error)); ok {
-		return rf(ctx, searchString, quantity, offset)
+		return rf(ctx, searchString, limit, offset)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) []models.Package); ok {
-		r0 = rf(ctx, searchString, quantity, offset)
+		r0 = rf(ctx, searchString, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Package)
@@ -581,7 +591,7 @@ func (_m *MockGoodsRepository) SearchPacket(ctx context.Context, searchString st
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, int64, int64) error); ok {
-		r1 = rf(ctx, searchString, quantity, offset)
+		r1 = rf(ctx, searchString, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -589,33 +599,33 @@ func (_m *MockGoodsRepository) SearchPacket(ctx context.Context, searchString st
 	return r0, r1
 }
 
-// MockGoodsRepository_SearchPacket_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPacket'
-type MockGoodsRepository_SearchPacket_Call struct {
+// MockGoodsRepository_SearchPackages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPackages'
+type MockGoodsRepository_SearchPackages_Call struct {
 	*mock.Call
 }
 
-// SearchPacket is a helper method to define mock.On call
+// SearchPackages is a helper method to define mock.On call
 //   - ctx context.Context
 //   - searchString string
-//   - quantity int64
+//   - limit int64
 //   - offset int64
-func (_e *MockGoodsRepository_Expecter) SearchPacket(ctx interface{}, searchString interface{}, quantity interface{}, offset interface{}) *MockGoodsRepository_SearchPacket_Call {
-	return &MockGoodsRepository_SearchPacket_Call{Call: _e.mock.On("SearchPacket", ctx, searchString, quantity, offset)}
+func (_e *MockGoodsRepository_Expecter) SearchPackages(ctx interface{}, searchString interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_SearchPackages_Call {
+	return &MockGoodsRepository_SearchPackages_Call{Call: _e.mock.On("SearchPackages", ctx, searchString, limit, offset)}
 }
 
-func (_c *MockGoodsRepository_SearchPacket_Call) Run(run func(ctx context.Context, searchString string, quantity int64, offset int64)) *MockGoodsRepository_SearchPacket_Call {
+func (_c *MockGoodsRepository_SearchPackages_Call) Run(run func(ctx context.Context, searchString string, limit int64, offset int64)) *MockGoodsRepository_SearchPackages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_SearchPacket_Call) Return(_a0 []models.Package, _a1 error) *MockGoodsRepository_SearchPacket_Call {
+func (_c *MockGoodsRepository_SearchPackages_Call) Return(_a0 []models.Package, _a1 error) *MockGoodsRepository_SearchPackages_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_SearchPacket_Call) RunAndReturn(run func(context.Context, string, int64, int64) ([]models.Package, error)) *MockGoodsRepository_SearchPacket_Call {
+func (_c *MockGoodsRepository_SearchPackages_Call) RunAndReturn(run func(context.Context, string, int64, int64) ([]models.Package, error)) *MockGoodsRepository_SearchPackages_Call {
 	_c.Call.Return(run)
 	return _c
 }

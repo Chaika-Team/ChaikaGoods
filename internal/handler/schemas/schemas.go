@@ -48,42 +48,42 @@ type GetProductByIDResponse struct {
 	Product ProductSchema `json:"product"`
 }
 
-// SearchPacketRequest представляет собой запрос на поиск пакетов
+// SearchPackagesRequest представляет собой запрос на поиск пакетов
 // @Description Запрос на поиск пакетов
-type SearchPacketRequest struct {
+type SearchPackagesRequest struct {
 	Query  string `json:"query,omitempty"`
 	Limit  int64  `json:"limit"`
 	Offset int64  `json:"offset"`
 }
 
-// SearchPacketResponse представляет собой ответ на запрос на поиск пакетов
+// SearchPackagesResponse представляет собой ответ на запрос на поиск пакетов
 // @Description Ответ на запрос на поиск пакетов
-type SearchPacketResponse struct {
-	Packets []PackageSchema `json:"packets"`
+type SearchPackagesResponse struct {
+	Packages []PackageSchema `json:"Packages"`
 }
 
-// AddPacketRequest представляет собой запрос на добавление пакета
+// AddPackageRequest представляет собой запрос на добавление пакета
 // @Description Запрос на добавление пакета
-type AddPacketRequest struct {
-	Packet PackageSchema `json:"packet"` // Сведения о новом пакете
+type AddPackageRequest struct {
+	Package PackageSchema `json:"Package"` // Сведения о новом пакете
 }
 
-// AddPacketResponse представляет собой ответ на запрос на добавление пакета
+// AddPackageResponse представляет собой ответ на запрос на добавление пакета
 // @Description Ответ на запрос на добавление пакета
-type AddPacketResponse struct {
-	PacketID int64 `json:"id"` // ID созданного пакета
+type AddPackageResponse struct {
+	PackageID int64 `json:"id"` // ID созданного пакета
 }
 
-// GetPacketByIDRequest представляет собой запрос на получение пакета по его ID
+// GetPackageByIDRequest представляет собой запрос на получение пакета по его ID
 // @Description Запрос на получение пакета по его ID
-type GetPacketByIDRequest struct {
-	PacketID int64 `json:"id"`
+type GetPackageByIDRequest struct {
+	PackageID int64 `json:"id"`
 }
 
-// GetPacketByIDResponse представляет собой ответ на запрос на получение пакета по его ID
+// GetPackageByIDResponse представляет собой ответ на запрос на получение пакета по его ID
 // @Description Ответ на запрос на получение пакета по его ID
-type GetPacketByIDResponse struct {
-	Packet PackageSchema `json:"packet"`
+type GetPackageByIDResponse struct {
+	Package PackageSchema `json:"Package"`
 }
 
 // CreateProductRequest представляет собой запрос на добавление продукта

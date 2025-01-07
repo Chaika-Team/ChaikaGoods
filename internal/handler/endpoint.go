@@ -17,10 +17,10 @@ type Endpoints struct {
 	GetProductByID    endpoint.Endpoint
 	GetCurrentVersion endpoint.Endpoint
 	GetDelta          endpoint.Endpoint
-	// For packets
-	SearchPacket  endpoint.Endpoint
-	AddPacket     endpoint.Endpoint
-	GetPacketByID endpoint.Endpoint
+	// For Packages
+	SearchPackages endpoint.Endpoint
+	AddPackage     endpoint.Endpoint
+	GetPackageByID endpoint.Endpoint
 	// For products (admin)
 	CreateProduct endpoint.Endpoint
 	UpdateProduct endpoint.Endpoint
@@ -43,10 +43,10 @@ func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
 		// Products
 		GetAllProducts: logMiddleware(makeGetAllProductsEndpoint(svc, productsMapper)),
 		GetProductByID: logMiddleware(makeGetProductByIDEndpoint(svc, productMapper)),
-		// Packets
-		SearchPacket:  logMiddleware(makeSearchPacketEndpoint(svc, packagesMapper)),
-		AddPacket:     logMiddleware(makeAddPacketEndpoint(svc, packageMapper)),
-		GetPacketByID: logMiddleware(makeGetPacketByIDEndpoint(svc, packageMapper)),
+		// Packages
+		SearchPackages: logMiddleware(makeSearchPackagesEndpoint(svc, packagesMapper)),
+		AddPackage:     logMiddleware(makeAddPackageEndpoint(svc, packageMapper)),
+		GetPackageByID: logMiddleware(makeGetPackageByIDEndpoint(svc, packageMapper)),
 		// Products (admin)
 		CreateProduct: logMiddleware(makeCreateProductEndpoint(svc, productMapper)),
 		UpdateProduct: logMiddleware(makeUpdateProductEndpoint(svc, productMapper)),
@@ -107,83 +107,83 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 	}
 }
 
-// makeSearchPacketEndpoint constructs a SearchPacket endpoint wrapping the service.
+// makeSearchPackagesEndpoint constructs a SearchPackages endpoint wrapping the service.
 //
-//	@Summary		Search packet
-//	@Description	Search for packets
-//	@Tags			packets
+//	@Summary		Search Package
+//	@Description	Search for Packages
+//	@Tags			Packages
 //	@Accept			json
 //	@Produce		json
 //	@Param			query	query		string	false	"Search query"
 //	@Param			limit	query		int		true	"Limit"
 //	@Param			offset	query		int		true	"Offset"
-//	@Success		200		{object}	schemas.SearchPacketResponse
+//	@Success		200		{object}	schemas.SearchPackagesResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/packets/search [get]
-func makeSearchPacketEndpoint(s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Packages/search [get]
+func makeSearchPackagesEndpoint(s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.SearchPacketRequest](request)
+		req := mustCast[schemas.SearchPackagesRequest](request)
 
-		packets, err := s.SearchPacket(ctx, req.Query, req.Limit, req.Offset)
+		Packages, err := s.SearchPackages(ctx, req.Query, req.Limit, req.Offset)
 		if err != nil {
 			return nil, err
 		}
 
-		packetsSchema := mapper.ToSchemas(packets)
-		return schemas.SearchPacketResponse{Packets: packetsSchema}, nil
+		PackagesSchema := mapper.ToSchemas(Packages)
+		return schemas.SearchPackagesResponse{Packages: PackagesSchema}, nil
 	}
 }
 
-// makeAddPacketEndpoint constructs a AddPacket endpoint wrapping the service.
+// makeAddPackageEndpoint constructs a AddPackage endpoint wrapping the service.
 //
-//	@Summary		Add packet
-//	@Description	Add a new packet of products to the database
-//	@Tags			packets
+//	@Summary		Add Package
+//	@Description	Add a new Package of products to the database
+//	@Tags			Packages
 //	@Accept			json
 //	@Produce		json
-//	@Param			packet	body		schemas.AddPacketRequest	true	"Packet details"
-//	@Success		200		{object}	schemas.AddPacketResponse
+//	@Param			Package	body		schemas.AddPackageRequest	true	"Package details"
+//	@Success		200		{object}	schemas.AddPackageResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/packets [post]
-func makeAddPacketEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Packages [post]
+func makeAddPackageEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.AddPacketRequest](request)
+		req := mustCast[schemas.AddPackageRequest](request)
 
-		packetModel := mapper.ToModel(req.Packet)
+		PackageModel := mapper.ToModel(req.Package)
 
-		id, err := s.AddPacket(ctx, &packetModel)
+		id, err := s.AddPackage(ctx, &PackageModel)
 		if err != nil {
 			return nil, err
 		}
 
-		return schemas.AddPacketResponse{PacketID: id}, nil
+		return schemas.AddPackageResponse{PackageID: id}, nil
 	}
 }
 
-// makeGetPacketByIDEndpoint constructs a GetPacketByID endpoint wrapping the service.
+// makeGetPackageByIDEndpoint constructs a GetPackageByID endpoint wrapping the service.
 //
-//	@Summary		Get packet by ID
-//	@Description	Get packet details by its ID
-//	@Tags			packets
+//	@Summary		Get Package by ID
+//	@Description	Get Package details by its ID
+//	@Tags			Packages
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		int	true	"Packet ID"
-//	@Success		200		{object}	schemas.GetPacketByIDResponse
+//	@Param			id	path		int	true	"Package ID"
+//	@Success		200		{object}	schemas.GetPackageByIDResponse
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/packets/{id} [get]
-func makeGetPacketByIDEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Packages/{id} [get]
+func makeGetPackageByIDEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[*schemas.GetPacketByIDRequest](request)
+		req := mustCast[*schemas.GetPackageByIDRequest](request)
 
-		packet, err := s.GetPacketByID(ctx, req.PacketID)
+		Package, err := s.GetPackageByID(ctx, req.PackageID)
 		if err != nil {
 			return nil, err
 		}
 
-		packetSchema := mapper.ToSchema(packet)
-		return schemas.GetPacketByIDResponse{Packet: packetSchema}, nil
+		PackageSchema := mapper.ToSchema(Package)
+		return schemas.GetPackageByIDResponse{Package: PackageSchema}, nil
 	}
 }
 

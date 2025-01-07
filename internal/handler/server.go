@@ -42,9 +42,9 @@ func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// GetAllProducts    endpoint.Endpoint
 	// GetProductByID    endpoint.Endpoint
-	// For packets
-	// SearchPacket endpoint.Endpoint
-	// AddPacket    endpoint.Endpoint
+	// For Packages
+	// SearchPackages endpoint.Endpoint
+	// AddPackage    endpoint.Endpoint
 	// For products (admin)
 	// CreateProduct    endpoint.Endpoint
 	// UpdateProduct endpoint.Endpoint
@@ -66,26 +66,26 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Search packet
-	api.Methods("GET").Path("/packets/search").Handler(httpGoKit.NewServer(
-		endpoints.SearchPacket,
-		decodeSearchPacketRequest,
+	// Search Package
+	api.Methods("GET").Path("/Packages/search").Handler(httpGoKit.NewServer(
+		endpoints.SearchPackages,
+		decodeSearchPackagesRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Add packet
-	api.Methods("POST").Path("/packets").Handler(httpGoKit.NewServer(
-		endpoints.AddPacket,
-		decodeJSONRequest(&schemas.AddPacketRequest{}),
+	// Add Package
+	api.Methods("POST").Path("/Packages").Handler(httpGoKit.NewServer(
+		endpoints.AddPackage,
+		decodeJSONRequest(&schemas.AddPackageRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Get packet by ID
-	api.Methods("GET").Path("/packets/{id}").Handler(httpGoKit.NewServer(
-		endpoints.GetPacketByID,
-		decodeRequestWithID(logger, "id", &schemas.GetPacketByIDRequest{}),
+	// Get Package by ID
+	api.Methods("GET").Path("/Packages/{id}").Handler(httpGoKit.NewServer(
+		endpoints.GetPackageByID,
+		decodeRequestWithID(logger, "id", &schemas.GetPackageByIDRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -186,8 +186,8 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 			s.ProductID = id
 			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
-		case *schemas.GetPacketByIDRequest:
-			s.PacketID = id
+		case *schemas.GetPackageByIDRequest:
+			s.PackageID = id
 			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
 		case *schemas.DeleteProductRequest:
@@ -200,8 +200,8 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 	}
 }
 
-// decodeSearchPacketRequest декодирует GET запрос с параметрами query, limit и offset.
-func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{}, error) {
+// decodeSearchPackagesRequest декодирует GET запрос с параметрами query, limit и offset.
+func decodeSearchPackagesRequest(_ context.Context, req *http.Request) (interface{}, error) {
 	query := req.URL.Query()
 
 	searchString := query.Get("query")
@@ -215,7 +215,7 @@ func decodeSearchPacketRequest(_ context.Context, req *http.Request) (interface{
 		return nil, errors.New("invalid or missing offset parameter")
 	}
 
-	return schemas.SearchPacketRequest{
+	return schemas.SearchPackagesRequest{
 		Query:  searchString,
 		Limit:  limit,
 		Offset: offset,

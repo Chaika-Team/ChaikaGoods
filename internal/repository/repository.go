@@ -6,29 +6,28 @@ import (
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 )
 
-type GoodsRepository interface {
-	// GetProductByID returns a product by its ID.
+// ProductRepository defines methods for product-related database operations.
+type ProductRepository interface {
 	GetProductByID(ctx context.Context, id int64) (models.Product, error)
-	// GetAllProducts returns all products.
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
-	// CreateProduct creates a new product.
 	CreateProduct(ctx context.Context, p *models.Product) (int64, error)
-	// UpdateProduct updates a product by its ID.
 	UpdateProduct(ctx context.Context, p *models.Product) error
-	// DeleteProduct deletes a product by its ID.
 	DeleteProduct(ctx context.Context, id int64) error
-	// GetPackageByID returns a package by its ID.
-	GetPackageByID(ctx context.Context, p *models.Package) error
-	// GetProductsByPackageID returns all products in a package.
-	GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error)
-	// ListPackages returns all packages.
+}
+
+// PackageRepository defines methods for package-related database operations.
+type PackageRepository interface {
+	GetPackageByID(ctx context.Context, id int64) (models.Package, error)
+	GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error)
 	ListPackages(ctx context.Context) ([]models.Package, error)
-	// CreatePackage creates a new package.
 	CreatePackage(ctx context.Context, pkg *models.Package) error
-	// DeletePackage deletes a package by its ID.
 	DeletePackage(ctx context.Context, packageID int64) error
-	// SearchPacket searches for a packet by its name.
-	SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error)
-	// GetAllPackages returns all packages with pagination.
-	GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error)
+	SearchPackages(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Package, error)
+	GetAllPackages(ctx context.Context, limit int64, offset int64) ([]models.Package, error)
+}
+
+// GoodsRepository объединяет репозитории для продуктов и пакетов.
+type GoodsRepository interface {
+	ProductRepository
+	PackageRepository
 }

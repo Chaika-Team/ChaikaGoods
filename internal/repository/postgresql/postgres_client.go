@@ -3,62 +3,98 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
-
-	"github.com/Chaika-Team/ChaikaGoods/internal/config"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/Chaika-Team/ChaikaGoods/internal/config"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Client is a subset of the pgx.Conn interface.
-// It provides methods for executing SQL queries and transactions.
+// Client is an interface for interacting with PostgreSQL database.
 type Client interface {
-	// Exec executes a query without returning any rows.
-	// The args are for any placeholder parameters in the query.
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
-
-	// Query sends a query to the database and returns the rows.
-	// The args are for any placeholder parameters in the query.
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-
-	// QueryRow sends a query to the database and returns a single row.
-	// The args are for any placeholder parameters in the query.
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
-
 	Begin(ctx context.Context) (pgx.Tx, error)
+	Close()
 }
 
-// NewClient создает новый пул соединений с базой данных.
-// Подключение к базе данных осуществляется с использованием предоставленных параметров подключения.
-// Функция будет пытаться подключиться к базе данных заданное количество попыток.
-func NewClient(ctx context.Context, conn config.StorageConfig, maxAttempts int) (pool *pgxpool.Pool, err error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", conn.Host, conn.User, conn.Password, conn.Database)
-	connConfig, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse DSN: %v", err)
-	}
-	//
-	// Настройка дополнительных параметров конфигурации, если необходимо
-	// connConfig.MaxConns = 10                        // Максимальное количество соединений
-	// connConfig.MinConns = 2                         // Минимальное количество соединений
-	// connConfig.HealthCheckPeriod = 30 * time.Second // Период проверки состояния соединений
+// PGClient wraps pgxpool.Pool to implement the Client interface.
+type PGClient struct {
+	pool   *pgxpool.Pool
+	logger log.Logger
+}
 
-	for i := 1; i <= maxAttempts; i++ {
+// NewClient creates a new PostgreSQL client with connection pooling.
+// It attempts to connect to the database up to maxAttempts times with a delay between attempts.
+func NewClient(ctx context.Context, cfg config.StorageConfig, logger log.Logger) (Client, error) {
+	connConfig, err := pgxpool.ParseConfig(cfg.DSN())
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse DSN: %w", err)
+	}
+
+	// Настройка дополнительных параметров пула из конфигурации
+	connConfig.MaxConns = cfg.MaxConns
+	connConfig.MinConns = cfg.MinConns
+	connConfig.MaxConnLifetime = cfg.MaxConnLifetime
+	connConfig.MaxConnIdleTime = cfg.MaxConnIdleTime
+	connConfig.HealthCheckPeriod = cfg.HealthCheckPeriod
+	connConfig.MaxConnLifetimeJitter = cfg.MaxConnLifetimeJitter
+
+	var pool *pgxpool.Pool
+	for i := 1; i <= cfg.MaxAttempts; i++ {
 		pool, err = pgxpool.NewWithConfig(ctx, connConfig)
 		if err == nil {
-			return pool, nil // Успешное подключение
+			// Тестирование подключения
+			err = pool.Ping(ctx)
+			if err == nil {
+				_ = level.Info(logger).Log("msg", "Connected to PostgreSQL database")
+				return &PGClient{pool: pool, logger: logger}, nil
+			}
+			pool.Close()
 		}
 
-		if i < maxAttempts {
-			log.Printf("Failed to connect to database, attempt %d/%d: %v", i, maxAttempts, err)
+		if i < cfg.MaxAttempts {
+			_ = level.Warn(logger).Log("msg", "Failed to connect to database", "attempt", i, "max_attempts", cfg.MaxAttempts, "err", err)
 			time.Sleep(5 * time.Second) // Пауза перед следующей попыткой
 		}
 	}
 
-	return nil, fmt.Errorf("failed to connect to the database after %d attempts: %v", maxAttempts, err)
+	return nil, fmt.Errorf("failed to connect to the database after %d attempts: %w", cfg.MaxAttempts, err)
+}
+
+// Exec executes a query without returning any rows.
+func (c *PGClient) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+	return c.pool.Exec(ctx, sql, arguments...)
+}
+
+// Query sends a query to the database and returns the rows.
+func (c *PGClient) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return c.pool.Query(ctx, sql, args...)
+}
+
+// QueryRow sends a query to the database and returns a single row.
+func (c *PGClient) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	return c.pool.QueryRow(ctx, sql, args...)
+}
+
+// SendBatch sends a batch of queries to the database.
+func (c *PGClient) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
+	return c.pool.SendBatch(ctx, b)
+}
+
+// Begin starts a transaction.
+func (c *PGClient) Begin(ctx context.Context) (pgx.Tx, error) {
+	return c.pool.Begin(ctx)
+}
+
+// Close closes the connection pool.
+func (c *PGClient) Close() {
+	c.pool.Close()
 }

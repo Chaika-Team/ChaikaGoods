@@ -13,42 +13,45 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// GoodsPGRepository implements the GoodsRepository interface using PostgreSQL.
 type GoodsPGRepository struct {
 	client Client
-	log    log.Logger
+	logger log.Logger
 }
 
-// NewGoodsRepository создает новый экземпляр GoodsRepository.
+// NewGoodsRepository creates a new instance of GoodsRepository.
 func NewGoodsRepository(client Client, logger log.Logger) repository.GoodsRepository {
 	return &GoodsPGRepository{
 		client: client,
-		log:    logger,
+		logger: logger,
 	}
 }
 
-// GetProductByID возвращает продукт по его ID.
+// ---------- ProductRepository Implementation ----------
+
+// GetProductByID returns a product by its ID.
 func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
-	sql := `SELECT id, name, description, price, imageurl, sku FROM public.product WHERE id = $1;`
+	const sql = `SELECT id, name, description, price, imageurl, sku FROM public.product WHERE id = $1;`
 	row := r.client.QueryRow(ctx, sql, id)
 
 	var p models.Product
-	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return p, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
-	} else if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get product by ID: %v", err))
+	if err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return p, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
+		}
+		_ = r.logger.Log("error", "Failed to get product by ID", "id", id, "err", err)
 		return p, err
 	}
 
 	return p, nil
 }
 
-// GetAllProducts возвращает список всех продуктов.
+// GetAllProducts returns a list of all products.
 func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Product, error) {
-	sql := `SELECT id, name, description, price, imageurl, sku FROM public.product;`
+	const sql = `SELECT id, name, description, price, imageurl, sku FROM public.product;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get all products: %v", err))
+		_ = r.logger.Log("error", "Failed to get all products", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -57,100 +60,102 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	for rows.Next() {
 		var p models.Product
 		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan product: %v", err))
-			continue
+			_ = r.logger.Log("error", "Failed to scan product", "err", err)
+			continue // Нужно решить, нужно ли пропускать или возвращать ошибку
 		}
 		products = append(products, p)
 	}
-	if err = rows.Err(); err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get all products: %v", err))
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while getting all products", "err", err)
 		return nil, err
 	}
+
 	return products, nil
 }
 
-// CreateProduct создание продукта в базе данных.
+// CreateProduct creates a new product in the database.
 func (r *GoodsPGRepository) CreateProduct(ctx context.Context, p *models.Product) (int64, error) {
-	sql := `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
-	err := r.client.QueryRow(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU).Scan(&p.ID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to create product: %v", err))
+	const sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+	if err := r.client.QueryRow(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU).Scan(&p.ID); err != nil {
+		_ = r.logger.Log("error", "Failed to create product", "name", p.Name, "err", err)
 		return 0, err
 	}
 	return p.ID, nil
-
 }
 
-// UpdateProduct обновление продукта в базе данных.
+// UpdateProduct updates an existing product in the database.
 func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product) error {
-	sql := `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
-	_, err := r.client.Exec(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU, p.ID)
+	const sql = `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
+	ct, err := r.client.Exec(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU, p.ID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", p.ID), nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to update product: %v", err))
+		_ = r.logger.Log("error", "Failed to update product", "id", p.ID, "err", err)
 		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", p.ID), nil)
 	}
 	return nil
 }
 
-// DeleteProduct удаляет продукт из базы данных по его ID.
+// DeleteProduct deletes a product from the database by its ID.
 func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
-	sql := `DELETE FROM public.product WHERE id = $1;`
-	_, err := r.client.Exec(ctx, sql, id)
+	const sql = `DELETE FROM public.product WHERE id = $1;`
+	ct, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete product: %v", err))
+		_ = r.logger.Log("error", "Failed to delete product", "id", id, "err", err)
 		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
 	}
 	return nil
 }
 
-// Package queries
+// ---------- PackageRepository Implementation ----------
 
-// GetPackageByID получает полную информацию о пакете, включая его содержимое.
-func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, p *models.Package) error {
-	sqlPackage := `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
-	err := r.client.QueryRow(ctx, sqlPackage, p.ID).Scan(&p.ID, &p.PackageName, &p.Description)
-	if err != nil {
+// GetPackageByID retrieves package details along with its contents.
+func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, id int64) (models.Package, error) {
+	var pkg models.Package
+	const sqlPackage = `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
+	if err := r.client.QueryRow(ctx, sqlPackage, id).Scan(&pkg.ID, &pkg.PackageName, &pkg.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", p.ID), nil)
+			return pkg, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", id), nil)
 		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get package by ID: %v", err))
-		return err
+		_ = r.logger.Log("error", "Failed to get package by ID", "id", id, "err", err)
+		return pkg, err
 	}
 
-	sqlContents := `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
-	rows, err := r.client.Query(ctx, sqlContents, p.ID)
+	// Get package contents
+	const sqlContents = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	rows, err := r.client.Query(ctx, sqlContents, id)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get package contents: %v", err))
-		return err
+		_ = r.logger.Log("error", "Failed to get package contents", "package_id", id, "err", err)
+		return pkg, err
 	}
 	defer rows.Close()
 
-	var contents []models.PackageContent
 	for rows.Next() {
 		var c models.PackageContent
 		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
-			return err
+			_ = r.logger.Log("error", "Failed to scan package content", "err", err)
+			return pkg, err
 		}
-		contents = append(contents, c)
+		pkg.Content = append(pkg.Content, c)
 	}
-	p.Content = contents
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while getting package contents", "err", err)
+		return pkg, err
+	}
 
-	return nil
+	return pkg, nil
 }
 
-// GetProductsByPackageID получает список продуктов в определенном пакете.
-func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *models.Package) ([]models.PackageContent, error) {
-	sql := `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
-	rows, err := r.client.Query(ctx, sql, p.ID)
+// GetProductsByPackageID retrieves all products within a specific package.
+func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error) {
+	const sql = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	rows, err := r.client.Query(ctx, sql, packageID)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to get products by package ID: %v", err))
+		_ = r.logger.Log("error", "Failed to get products by package ID", "package_id", packageID, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -159,21 +164,26 @@ func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, p *model
 	for rows.Next() {
 		var c models.PackageContent
 		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package content: %v", err))
-			continue
+			_ = r.logger.Log("error", "Failed to scan package content", "err", err)
+			return nil, err
 		}
 		contents = append(contents, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while getting products by package ID", "err", err)
+		return nil, err
 	}
 
 	return contents, nil
 }
 
-// ListPackages возвращает список всех пакетов.
+// ListPackages returns a list of all packages.
 func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
-	sql := `SELECT packageid, packagename, description FROM public.package;`
+	const sql = `SELECT packageid, packagename, description FROM public."package";`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to list packages: %v", err))
+		_ = r.logger.Log("error", "Failed to list packages", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -182,21 +192,26 @@ func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package,
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
-			continue
+			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
+	}
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while listing packages", "err", err)
+		return nil, err
 	}
 
 	return packages, nil
 }
 
-// CreatePackage добавляет новый пакет в базу данных вместе с его содержимым.
-func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
-	// Начинаем транзакцию
+// CreatePackage adds a new package to the database along with its contents.
+func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Package) (err error) {
+	const sqlInsertPackage = `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
+
 	tx, err := r.client.Begin(ctx)
 	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to start transaction: %v", err))
+		_ = r.logger.Log("error", "Failed to begin transaction", "err", err)
 		return err
 	}
 	defer func() {
@@ -207,24 +222,22 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 			_ = tx.Rollback(ctx)
 		} else {
 			err = tx.Commit(ctx)
+			if err != nil {
+				_ = r.logger.Log("error", "Failed to commit transaction", "err", err)
+			}
 		}
 	}()
 
-	// SQL-запрос для вставки пакета
-	sqlInsertPackage := `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
-
-	// Добавляем пакет
-	err = tx.QueryRow(ctx, sqlInsertPackage, pkg.PackageName, pkg.Description).Scan(&pkg.ID)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to insert package: %v", err))
+	// Insert package
+	if err = tx.QueryRow(ctx, sqlInsertPackage, pkg.PackageName, pkg.Description).Scan(&pkg.ID); err != nil {
+		_ = r.logger.Log("error", "Failed to insert package", "pkg_name", pkg.PackageName, "err", err)
 		return err
 	}
 
-	// Добавляем содержимое пакета
+	// Insert package contents
 	for _, content := range pkg.Content {
-		err = r.CreateProductToPackage(ctx, tx, pkg.ID, content)
-		if err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to add product to package: %v", err))
+		if err = r.createProductToPackage(ctx, tx, pkg.ID, content); err != nil {
+			_ = r.logger.Log("error", "Failed to add product to package", "pkg_id", pkg.ID, "product_id", content.ProductID, "err", err)
 			return err
 		}
 	}
@@ -232,67 +245,69 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 	return nil
 }
 
-// CreateProductToPackage добавляет одну запись содержимого пакета.
-func (r *GoodsPGRepository) CreateProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
-	sqlInsertContent := `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
-
-	// Выполняем запрос
-	_, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to insert package content: %v", err))
-	}
-	return err
-}
-
-// DeletePackage удаляет пакет и его содержимое.
-func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) error {
-	sqlDeleteContents := `DELETE FROM public.packagecontent WHERE packageid = $1;`
-	sqlDeletePackage := `DELETE FROM public."package" WHERE packageid = $1;`
-
-	tx, err := r.client.Begin(ctx)
-	if err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to begin transaction: %v", err))
-		return err
-	}
-	defer func(tx pgx.Tx, ctx context.Context) {
-		err := tx.Rollback(ctx)
-		if err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to rollback transaction: %v", err))
-		}
-	}(tx, ctx)
-
-	if _, err := tx.Exec(ctx, sqlDeleteContents, packageID); err != nil {
-		// Check if not found
-		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package content with id %d not found", packageID), nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete package contents: %v", err))
-		return err
-	}
-	if _, err := tx.Exec(ctx, sqlDeletePackage, packageID); err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to delete package: %v", err))
-		return err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Failed to commit transaction: %v", err))
+// createProductToPackage adds a single package content entry.
+func (r *GoodsPGRepository) createProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
+	const sqlInsertContent = `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
+	if _, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity); err != nil {
+		_ = r.logger.Log("error", "Failed to insert package content", "package_id", packageID, "product_id", content.ProductID, "err", err)
 		return err
 	}
 	return nil
 }
 
-func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString string, quantity int64, offset int64) ([]models.Package, error) {
+// DeletePackage deletes a package and its contents from the database by package ID.
+func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) error {
+	const (
+		sqlDeleteContents = `DELETE FROM public.packagecontent WHERE packageid = $1;`
+		sqlDeletePackage  = `DELETE FROM public."package" WHERE packageid = $1;`
+	)
+
+	tx, err := r.client.Begin(ctx)
+	if err != nil {
+		_ = r.logger.Log("error", "Failed to begin transaction", "err", err)
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	// Delete package contents
+	if _, err = tx.Exec(ctx, sqlDeleteContents, packageID); err != nil {
+		_ = r.logger.Log("error", "Failed to delete package contents", "package_id", packageID, "err", err)
+		return err
+	}
+
+	// Delete package
+	ct, err := tx.Exec(ctx, sqlDeletePackage, packageID)
+	if err != nil {
+		_ = r.logger.Log("error", "Failed to delete package", "package_id", packageID, "err", err)
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", packageID), nil)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		_ = r.logger.Log("error", "Failed to commit transaction", "err", err)
+		return err
+	}
+
+	return nil
+}
+
+// SearchPackages searches for packages by name or description with pagination.
+func (r *GoodsPGRepository) SearchPackages(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Package, error) {
 	searchPattern := "%" + searchString + "%"
-	sql := `SELECT packageid, packagename, description FROM public."package" 
-	        WHERE packagename LIKE $1 OR description LIKE $1 
+	const sql = `SELECT packageid, packagename, description FROM public."package" 
+	        WHERE packagename ILIKE $1 OR description ILIKE $1 
 	        LIMIT $2 OFFSET $3;`
 
-	rows, err := r.client.Query(ctx, sql, searchPattern, quantity, offset)
+	rows, err := r.client.Query(ctx, sql, searchPattern, limit, offset)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("No packages matching query '%s' found", searchString), nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to search package: %v", err))
+		_ = r.logger.Log("error", "Failed to search packages", "search", searchString, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -301,29 +316,26 @@ func (r *GoodsPGRepository) SearchPacket(ctx context.Context, searchString strin
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
-			continue
+			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
 	}
 
-	if rows.Err() != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
-		return nil, rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while searching packages", "err", err)
+		return nil, err
 	}
 
 	return packages, nil
 }
 
-func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, quantity int64, offset int64) ([]models.Package, error) {
-	sql := `SELECT packageid, packagename, description FROM public."package" LIMIT $1 OFFSET $2;`
-
-	rows, err := r.client.Query(ctx, sql, quantity, offset)
+// GetAllPackages returns all packages with pagination.
+func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, limit int64, offset int64) ([]models.Package, error) {
+	const sql = `SELECT packageid, packagename, description FROM public."package" LIMIT $1 OFFSET $2;`
+	rows, err := r.client.Query(ctx, sql, limit, offset)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, myerr.NewAppError(myerr.ErrorTypeNotFound, "No packages found", nil)
-		}
-		_ = r.log.Log("error", fmt.Sprintf("Failed to retrieve all packages: %v", err))
+		_ = r.logger.Log("error", "Failed to retrieve all packages", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -332,15 +344,14 @@ func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, quantity int64, 
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.log.Log("error", fmt.Sprintf("Failed to scan package: %v", err))
-			continue
+			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
 	}
-
-	if rows.Err() != nil {
-		_ = r.log.Log("error", fmt.Sprintf("Rows iteration error: %v", rows.Err()))
-		return nil, rows.Err()
+	if err := rows.Err(); err != nil {
+		_ = r.logger.Log("error", "Rows iteration error while getting all packages", "err", err)
+		return nil, err
 	}
 
 	return packages, nil

@@ -25,9 +25,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/packets": {
+        "/api/v1/Packages": {
             "post": {
-                "description": "Add a new packet of products to the database",
+                "description": "Add a new Package of products to the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,17 +35,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "packets"
+                    "Packages"
                 ],
-                "summary": "Add packet",
+                "summary": "Add Package",
                 "parameters": [
                     {
-                        "description": "Packet details",
-                        "name": "packet",
+                        "description": "Package details",
+                        "name": "Package",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest"
                         }
                     }
                 ],
@@ -53,7 +53,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse"
                         }
                     },
                     "400": {
@@ -71,9 +71,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/packets/search": {
+        "/api/v1/Packages/search": {
             "get": {
-                "description": "Search for packets",
+                "description": "Search for Packages",
                 "consumes": [
                     "application/json"
                 ],
@@ -81,9 +81,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "packets"
+                    "Packages"
                 ],
-                "summary": "Search packet",
+                "summary": "Search Package",
                 "parameters": [
                     {
                         "type": "string",
@@ -110,7 +110,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse"
                         }
                     },
                     "500": {
@@ -122,9 +122,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/packets/{id}": {
+        "/api/v1/Packages/{id}": {
             "get": {
-                "description": "Get packet details by its ID",
+                "description": "Get Package details by its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -132,13 +132,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "packets"
+                    "Packages"
                 ],
-                "summary": "Get packet by ID",
+                "summary": "Get Package by ID",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Packet ID",
+                        "description": "Package ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -148,7 +148,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse"
                         }
                     },
                     "404": {
@@ -371,11 +371,11 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketRequest": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest": {
             "description": "Запрос на добавление пакета",
             "type": "object",
             "properties": {
-                "packet": {
+                "Package": {
                     "description": "Сведения о новом пакете",
                     "allOf": [
                         {
@@ -385,7 +385,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPacketResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse": {
             "description": "Ответ на запрос на добавление пакета",
             "type": "object",
             "properties": {
@@ -442,11 +442,11 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPacketByIDResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse": {
             "description": "Ответ на запрос на получение пакета по его ID",
             "type": "object",
             "properties": {
-                "packet": {
+                "Package": {
                     "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
                 }
             }
@@ -511,11 +511,11 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPacketResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse": {
             "description": "Ответ на запрос на поиск пакетов",
             "type": "object",
             "properties": {
-                "packets": {
+                "Packages": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"

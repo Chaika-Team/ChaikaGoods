@@ -57,7 +57,7 @@ func main() {
 	defer cancel()
 
 	// Инициализация клиента базы данных
-	pool, err := repo.NewClient(ctx, cfg.Storage, 5)
+	pool, err := repo.NewClient(ctx, cfg.Storage, logger)
 	if err != nil {
 		_ = level.Error(logger).Log("message", "Failed to connect to the database", "err", err)
 		return
