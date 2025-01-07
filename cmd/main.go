@@ -52,6 +52,9 @@ func main() {
 	// Загрузка конфигурации
 	cfg := config.GetConfigWithPath(logger, configPath)
 
+	// Конфигурация логгера с учётом уровня
+	logger = config.ConfigureLogger(logger, cfg.Log.Level)
+
 	// Корневой контекст
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

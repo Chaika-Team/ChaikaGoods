@@ -11,8 +11,10 @@ import (
 
 // Config is the application configuration structure that is read from the config file.
 type Config struct {
-	IsDebug *bool `yaml:"is_debug" env-required:"true"`
-	Listen  struct {
+	Log struct {
+		Level string `yaml:"level" env-default:"info"`
+	}
+	Listen struct {
 		Type   string `yaml:"type" env-default:"port"`
 		BindIP string `yaml:"bind_ip" env-default:"127.0.0.1"`
 		Port   string `yaml:"port" env-default:"8080"`
