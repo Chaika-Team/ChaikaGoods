@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 	"github.com/Chaika-Team/ChaikaGoods/internal/repository"
@@ -37,7 +40,7 @@ func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (model
 	var p models.Product
 	if err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return p, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
+			return p, myerr.NotFound(fmt.Sprintf("Product with ID %d not found", id), nil)
 		}
 		_ = r.logger.Log("error", "Failed to get product by ID", "id", id, "err", err)
 		return p, err
@@ -51,7 +54,7 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	const sql = `SELECT id, name, description, price, imageurl, sku FROM public.product;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to get all products", "err", err)
+		_ = r.logger.Log("error", "Failed to retrieve all products", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -61,12 +64,12 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 		var p models.Product
 		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU); err != nil {
 			_ = r.logger.Log("error", "Failed to scan product", "err", err)
-			continue // Нужно решить, нужно ли пропускать или возвращать ошибку
+			continue // Пропускаем некорректную строку, но продолжаем обработку остальных.
 		}
 		products = append(products, p)
 	}
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while getting all products", "err", err)
+		_ = r.logger.Log("error", "Error during rows iteration", "err", err)
 		return nil, err
 	}
 
@@ -77,7 +80,11 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 func (r *GoodsPGRepository) CreateProduct(ctx context.Context, p *models.Product) (int64, error) {
 	const sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 	if err := r.client.QueryRow(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU).Scan(&p.ID); err != nil {
-		_ = r.logger.Log("error", "Failed to create product", "name", p.Name, "err", err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return 0, myerr.Conflict(fmt.Sprintf("Product with SKU %s already exists", p.SKU), err)
+		}
+		_ = r.logger.Log("error", "Failed to create product", "err", err)
 		return 0, err
 	}
 	return p.ID, nil
@@ -88,11 +95,15 @@ func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product
 	const sql = `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
 	ct, err := r.client.Exec(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU, p.ID)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return myerr.Conflict(fmt.Sprintf("Updated data conflicts with existing product with SKU %s", p.SKU), err)
+		}
 		_ = r.logger.Log("error", "Failed to update product", "id", p.ID, "err", err)
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", p.ID), nil)
+		return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for update", p.ID), nil)
 	}
 	return nil
 }
@@ -102,11 +113,14 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 	const sql = `DELETE FROM public.product WHERE id = $1;`
 	ct, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for deletion", id), nil)
+		}
 		_ = r.logger.Log("error", "Failed to delete product", "id", id, "err", err)
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Product with id %d not found", id), nil)
+		return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for deletion", id), nil)
 	}
 	return nil
 }
@@ -119,7 +133,7 @@ func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, id int64) (model
 	const sqlPackage = `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
 	if err := r.client.QueryRow(ctx, sqlPackage, id).Scan(&pkg.ID, &pkg.PackageName, &pkg.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return pkg, myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", id), nil)
+			return pkg, myerr.NotFound(fmt.Sprintf("Package with ID %d not found", id), nil)
 		}
 		_ = r.logger.Log("error", "Failed to get package by ID", "id", id, "err", err)
 		return pkg, err
@@ -230,6 +244,10 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 
 	// Insert package
 	if err = tx.QueryRow(ctx, sqlInsertPackage, pkg.PackageName, pkg.Description).Scan(&pkg.ID); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return myerr.Conflict(fmt.Sprintf("Package with name %s already exists", pkg.PackageName), err)
+		}
 		_ = r.logger.Log("error", "Failed to insert package", "pkg_name", pkg.PackageName, "err", err)
 		return err
 	}
@@ -247,8 +265,15 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 
 // createProductToPackage adds a single package content entry.
 func (r *GoodsPGRepository) createProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
+	// Insert package content
 	const sqlInsertContent = `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
 	if _, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
+			return myerr.NotFound(fmt.Sprintf("Product with ID %d not found", content.ProductID), err)
+		} else if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return myerr.Conflict(fmt.Sprintf("Product with ID %d already exists in package", content.ProductID), err)
+		}
 		_ = r.logger.Log("error", "Failed to insert package content", "package_id", packageID, "product_id", content.ProductID, "err", err)
 		return err
 	}
@@ -286,7 +311,7 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NewAppError(myerr.ErrorTypeNotFound, fmt.Sprintf("Package with id %d not found", packageID), nil)
+		return myerr.NotFound(fmt.Sprintf("Package with id %d not found", packageID), nil)
 	}
 
 	// Commit transaction
