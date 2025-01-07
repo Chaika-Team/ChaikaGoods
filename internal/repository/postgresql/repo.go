@@ -16,6 +16,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const (
+	msgFailedToScanPackage = "Failed to scan package"
+	fmtProductNotFound     = "Product with ID %d not found"
+)
+
 // GoodsPGRepository implements the GoodsRepository interface using PostgreSQL.
 type GoodsPGRepository struct {
 	client Client
@@ -40,7 +45,7 @@ func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (model
 	var p models.Product
 	if err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.ImageURL, &p.SKU); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return p, myerr.NotFound(fmt.Sprintf("Product with ID %d not found", id), nil)
+			return p, myerr.NotFound(fmt.Sprintf(fmtProductNotFound, id), nil)
 		}
 		_ = r.logger.Log("error", "Failed to get product by ID", "id", id, "err", err)
 		return p, err
@@ -103,7 +108,7 @@ func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for update", p.ID), nil)
+		return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, p.ID), nil)
 	}
 	return nil
 }
@@ -114,13 +119,13 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 	ct, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for deletion", id), nil)
+			return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, id), nil)
 		}
 		_ = r.logger.Log("error", "Failed to delete product", "id", id, "err", err)
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NotFound(fmt.Sprintf("Product with ID %d not found for deletion", id), nil)
+		return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, id), nil)
 	}
 	return nil
 }
@@ -206,7 +211,7 @@ func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package,
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
@@ -270,7 +275,7 @@ func (r *GoodsPGRepository) createProductToPackage(ctx context.Context, tx pgx.T
 	if _, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
-			return myerr.NotFound(fmt.Sprintf("Product with ID %d not found", content.ProductID), err)
+			return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, content.ProductID), err)
 		} else if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return myerr.Conflict(fmt.Sprintf("Product with ID %d already exists in package", content.ProductID), err)
 		}
@@ -341,7 +346,7 @@ func (r *GoodsPGRepository) SearchPackages(ctx context.Context, searchString str
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
@@ -369,7 +374,7 @@ func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, limit int64, off
 	for rows.Next() {
 		var p models.Package
 		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", "Failed to scan package", "err", err)
+			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
 		packages = append(packages, p)
