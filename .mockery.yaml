@@ -3,13 +3,12 @@ issue-845-fix: true
 resolve-type-alias: false
 
 packages:
-  github.com/Chaika-Team/ChaikaGoods/internal/repository:
+  github.com/Chaika-Team/ChaikaGoods/internal/models:
     config:
       mockname: "Mock{{.InterfaceName}}"
       filename: "{{.InterfaceName}}.mock.go"
-      dir: "internal/repository/mocks"
+      dir: "tests/mocks"
       outpkg: "mocks"
       inpackage: false
     interfaces:
       GoodsRepository:
-      # Дополнительные настройки интерфейса, если необходимо

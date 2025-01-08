@@ -3,8 +3,8 @@ package unit_tests
 import (
 	"testing"
 
-	"github.com/Chaika-Team/ChaikaGoods/internal/repository/mocks"
 	"github.com/Chaika-Team/ChaikaGoods/internal/service"
+	"github.com/Chaika-Team/ChaikaGoods/tests/mocks"
 
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/suite"
