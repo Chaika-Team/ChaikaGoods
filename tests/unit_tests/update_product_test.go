@@ -1,4 +1,3 @@
-// internal/service/update_product_test.go
 package unit_tests
 
 import (

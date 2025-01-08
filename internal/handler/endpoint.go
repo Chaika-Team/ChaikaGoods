@@ -17,10 +17,10 @@ type Endpoints struct {
 	GetProductByID    endpoint.Endpoint
 	GetCurrentVersion endpoint.Endpoint
 	GetDelta          endpoint.Endpoint
-	// For Packages
-	SearchPackages endpoint.Endpoint
-	AddPackage     endpoint.Endpoint
-	GetPackageByID endpoint.Endpoint
+	// For Templates
+	SearchTemplates endpoint.Endpoint
+	AddTemplate     endpoint.Endpoint
+	GetTemplateByID endpoint.Endpoint
 	// For products (admin)
 	CreateProduct endpoint.Endpoint
 	UpdateProduct endpoint.Endpoint
@@ -32,9 +32,9 @@ func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
 	// Инициализируем мапперы через конструкторы
 	productMapper := schemas.NewProductMapper()
 	productsMapper := schemas.NewProductsMapper(productMapper)
-	packageContentMapper := schemas.NewPackageContentMapper()
-	packageMapper := schemas.NewPackageMapper(packageContentMapper, productMapper)
-	packagesMapper := schemas.NewPackagesMapper(packageMapper)
+	templateContentMapper := schemas.NewTemplateContentMapper()
+	templateMapper := schemas.NewTemplateMapper(templateContentMapper, productMapper)
+	templatesMapper := schemas.NewTemplatesMapper(templateMapper)
 
 	// Создаем middleware для логирования и обработки ошибок
 	logMiddleware := LoggingMiddleware(logger)
@@ -43,10 +43,10 @@ func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
 		// Products
 		GetAllProducts: logMiddleware(makeGetAllProductsEndpoint(svc, productsMapper)),
 		GetProductByID: logMiddleware(makeGetProductByIDEndpoint(svc, productMapper)),
-		// Packages
-		SearchPackages: logMiddleware(makeSearchPackagesEndpoint(svc, packagesMapper)),
-		AddPackage:     logMiddleware(makeAddPackageEndpoint(svc, packageMapper)),
-		GetPackageByID: logMiddleware(makeGetPackageByIDEndpoint(svc, packageMapper)),
+		// Templates
+		SearchTemplates: logMiddleware(makeSearchTemplatesEndpoint(svc, templatesMapper)),
+		AddTemplate:     logMiddleware(makeAddTemplateEndpoint(svc, templateMapper)),
+		GetTemplateByID: logMiddleware(makeGetTemplateByIDEndpoint(svc, templateMapper)),
 		// Products (admin)
 		CreateProduct: logMiddleware(makeCreateProductEndpoint(svc, productMapper)),
 		UpdateProduct: logMiddleware(makeUpdateProductEndpoint(svc, productMapper)),
@@ -107,83 +107,83 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 	}
 }
 
-// makeSearchPackagesEndpoint constructs a SearchPackages endpoint wrapping the service.
+// makeSearchTemplatesEndpoint constructs a SearchTemplates endpoint wrapping the service.
 //
-//	@Summary		Search Package
-//	@Description	Search for Packages
-//	@Tags			Packages
+//	@Summary		Search Template
+//	@Description	Search for Templates
+//	@Tags			Templates
 //	@Accept			json
 //	@Produce		json
 //	@Param			query	query		string	false	"Search query"
 //	@Param			limit	query		int		true	"Limit"
 //	@Param			offset	query		int		true	"Offset"
-//	@Success		200		{object}	schemas.SearchPackagesResponse
+//	@Success		200		{object}	schemas.SearchTemplatesResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Packages/search [get]
-func makeSearchPackagesEndpoint(s service.Service, mapper *schemas.PackagesMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Templates/search [get]
+func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.SearchPackagesRequest](request)
+		req := mustCast[schemas.SearchTemplatesRequest](request)
 
-		Packages, err := s.SearchPackages(ctx, req.Query, req.Limit, req.Offset)
+		Templates, err := s.SearchTemplates(ctx, req.Query, req.Limit, req.Offset)
 		if err != nil {
 			return nil, err
 		}
 
-		PackagesSchema := mapper.ToSchemas(Packages)
-		return schemas.SearchPackagesResponse{Packages: PackagesSchema}, nil
+		TemplatesSchema := mapper.ToSchemas(Templates)
+		return schemas.SearchTemplatesResponse{Templates: TemplatesSchema}, nil
 	}
 }
 
-// makeAddPackageEndpoint constructs a AddPackage endpoint wrapping the service.
+// makeAddTemplateEndpoint constructs a AddTemplate endpoint wrapping the service.
 //
-//	@Summary		Add Package
-//	@Description	Add a new Package of products to the database
-//	@Tags			Packages
+//	@Summary		Add Template
+//	@Description	Add a new Template of products to the database
+//	@Tags			Templates
 //	@Accept			json
 //	@Produce		json
-//	@Param			Package	body		schemas.AddPackageRequest	true	"Package details"
-//	@Success		200		{object}	schemas.AddPackageResponse
+//	@Param			Template	body		schemas.AddTemplateRequest	true	"Template details"
+//	@Success		200		{object}	schemas.AddTemplateResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Packages [post]
-func makeAddPackageEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Templates [post]
+func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.AddPackageRequest](request)
+		req := mustCast[schemas.AddTemplateRequest](request)
 
-		PackageModel := mapper.ToModel(req.Package)
+		TemplateModel := mapper.ToModel(req.Template)
 
-		id, err := s.AddPackage(ctx, &PackageModel)
+		id, err := s.AddTemplate(ctx, &TemplateModel)
 		if err != nil {
 			return nil, err
 		}
 
-		return schemas.AddPackageResponse{PackageID: id}, nil
+		return schemas.AddTemplateResponse{TemplateID: id}, nil
 	}
 }
 
-// makeGetPackageByIDEndpoint constructs a GetPackageByID endpoint wrapping the service.
+// makeGetTemplateByIDEndpoint constructs a GetTemplateByID endpoint wrapping the service.
 //
-//	@Summary		Get Package by ID
-//	@Description	Get Package details by its ID
-//	@Tags			Packages
+//	@Summary		Get Template by ID
+//	@Description	Get Template details by its ID
+//	@Tags			Templates
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		int	true	"Package ID"
-//	@Success		200		{object}	schemas.GetPackageByIDResponse
+//	@Param			id	path		int	true	"Template ID"
+//	@Success		200		{object}	schemas.GetTemplateByIDResponse
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Packages/{id} [get]
-func makeGetPackageByIDEndpoint(s service.Service, mapper *schemas.PackageMapper) endpoint.Endpoint {
+//	@Router			/api/v1/Templates/{id} [get]
+func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[*schemas.GetPackageByIDRequest](request)
+		req := mustCast[*schemas.GetTemplateByIDRequest](request)
 
-		Package, err := s.GetPackageByID(ctx, req.PackageID)
+		Template, err := s.GetTemplateByID(ctx, req.TemplateID)
 		if err != nil {
 			return nil, err
 		}
 
-		PackageSchema := mapper.ToSchema(Package)
-		return schemas.GetPackageByIDResponse{Package: PackageSchema}, nil
+		TemplateSchema := mapper.ToSchema(Template)
+		return schemas.GetTemplateByIDResponse{Template: TemplateSchema}, nil
 	}
 }
 

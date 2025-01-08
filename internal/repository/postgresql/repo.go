@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	msgFailedToScanPackage = "Failed to scan package"
-	fmtProductNotFound     = "Product with ID %d not found"
+	msgFailedToScanTemplate = "Failed to scan template"
+	fmtProductNotFound      = "Product with ID %d not found"
 )
 
 // GoodsPGRepository implements the GoodsRepository interface using PostgreSQL.
@@ -128,103 +128,103 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 	return nil
 }
 
-// ---------- PackageRepository Implementation ----------
+// ---------- TemplateRepository Implementation ----------
 
-// GetPackageByID retrieves package details along with its contents.
-func (r *GoodsPGRepository) GetPackageByID(ctx context.Context, id int64) (models.Package, error) {
-	var pkg models.Package
-	const sqlPackage = `SELECT packageid, packagename, description FROM public."package" WHERE packageid = $1;`
-	if err := r.client.QueryRow(ctx, sqlPackage, id).Scan(&pkg.ID, &pkg.PackageName, &pkg.Description); err != nil {
+// GetTemplateByID retrieves template details along with its contents.
+func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (models.Template, error) {
+	var pkg models.Template
+	const sqlTemplate = `SELECT templateid, templatename, description FROM public."template" WHERE templateid = $1;`
+	if err := r.client.QueryRow(ctx, sqlTemplate, id).Scan(&pkg.ID, &pkg.TemplateName, &pkg.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return pkg, myerr.NotFound(fmt.Sprintf("Package with ID %d not found", id), nil)
+			return pkg, myerr.NotFound(fmt.Sprintf("Template with ID %d not found", id), nil)
 		}
-		_ = r.logger.Log("error", "Failed to get package by ID", "id", id, "err", err)
+		_ = r.logger.Log("error", "Failed to get template by ID", "id", id, "err", err)
 		return pkg, err
 	}
 
-	// Get package contents
-	const sqlContents = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	// Get template contents
+	const sqlContents = `SELECT productid, quantity FROM public.templatecontent WHERE templateid = $1;`
 	rows, err := r.client.Query(ctx, sqlContents, id)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to get package contents", "package_id", id, "err", err)
+		_ = r.logger.Log("error", "Failed to get template contents", "template_id", id, "err", err)
 		return pkg, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var c models.PackageContent
+		var c models.TemplateContent
 		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
-			_ = r.logger.Log("error", "Failed to scan package content", "err", err)
+			_ = r.logger.Log("error", "Failed to scan template content", "err", err)
 			return pkg, err
 		}
 		pkg.Content = append(pkg.Content, c)
 	}
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while getting package contents", "err", err)
+		_ = r.logger.Log("error", "Rows iteration error while getting template contents", "err", err)
 		return pkg, err
 	}
 
 	return pkg, nil
 }
 
-// GetProductsByPackageID retrieves all products within a specific package.
-func (r *GoodsPGRepository) GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error) {
-	const sql = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
-	rows, err := r.client.Query(ctx, sql, packageID)
+// GetProductsByTemplateID retrieves all products within a specific template.
+func (r *GoodsPGRepository) GetProductsByTemplateID(ctx context.Context, templateID int64) ([]models.TemplateContent, error) {
+	const sql = `SELECT productid, quantity FROM public.templatecontent WHERE templateid = $1;`
+	rows, err := r.client.Query(ctx, sql, templateID)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to get products by package ID", "package_id", packageID, "err", err)
+		_ = r.logger.Log("error", "Failed to get products by template ID", "template_id", templateID, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var contents []models.PackageContent
+	var contents []models.TemplateContent
 	for rows.Next() {
-		var c models.PackageContent
+		var c models.TemplateContent
 		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
-			_ = r.logger.Log("error", "Failed to scan package content", "err", err)
+			_ = r.logger.Log("error", "Failed to scan template content", "err", err)
 			return nil, err
 		}
 		contents = append(contents, c)
 	}
 
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while getting products by package ID", "err", err)
+		_ = r.logger.Log("error", "Rows iteration error while getting products by template ID", "err", err)
 		return nil, err
 	}
 
 	return contents, nil
 }
 
-// ListPackages returns a list of all packages.
-func (r *GoodsPGRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
-	const sql = `SELECT packageid, packagename, description FROM public."package";`
+// ListTemplates returns a list of all templates.
+func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Template, error) {
+	const sql = `SELECT templateid, templatename, description FROM public."template";`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to list packages", "err", err)
+		_ = r.logger.Log("error", "Failed to list templates", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var packages []models.Package
+	var templates []models.Template
 	for rows.Next() {
-		var p models.Package
-		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
+		var p models.Template
+		if err := rows.Scan(&p.ID, &p.TemplateName, &p.Description); err != nil {
+			_ = r.logger.Log("error", msgFailedToScanTemplate, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
-		packages = append(packages, p)
+		templates = append(templates, p)
 	}
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while listing packages", "err", err)
+		_ = r.logger.Log("error", "Rows iteration error while listing templates", "err", err)
 		return nil, err
 	}
 
-	return packages, nil
+	return templates, nil
 }
 
-// CreatePackage adds a new package to the database along with its contents.
-func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Package) (err error) {
-	const sqlInsertPackage = `INSERT INTO public."package" (packagename, description) VALUES ($1, $2) RETURNING packageid;`
+// CreateTemplate adds a new template to the database along with its contents.
+func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, pkg *models.Template) (err error) {
+	const sqlInsertTemplate = `INSERT INTO public."template" (templatename, description) VALUES ($1, $2) RETURNING templateid;`
 
 	tx, err := r.client.Begin(ctx)
 	if err != nil {
@@ -245,20 +245,20 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 		}
 	}()
 
-	// Insert package
-	if err = tx.QueryRow(ctx, sqlInsertPackage, pkg.PackageName, pkg.Description).Scan(&pkg.ID); err != nil {
+	// Insert template
+	if err = tx.QueryRow(ctx, sqlInsertTemplate, pkg.TemplateName, pkg.Description).Scan(&pkg.ID); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return myerr.Conflict(fmt.Sprintf("Package with name %s already exists", pkg.PackageName), err)
+			return myerr.Conflict(fmt.Sprintf("Template with name %s already exists", pkg.TemplateName), err)
 		}
-		_ = r.logger.Log("error", "Failed to insert package", "pkg_name", pkg.PackageName, "err", err)
+		_ = r.logger.Log("error", "Failed to insert template", "pkg_name", pkg.TemplateName, "err", err)
 		return err
 	}
 
-	// Insert package contents
+	// Insert template contents
 	for _, content := range pkg.Content {
-		if err = r.createProductToPackage(ctx, tx, pkg.ID, content); err != nil {
-			_ = r.logger.Log("error", "Failed to add product to package", "pkg_id", pkg.ID, "product_id", content.ProductID, "err", err)
+		if err = r.createProductToTemplate(ctx, tx, pkg.ID, content); err != nil {
+			_ = r.logger.Log("error", "Failed to add product to template", "pkg_id", pkg.ID, "product_id", content.ProductID, "err", err)
 			return err
 		}
 	}
@@ -266,28 +266,28 @@ func (r *GoodsPGRepository) CreatePackage(ctx context.Context, pkg *models.Packa
 	return nil
 }
 
-// createProductToPackage adds a single package content entry.
-func (r *GoodsPGRepository) createProductToPackage(ctx context.Context, tx pgx.Tx, packageID int64, content models.PackageContent) error {
-	// Insert package content
-	const sqlInsertContent = `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
-	if _, err := tx.Exec(ctx, sqlInsertContent, packageID, content.ProductID, content.Quantity); err != nil {
+// createProductToTemplate adds a single template content entry.
+func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.Tx, templateID int64, content models.TemplateContent) error {
+	// Insert template content
+	const sqlInsertContent = `INSERT INTO public.templatecontent (templateid, productid, quantity) VALUES ($1, $2, $3);`
+	if _, err := tx.Exec(ctx, sqlInsertContent, templateID, content.ProductID, content.Quantity); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
 			return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, content.ProductID), err)
 		} else if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return myerr.Conflict(fmt.Sprintf("Product with ID %d already exists in package", content.ProductID), err)
+			return myerr.Conflict(fmt.Sprintf("Product with ID %d already exists in template", content.ProductID), err)
 		}
-		_ = r.logger.Log("error", "Failed to insert package content", "package_id", packageID, "product_id", content.ProductID, "err", err)
+		_ = r.logger.Log("error", "Failed to insert template content", "template_id", templateID, "product_id", content.ProductID, "err", err)
 		return err
 	}
 	return nil
 }
 
-// DeletePackage deletes a package and its contents from the database by package ID.
-func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) error {
+// DeleteTemplate deletes a template and its contents from the database by template ID.
+func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, templateID int64) error {
 	const (
-		sqlDeleteContents = `DELETE FROM public.packagecontent WHERE packageid = $1;`
-		sqlDeletePackage  = `DELETE FROM public."package" WHERE packageid = $1;`
+		sqlDeleteContents = `DELETE FROM public.templatecontent WHERE templateid = $1;`
+		sqlDeleteTemplate = `DELETE FROM public."template" WHERE templateid = $1;`
 	)
 
 	tx, err := r.client.Begin(ctx)
@@ -301,20 +301,20 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 		}
 	}()
 
-	// Delete package contents
-	if _, err = tx.Exec(ctx, sqlDeleteContents, packageID); err != nil {
-		_ = r.logger.Log("error", "Failed to delete package contents", "package_id", packageID, "err", err)
+	// Delete template contents
+	if _, err = tx.Exec(ctx, sqlDeleteContents, templateID); err != nil {
+		_ = r.logger.Log("error", "Failed to delete template contents", "template_id", templateID, "err", err)
 		return err
 	}
 
-	// Delete package
-	ct, err := tx.Exec(ctx, sqlDeletePackage, packageID)
+	// Delete template
+	ct, err := tx.Exec(ctx, sqlDeleteTemplate, templateID)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to delete package", "package_id", packageID, "err", err)
+		_ = r.logger.Log("error", "Failed to delete template", "template_id", templateID, "err", err)
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NotFound(fmt.Sprintf("Package with id %d not found", packageID), nil)
+		return myerr.NotFound(fmt.Sprintf("Template with id %d not found", templateID), nil)
 	}
 
 	// Commit transaction
@@ -326,61 +326,61 @@ func (r *GoodsPGRepository) DeletePackage(ctx context.Context, packageID int64) 
 	return nil
 }
 
-// SearchPackages searches for packages by name or description with pagination.
-func (r *GoodsPGRepository) SearchPackages(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Package, error) {
+// SearchTemplates searches for templates by name or description with pagination.
+func (r *GoodsPGRepository) SearchTemplates(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Template, error) {
 	searchPattern := "%" + searchString + "%"
-	const sql = `SELECT packageid, packagename, description FROM public."package" 
-	        WHERE packagename ILIKE $1 OR description ILIKE $1 
+	const sql = `SELECT templateid, templatename, description FROM public."template"
+	        WHERE templatename ILIKE $1 OR description ILIKE $1 
 	        LIMIT $2 OFFSET $3;`
 
 	rows, err := r.client.Query(ctx, sql, searchPattern, limit, offset)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to search packages", "search", searchString, "err", err)
+		_ = r.logger.Log("error", "Failed to search templates", "search", searchString, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var packages []models.Package
+	var templates []models.Template
 	for rows.Next() {
-		var p models.Package
-		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
+		var p models.Template
+		if err := rows.Scan(&p.ID, &p.TemplateName, &p.Description); err != nil {
+			_ = r.logger.Log("error", msgFailedToScanTemplate, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
-		packages = append(packages, p)
+		templates = append(templates, p)
 	}
 
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while searching packages", "err", err)
+		_ = r.logger.Log("error", "Rows iteration error while searching templates", "err", err)
 		return nil, err
 	}
 
-	return packages, nil
+	return templates, nil
 }
 
-// GetAllPackages returns all packages with pagination.
-func (r *GoodsPGRepository) GetAllPackages(ctx context.Context, limit int64, offset int64) ([]models.Package, error) {
-	const sql = `SELECT packageid, packagename, description FROM public."package" LIMIT $1 OFFSET $2;`
+// GetAllTemplates returns all templates with pagination.
+func (r *GoodsPGRepository) GetAllTemplates(ctx context.Context, limit int64, offset int64) ([]models.Template, error) {
+	const sql = `SELECT templateid, templatename, description FROM public."template" LIMIT $1 OFFSET $2;`
 	rows, err := r.client.Query(ctx, sql, limit, offset)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to retrieve all packages", "err", err)
+		_ = r.logger.Log("error", "Failed to retrieve all templates", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var packages []models.Package
+	var templates []models.Template
 	for rows.Next() {
-		var p models.Package
-		if err := rows.Scan(&p.ID, &p.PackageName, &p.Description); err != nil {
-			_ = r.logger.Log("error", msgFailedToScanPackage, "err", err)
+		var p models.Template
+		if err := rows.Scan(&p.ID, &p.TemplateName, &p.Description); err != nil {
+			_ = r.logger.Log("error", msgFailedToScanTemplate, "err", err)
 			continue // Можно решить, нужно ли пропускать или возвращать ошибку
 		}
-		packages = append(packages, p)
+		templates = append(templates, p)
 	}
 	if err := rows.Err(); err != nil {
-		_ = r.logger.Log("error", "Rows iteration error while getting all packages", "err", err)
+		_ = r.logger.Log("error", "Rows iteration error while getting all templates", "err", err)
 		return nil, err
 	}
 
-	return packages, nil
+	return templates, nil
 }

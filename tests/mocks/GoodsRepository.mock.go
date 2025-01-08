@@ -22,53 +22,6 @@ func (_m *MockGoodsRepository) EXPECT() *MockGoodsRepository_Expecter {
 	return &MockGoodsRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreatePackage provides a mock function with given fields: ctx, pkg
-func (_m *MockGoodsRepository) CreatePackage(ctx context.Context, pkg *models.Package) error {
-	ret := _m.Called(ctx, pkg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreatePackage")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Package) error); ok {
-		r0 = rf(ctx, pkg)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockGoodsRepository_CreatePackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePackage'
-type MockGoodsRepository_CreatePackage_Call struct {
-	*mock.Call
-}
-
-// CreatePackage is a helper method to define mock.On call
-//   - ctx context.Context
-//   - pkg *models.Package
-func (_e *MockGoodsRepository_Expecter) CreatePackage(ctx interface{}, pkg interface{}) *MockGoodsRepository_CreatePackage_Call {
-	return &MockGoodsRepository_CreatePackage_Call{Call: _e.mock.On("CreatePackage", ctx, pkg)}
-}
-
-func (_c *MockGoodsRepository_CreatePackage_Call) Run(run func(ctx context.Context, pkg *models.Package)) *MockGoodsRepository_CreatePackage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Package))
-	})
-	return _c
-}
-
-func (_c *MockGoodsRepository_CreatePackage_Call) Return(_a0 error) *MockGoodsRepository_CreatePackage_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockGoodsRepository_CreatePackage_Call) RunAndReturn(run func(context.Context, *models.Package) error) *MockGoodsRepository_CreatePackage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CreateProduct provides a mock function with given fields: ctx, p
 func (_m *MockGoodsRepository) CreateProduct(ctx context.Context, p *models.Product) (int64, error) {
 	ret := _m.Called(ctx, p)
@@ -126,17 +79,17 @@ func (_c *MockGoodsRepository_CreateProduct_Call) RunAndReturn(run func(context.
 	return _c
 }
 
-// DeletePackage provides a mock function with given fields: ctx, packageID
-func (_m *MockGoodsRepository) DeletePackage(ctx context.Context, packageID int64) error {
-	ret := _m.Called(ctx, packageID)
+// CreateTemplate provides a mock function with given fields: ctx, pkg
+func (_m *MockGoodsRepository) CreateTemplate(ctx context.Context, pkg *models.Template) error {
+	ret := _m.Called(ctx, pkg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeletePackage")
+		panic("no return value specified for CreateTemplate")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
-		r0 = rf(ctx, packageID)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Template) error); ok {
+		r0 = rf(ctx, pkg)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -144,31 +97,31 @@ func (_m *MockGoodsRepository) DeletePackage(ctx context.Context, packageID int6
 	return r0
 }
 
-// MockGoodsRepository_DeletePackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePackage'
-type MockGoodsRepository_DeletePackage_Call struct {
+// MockGoodsRepository_CreateTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateTemplate'
+type MockGoodsRepository_CreateTemplate_Call struct {
 	*mock.Call
 }
 
-// DeletePackage is a helper method to define mock.On call
+// CreateTemplate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - packageID int64
-func (_e *MockGoodsRepository_Expecter) DeletePackage(ctx interface{}, packageID interface{}) *MockGoodsRepository_DeletePackage_Call {
-	return &MockGoodsRepository_DeletePackage_Call{Call: _e.mock.On("DeletePackage", ctx, packageID)}
+//   - pkg *models.Template
+func (_e *MockGoodsRepository_Expecter) CreateTemplate(ctx interface{}, pkg interface{}) *MockGoodsRepository_CreateTemplate_Call {
+	return &MockGoodsRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, pkg)}
 }
 
-func (_c *MockGoodsRepository_DeletePackage_Call) Run(run func(ctx context.Context, packageID int64)) *MockGoodsRepository_DeletePackage_Call {
+func (_c *MockGoodsRepository_CreateTemplate_Call) Run(run func(ctx context.Context, pkg *models.Template)) *MockGoodsRepository_CreateTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64))
+		run(args[0].(context.Context), args[1].(*models.Template))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_DeletePackage_Call) Return(_a0 error) *MockGoodsRepository_DeletePackage_Call {
+func (_c *MockGoodsRepository_CreateTemplate_Call) Return(_a0 error) *MockGoodsRepository_CreateTemplate_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoodsRepository_DeletePackage_Call) RunAndReturn(run func(context.Context, int64) error) *MockGoodsRepository_DeletePackage_Call {
+func (_c *MockGoodsRepository_CreateTemplate_Call) RunAndReturn(run func(context.Context, *models.Template) error) *MockGoodsRepository_CreateTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -220,62 +173,49 @@ func (_c *MockGoodsRepository_DeleteProduct_Call) RunAndReturn(run func(context.
 	return _c
 }
 
-// GetAllPackages provides a mock function with given fields: ctx, limit, offset
-func (_m *MockGoodsRepository) GetAllPackages(ctx context.Context, limit int64, offset int64) ([]models.Package, error) {
-	ret := _m.Called(ctx, limit, offset)
+// DeleteTemplate provides a mock function with given fields: ctx, templateID
+func (_m *MockGoodsRepository) DeleteTemplate(ctx context.Context, templateID int64) error {
+	ret := _m.Called(ctx, templateID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetAllPackages")
+		panic("no return value specified for DeleteTemplate")
 	}
 
-	var r0 []models.Package
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) ([]models.Package, error)); ok {
-		return rf(ctx, limit, offset)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) []models.Package); ok {
-		r0 = rf(ctx, limit, offset)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, templateID)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Package)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = rf(ctx, limit, offset)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
-// MockGoodsRepository_GetAllPackages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllPackages'
-type MockGoodsRepository_GetAllPackages_Call struct {
+// MockGoodsRepository_DeleteTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteTemplate'
+type MockGoodsRepository_DeleteTemplate_Call struct {
 	*mock.Call
 }
 
-// GetAllPackages is a helper method to define mock.On call
+// DeleteTemplate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - limit int64
-//   - offset int64
-func (_e *MockGoodsRepository_Expecter) GetAllPackages(ctx interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_GetAllPackages_Call {
-	return &MockGoodsRepository_GetAllPackages_Call{Call: _e.mock.On("GetAllPackages", ctx, limit, offset)}
+//   - templateID int64
+func (_e *MockGoodsRepository_Expecter) DeleteTemplate(ctx interface{}, templateID interface{}) *MockGoodsRepository_DeleteTemplate_Call {
+	return &MockGoodsRepository_DeleteTemplate_Call{Call: _e.mock.On("DeleteTemplate", ctx, templateID)}
 }
 
-func (_c *MockGoodsRepository_GetAllPackages_Call) Run(run func(ctx context.Context, limit int64, offset int64)) *MockGoodsRepository_GetAllPackages_Call {
+func (_c *MockGoodsRepository_DeleteTemplate_Call) Run(run func(ctx context.Context, templateID int64)) *MockGoodsRepository_DeleteTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64), args[2].(int64))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetAllPackages_Call) Return(_a0 []models.Package, _a1 error) *MockGoodsRepository_GetAllPackages_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockGoodsRepository_DeleteTemplate_Call) Return(_a0 error) *MockGoodsRepository_DeleteTemplate_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetAllPackages_Call) RunAndReturn(run func(context.Context, int64, int64) ([]models.Package, error)) *MockGoodsRepository_GetAllPackages_Call {
+func (_c *MockGoodsRepository_DeleteTemplate_Call) RunAndReturn(run func(context.Context, int64) error) *MockGoodsRepository_DeleteTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -338,27 +278,29 @@ func (_c *MockGoodsRepository_GetAllProducts_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// GetPackageByID provides a mock function with given fields: ctx, id
-func (_m *MockGoodsRepository) GetPackageByID(ctx context.Context, id int64) (models.Package, error) {
-	ret := _m.Called(ctx, id)
+// GetAllTemplates provides a mock function with given fields: ctx, limit, offset
+func (_m *MockGoodsRepository) GetAllTemplates(ctx context.Context, limit int64, offset int64) ([]models.Template, error) {
+	ret := _m.Called(ctx, limit, offset)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPackageByID")
+		panic("no return value specified for GetAllTemplates")
 	}
 
-	var r0 models.Package
+	var r0 []models.Template
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (models.Package, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) ([]models.Template, error)); ok {
+		return rf(ctx, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) models.Package); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) []models.Template); ok {
+		r0 = rf(ctx, limit, offset)
 	} else {
-		r0 = ret.Get(0).(models.Package)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Template)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = rf(ctx, limit, offset)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -366,31 +308,32 @@ func (_m *MockGoodsRepository) GetPackageByID(ctx context.Context, id int64) (mo
 	return r0, r1
 }
 
-// MockGoodsRepository_GetPackageByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPackageByID'
-type MockGoodsRepository_GetPackageByID_Call struct {
+// MockGoodsRepository_GetAllTemplates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllTemplates'
+type MockGoodsRepository_GetAllTemplates_Call struct {
 	*mock.Call
 }
 
-// GetPackageByID is a helper method to define mock.On call
+// GetAllTemplates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id int64
-func (_e *MockGoodsRepository_Expecter) GetPackageByID(ctx interface{}, id interface{}) *MockGoodsRepository_GetPackageByID_Call {
-	return &MockGoodsRepository_GetPackageByID_Call{Call: _e.mock.On("GetPackageByID", ctx, id)}
+//   - limit int64
+//   - offset int64
+func (_e *MockGoodsRepository_Expecter) GetAllTemplates(ctx interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_GetAllTemplates_Call {
+	return &MockGoodsRepository_GetAllTemplates_Call{Call: _e.mock.On("GetAllTemplates", ctx, limit, offset)}
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) Run(run func(ctx context.Context, id int64)) *MockGoodsRepository_GetPackageByID_Call {
+func (_c *MockGoodsRepository_GetAllTemplates_Call) Run(run func(ctx context.Context, limit int64, offset int64)) *MockGoodsRepository_GetAllTemplates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64))
+		run(args[0].(context.Context), args[1].(int64), args[2].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) Return(_a0 models.Package, _a1 error) *MockGoodsRepository_GetPackageByID_Call {
+func (_c *MockGoodsRepository_GetAllTemplates_Call) Return(_a0 []models.Template, _a1 error) *MockGoodsRepository_GetAllTemplates_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetPackageByID_Call) RunAndReturn(run func(context.Context, int64) (models.Package, error)) *MockGoodsRepository_GetPackageByID_Call {
+func (_c *MockGoodsRepository_GetAllTemplates_Call) RunAndReturn(run func(context.Context, int64, int64) ([]models.Template, error)) *MockGoodsRepository_GetAllTemplates_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -452,29 +395,29 @@ func (_c *MockGoodsRepository_GetProductByID_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// GetProductsByPackageID provides a mock function with given fields: ctx, packageID
-func (_m *MockGoodsRepository) GetProductsByPackageID(ctx context.Context, packageID int64) ([]models.PackageContent, error) {
-	ret := _m.Called(ctx, packageID)
+// GetProductsByTemplateID provides a mock function with given fields: ctx, templateID
+func (_m *MockGoodsRepository) GetProductsByTemplateID(ctx context.Context, templateID int64) ([]models.TemplateContent, error) {
+	ret := _m.Called(ctx, templateID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetProductsByPackageID")
+		panic("no return value specified for GetProductsByTemplateID")
 	}
 
-	var r0 []models.PackageContent
+	var r0 []models.TemplateContent
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]models.PackageContent, error)); ok {
-		return rf(ctx, packageID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]models.TemplateContent, error)); ok {
+		return rf(ctx, templateID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) []models.PackageContent); ok {
-		r0 = rf(ctx, packageID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []models.TemplateContent); ok {
+		r0 = rf(ctx, templateID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.PackageContent)
+			r0 = ret.Get(0).([]models.TemplateContent)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, packageID)
+		r1 = rf(ctx, templateID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -482,53 +425,110 @@ func (_m *MockGoodsRepository) GetProductsByPackageID(ctx context.Context, packa
 	return r0, r1
 }
 
-// MockGoodsRepository_GetProductsByPackageID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProductsByPackageID'
-type MockGoodsRepository_GetProductsByPackageID_Call struct {
+// MockGoodsRepository_GetProductsByTemplateID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProductsByTemplateID'
+type MockGoodsRepository_GetProductsByTemplateID_Call struct {
 	*mock.Call
 }
 
-// GetProductsByPackageID is a helper method to define mock.On call
+// GetProductsByTemplateID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - packageID int64
-func (_e *MockGoodsRepository_Expecter) GetProductsByPackageID(ctx interface{}, packageID interface{}) *MockGoodsRepository_GetProductsByPackageID_Call {
-	return &MockGoodsRepository_GetProductsByPackageID_Call{Call: _e.mock.On("GetProductsByPackageID", ctx, packageID)}
+//   - templateID int64
+func (_e *MockGoodsRepository_Expecter) GetProductsByTemplateID(ctx interface{}, templateID interface{}) *MockGoodsRepository_GetProductsByTemplateID_Call {
+	return &MockGoodsRepository_GetProductsByTemplateID_Call{Call: _e.mock.On("GetProductsByTemplateID", ctx, templateID)}
 }
 
-func (_c *MockGoodsRepository_GetProductsByPackageID_Call) Run(run func(ctx context.Context, packageID int64)) *MockGoodsRepository_GetProductsByPackageID_Call {
+func (_c *MockGoodsRepository_GetProductsByTemplateID_Call) Run(run func(ctx context.Context, templateID int64)) *MockGoodsRepository_GetProductsByTemplateID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetProductsByPackageID_Call) Return(_a0 []models.PackageContent, _a1 error) *MockGoodsRepository_GetProductsByPackageID_Call {
+func (_c *MockGoodsRepository_GetProductsByTemplateID_Call) Return(_a0 []models.TemplateContent, _a1 error) *MockGoodsRepository_GetProductsByTemplateID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_GetProductsByPackageID_Call) RunAndReturn(run func(context.Context, int64) ([]models.PackageContent, error)) *MockGoodsRepository_GetProductsByPackageID_Call {
+func (_c *MockGoodsRepository_GetProductsByTemplateID_Call) RunAndReturn(run func(context.Context, int64) ([]models.TemplateContent, error)) *MockGoodsRepository_GetProductsByTemplateID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListPackages provides a mock function with given fields: ctx
-func (_m *MockGoodsRepository) ListPackages(ctx context.Context) ([]models.Package, error) {
+// GetTemplateByID provides a mock function with given fields: ctx, id
+func (_m *MockGoodsRepository) GetTemplateByID(ctx context.Context, id int64) (models.Template, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTemplateByID")
+	}
+
+	var r0 models.Template
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (models.Template, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) models.Template); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(models.Template)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGoodsRepository_GetTemplateByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTemplateByID'
+type MockGoodsRepository_GetTemplateByID_Call struct {
+	*mock.Call
+}
+
+// GetTemplateByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id int64
+func (_e *MockGoodsRepository_Expecter) GetTemplateByID(ctx interface{}, id interface{}) *MockGoodsRepository_GetTemplateByID_Call {
+	return &MockGoodsRepository_GetTemplateByID_Call{Call: _e.mock.On("GetTemplateByID", ctx, id)}
+}
+
+func (_c *MockGoodsRepository_GetTemplateByID_Call) Run(run func(ctx context.Context, id int64)) *MockGoodsRepository_GetTemplateByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64))
+	})
+	return _c
+}
+
+func (_c *MockGoodsRepository_GetTemplateByID_Call) Return(_a0 models.Template, _a1 error) *MockGoodsRepository_GetTemplateByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGoodsRepository_GetTemplateByID_Call) RunAndReturn(run func(context.Context, int64) (models.Template, error)) *MockGoodsRepository_GetTemplateByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListTemplates provides a mock function with given fields: ctx
+func (_m *MockGoodsRepository) ListTemplates(ctx context.Context) ([]models.Template, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListPackages")
+		panic("no return value specified for ListTemplates")
 	}
 
-	var r0 []models.Package
+	var r0 []models.Template
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]models.Package, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]models.Template, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []models.Package); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []models.Template); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Package)
+			r0 = ret.Get(0).([]models.Template)
 		}
 	}
 
@@ -541,52 +541,52 @@ func (_m *MockGoodsRepository) ListPackages(ctx context.Context) ([]models.Packa
 	return r0, r1
 }
 
-// MockGoodsRepository_ListPackages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPackages'
-type MockGoodsRepository_ListPackages_Call struct {
+// MockGoodsRepository_ListTemplates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTemplates'
+type MockGoodsRepository_ListTemplates_Call struct {
 	*mock.Call
 }
 
-// ListPackages is a helper method to define mock.On call
+// ListTemplates is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockGoodsRepository_Expecter) ListPackages(ctx interface{}) *MockGoodsRepository_ListPackages_Call {
-	return &MockGoodsRepository_ListPackages_Call{Call: _e.mock.On("ListPackages", ctx)}
+func (_e *MockGoodsRepository_Expecter) ListTemplates(ctx interface{}) *MockGoodsRepository_ListTemplates_Call {
+	return &MockGoodsRepository_ListTemplates_Call{Call: _e.mock.On("ListTemplates", ctx)}
 }
 
-func (_c *MockGoodsRepository_ListPackages_Call) Run(run func(ctx context.Context)) *MockGoodsRepository_ListPackages_Call {
+func (_c *MockGoodsRepository_ListTemplates_Call) Run(run func(ctx context.Context)) *MockGoodsRepository_ListTemplates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_ListPackages_Call) Return(_a0 []models.Package, _a1 error) *MockGoodsRepository_ListPackages_Call {
+func (_c *MockGoodsRepository_ListTemplates_Call) Return(_a0 []models.Template, _a1 error) *MockGoodsRepository_ListTemplates_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_ListPackages_Call) RunAndReturn(run func(context.Context) ([]models.Package, error)) *MockGoodsRepository_ListPackages_Call {
+func (_c *MockGoodsRepository_ListTemplates_Call) RunAndReturn(run func(context.Context) ([]models.Template, error)) *MockGoodsRepository_ListTemplates_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SearchPackages provides a mock function with given fields: ctx, searchString, limit, offset
-func (_m *MockGoodsRepository) SearchPackages(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Package, error) {
+// SearchTemplates provides a mock function with given fields: ctx, searchString, limit, offset
+func (_m *MockGoodsRepository) SearchTemplates(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Template, error) {
 	ret := _m.Called(ctx, searchString, limit, offset)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchPackages")
+		panic("no return value specified for SearchTemplates")
 	}
 
-	var r0 []models.Package
+	var r0 []models.Template
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) ([]models.Package, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) ([]models.Template, error)); ok {
 		return rf(ctx, searchString, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) []models.Package); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) []models.Template); ok {
 		r0 = rf(ctx, searchString, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Package)
+			r0 = ret.Get(0).([]models.Template)
 		}
 	}
 
@@ -599,33 +599,33 @@ func (_m *MockGoodsRepository) SearchPackages(ctx context.Context, searchString 
 	return r0, r1
 }
 
-// MockGoodsRepository_SearchPackages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPackages'
-type MockGoodsRepository_SearchPackages_Call struct {
+// MockGoodsRepository_SearchTemplates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchTemplates'
+type MockGoodsRepository_SearchTemplates_Call struct {
 	*mock.Call
 }
 
-// SearchPackages is a helper method to define mock.On call
+// SearchTemplates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - searchString string
 //   - limit int64
 //   - offset int64
-func (_e *MockGoodsRepository_Expecter) SearchPackages(ctx interface{}, searchString interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_SearchPackages_Call {
-	return &MockGoodsRepository_SearchPackages_Call{Call: _e.mock.On("SearchPackages", ctx, searchString, limit, offset)}
+func (_e *MockGoodsRepository_Expecter) SearchTemplates(ctx interface{}, searchString interface{}, limit interface{}, offset interface{}) *MockGoodsRepository_SearchTemplates_Call {
+	return &MockGoodsRepository_SearchTemplates_Call{Call: _e.mock.On("SearchTemplates", ctx, searchString, limit, offset)}
 }
 
-func (_c *MockGoodsRepository_SearchPackages_Call) Run(run func(ctx context.Context, searchString string, limit int64, offset int64)) *MockGoodsRepository_SearchPackages_Call {
+func (_c *MockGoodsRepository_SearchTemplates_Call) Run(run func(ctx context.Context, searchString string, limit int64, offset int64)) *MockGoodsRepository_SearchTemplates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(int64))
 	})
 	return _c
 }
 
-func (_c *MockGoodsRepository_SearchPackages_Call) Return(_a0 []models.Package, _a1 error) *MockGoodsRepository_SearchPackages_Call {
+func (_c *MockGoodsRepository_SearchTemplates_Call) Return(_a0 []models.Template, _a1 error) *MockGoodsRepository_SearchTemplates_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGoodsRepository_SearchPackages_Call) RunAndReturn(run func(context.Context, string, int64, int64) ([]models.Package, error)) *MockGoodsRepository_SearchPackages_Call {
+func (_c *MockGoodsRepository_SearchTemplates_Call) RunAndReturn(run func(context.Context, string, int64, int64) ([]models.Template, error)) *MockGoodsRepository_SearchTemplates_Call {
 	_c.Call.Return(run)
 	return _c
 }

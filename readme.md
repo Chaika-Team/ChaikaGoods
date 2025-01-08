@@ -61,7 +61,7 @@ storage:
   max_conns: 10
   min_conns: 2
   health_check_period: 30s
-  
+
 ```
 
 ### Запуск

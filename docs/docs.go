@@ -25,9 +25,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/Packages": {
+        "/api/v1/Templates": {
             "post": {
-                "description": "Add a new Package of products to the database",
+                "description": "Add a new Template of products to the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,17 +35,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Packages"
+                    "Templates"
                 ],
-                "summary": "Add Package",
+                "summary": "Add Template",
                 "parameters": [
                     {
-                        "description": "Package details",
-                        "name": "Package",
+                        "description": "Template details",
+                        "name": "Template",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest"
                         }
                     }
                 ],
@@ -53,7 +53,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse"
                         }
                     },
                     "400": {
@@ -71,9 +71,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/Packages/search": {
+        "/api/v1/Templates/search": {
             "get": {
-                "description": "Search for Packages",
+                "description": "Search for Templates",
                 "consumes": [
                     "application/json"
                 ],
@@ -81,9 +81,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Packages"
+                    "Templates"
                 ],
-                "summary": "Search Package",
+                "summary": "Search Template",
                 "parameters": [
                     {
                         "type": "string",
@@ -110,7 +110,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse"
                         }
                     },
                     "500": {
@@ -122,9 +122,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/Packages/{id}": {
+        "/api/v1/Templates/{id}": {
             "get": {
-                "description": "Get Package details by its ID",
+                "description": "Get Template details by its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -132,13 +132,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Packages"
+                    "Templates"
                 ],
-                "summary": "Get Package by ID",
+                "summary": "Get Template by ID",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Package ID",
+                        "description": "Template ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -148,7 +148,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse"
                         }
                     },
                     "404": {
@@ -371,21 +371,21 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest": {
             "description": "Запрос на добавление пакета",
             "type": "object",
             "properties": {
-                "Package": {
+                "Template": {
                     "description": "Сведения о новом пакете",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                         }
                     ]
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse": {
             "description": "Ответ на запрос на добавление пакета",
             "type": "object",
             "properties": {
@@ -442,15 +442,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse": {
-            "description": "Ответ на запрос на получение пакета по его ID",
-            "type": "object",
-            "properties": {
-                "Package": {
-                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
-                }
-            }
-        },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse": {
             "description": "Ответ на запрос на получение продукта по его ID",
             "type": "object",
@@ -460,34 +451,12 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse": {
+            "description": "Ответ на запрос на получение пакета по его ID",
             "type": "object",
             "properties": {
-                "product_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "package_name": {
-                    "type": "string"
+                "Template": {
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                 }
             }
         },
@@ -511,15 +480,46 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse": {
             "description": "Ответ на запрос на поиск пакетов",
             "type": "object",
             "properties": {
-                "Packages": {
+                "Templates": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                     }
+                }
+            }
+        },
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "template_name": {
+                    "type": "string"
                 }
             }
         },

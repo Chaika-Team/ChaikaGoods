@@ -42,9 +42,9 @@ func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// GetAllProducts    endpoint.Endpoint
 	// GetProductByID    endpoint.Endpoint
-	// For Packages
-	// SearchPackages endpoint.Endpoint
-	// AddPackage    endpoint.Endpoint
+	// For Templates
+	// SearchTemplates endpoint.Endpoint
+	// AddTemplate    endpoint.Endpoint
 	// For products (admin)
 	// CreateProduct    endpoint.Endpoint
 	// UpdateProduct endpoint.Endpoint
@@ -66,26 +66,26 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Search Package
-	api.Methods("GET").Path("/Packages/search").Handler(httpGoKit.NewServer(
-		endpoints.SearchPackages,
-		decodeSearchPackagesRequest,
+	// Search Template
+	api.Methods("GET").Path("/Templates/search").Handler(httpGoKit.NewServer(
+		endpoints.SearchTemplates,
+		decodeSearchTemplatesRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Add Package
-	api.Methods("POST").Path("/Packages").Handler(httpGoKit.NewServer(
-		endpoints.AddPackage,
-		decodeJSONRequest(&schemas.AddPackageRequest{}),
+	// Add Template
+	api.Methods("POST").Path("/Templates").Handler(httpGoKit.NewServer(
+		endpoints.AddTemplate,
+		decodeJSONRequest(&schemas.AddTemplateRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
-	// Get Package by ID
-	api.Methods("GET").Path("/Packages/{id}").Handler(httpGoKit.NewServer(
-		endpoints.GetPackageByID,
-		decodeRequestWithID(logger, "id", &schemas.GetPackageByIDRequest{}),
+	// Get Template by ID
+	api.Methods("GET").Path("/Templates/{id}").Handler(httpGoKit.NewServer(
+		endpoints.GetTemplateByID,
+		decodeRequestWithID(logger, "id", &schemas.GetTemplateByIDRequest{}),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -186,8 +186,8 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 			s.ProductID = id
 			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
-		case *schemas.GetPackageByIDRequest:
-			s.PackageID = id
+		case *schemas.GetTemplateByIDRequest:
+			s.TemplateID = id
 			_ = level.Debug(logger).Log("msg", decoderReturningMsg, "type", fmt.Sprintf("%T", s))
 			return s, nil
 		case *schemas.DeleteProductRequest:
@@ -200,8 +200,8 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 	}
 }
 
-// decodeSearchPackagesRequest декодирует GET запрос с параметрами query, limit и offset.
-func decodeSearchPackagesRequest(_ context.Context, req *http.Request) (interface{}, error) {
+// decodeSearchTemplatesRequest декодирует GET запрос с параметрами query, limit и offset.
+func decodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interface{}, error) {
 	query := req.URL.Query()
 
 	searchString := query.Get("query")
@@ -215,7 +215,7 @@ func decodeSearchPackagesRequest(_ context.Context, req *http.Request) (interfac
 		return nil, errors.New("invalid or missing offset parameter")
 	}
 
-	return schemas.SearchPackagesRequest{
+	return schemas.SearchTemplatesRequest{
 		Query:  searchString,
 		Limit:  limit,
 		Offset: offset,

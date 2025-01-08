@@ -12,14 +12,14 @@ type ProductSchema struct {
 	ImageURL    string  `json:"imageurl"`
 }
 
-type PackageSchema struct {
-	ID          int64                  `json:"id"`
-	PackageName string                 `json:"package_name"`
-	Description string                 `json:"description"`
-	Content     []PackageContentSchema `json:"content"`
+type TemplateSchema struct {
+	ID           int64                   `json:"id"`
+	TemplateName string                  `json:"template_name"`
+	Description  string                  `json:"description"`
+	Content      []TemplateContentSchema `json:"content"`
 }
 
-type PackageContentSchema struct {
+type TemplateContentSchema struct {
 	ProductID int64 `json:"product_id"`
 	Quantity  int   `json:"quantity"`
 }
@@ -48,42 +48,42 @@ type GetProductByIDResponse struct {
 	Product ProductSchema `json:"product"`
 }
 
-// SearchPackagesRequest представляет собой запрос на поиск пакетов
+// SearchTemplatesRequest представляет собой запрос на поиск пакетов
 // @Description Запрос на поиск пакетов
-type SearchPackagesRequest struct {
+type SearchTemplatesRequest struct {
 	Query  string `json:"query,omitempty"`
 	Limit  int64  `json:"limit"`
 	Offset int64  `json:"offset"`
 }
 
-// SearchPackagesResponse представляет собой ответ на запрос на поиск пакетов
+// SearchTemplatesResponse представляет собой ответ на запрос на поиск пакетов
 // @Description Ответ на запрос на поиск пакетов
-type SearchPackagesResponse struct {
-	Packages []PackageSchema `json:"Packages"`
+type SearchTemplatesResponse struct {
+	Templates []TemplateSchema `json:"Templates"`
 }
 
-// AddPackageRequest представляет собой запрос на добавление пакета
+// AddTemplateRequest представляет собой запрос на добавление пакета
 // @Description Запрос на добавление пакета
-type AddPackageRequest struct {
-	Package PackageSchema `json:"Package"` // Сведения о новом пакете
+type AddTemplateRequest struct {
+	Template TemplateSchema `json:"Template"` // Сведения о новом пакете
 }
 
-// AddPackageResponse представляет собой ответ на запрос на добавление пакета
+// AddTemplateResponse представляет собой ответ на запрос на добавление пакета
 // @Description Ответ на запрос на добавление пакета
-type AddPackageResponse struct {
-	PackageID int64 `json:"id"` // ID созданного пакета
+type AddTemplateResponse struct {
+	TemplateID int64 `json:"id"` // ID созданного пакета
 }
 
-// GetPackageByIDRequest представляет собой запрос на получение пакета по его ID
+// GetTemplateByIDRequest представляет собой запрос на получение пакета по его ID
 // @Description Запрос на получение пакета по его ID
-type GetPackageByIDRequest struct {
-	PackageID int64 `json:"id"`
+type GetTemplateByIDRequest struct {
+	TemplateID int64 `json:"id"`
 }
 
-// GetPackageByIDResponse представляет собой ответ на запрос на получение пакета по его ID
+// GetTemplateByIDResponse представляет собой ответ на запрос на получение пакета по его ID
 // @Description Ответ на запрос на получение пакета по его ID
-type GetPackageByIDResponse struct {
-	Package PackageSchema `json:"Package"`
+type GetTemplateByIDResponse struct {
+	Template TemplateSchema `json:"Template"`
 }
 
 // CreateProductRequest представляет собой запрос на добавление продукта
