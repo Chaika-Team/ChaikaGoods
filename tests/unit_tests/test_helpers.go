@@ -18,7 +18,7 @@ func createTestProduct(id int64, name string) models.Product {
 	}
 }
 
-// createTestTemplate создает и возвращает тестовый пакет с заданным ID и именем.
+// createTestTemplate создает и возвращает тестовый шаблон с заданным ID и именем.
 func createTestTemplate(id int64, name string) models.Template {
 	return models.Template{
 		ID:           id,

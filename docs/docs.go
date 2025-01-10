@@ -372,11 +372,11 @@ const docTemplate = `{
     },
     "definitions": {
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest": {
-            "description": "Запрос на добавление пакета",
+            "description": "Запрос на добавление шаблона",
             "type": "object",
             "properties": {
                 "Template": {
-                    "description": "Сведения о новом пакете",
+                    "description": "Сведения о новом шаблоне",
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
@@ -386,11 +386,11 @@ const docTemplate = `{
             }
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse": {
-            "description": "Ответ на запрос на добавление пакета",
+            "description": "Ответ на запрос на добавление шаблона",
             "type": "object",
             "properties": {
                 "id": {
-                    "description": "ID созданного пакета",
+                    "description": "ID созданного шаблона",
                     "type": "integer"
                 }
             }
@@ -452,7 +452,7 @@ const docTemplate = `{
             }
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse": {
-            "description": "Ответ на запрос на получение пакета по его ID",
+            "description": "Ответ на запрос на получение шаблона по его ID",
             "type": "object",
             "properties": {
                 "Template": {
@@ -481,7 +481,7 @@ const docTemplate = `{
             }
         },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse": {
-            "description": "Ответ на запрос на поиск пакетов",
+            "description": "Ответ на запрос на поиск шаблонов",
             "type": "object",
             "properties": {
                 "Templates": {

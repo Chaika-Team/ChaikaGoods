@@ -10,7 +10,7 @@ type Product struct {
 	SKU         string  `json:"sku"`
 }
 
-// Template описывает пакет товаров.
+// Template описывает шаблон товаров.
 type Template struct {
 	ID           int64             `json:"id"`
 	TemplateName string            `json:"template_name"`
@@ -18,7 +18,7 @@ type Template struct {
 	Content      []TemplateContent `json:"content"`
 }
 
-// TemplateContent описывает одно содержимое пакета.
+// TemplateContent описывает одно содержимое шаблона.
 type TemplateContent struct {
 	ProductID int64 `json:"product_id"`
 	Quantity  int   `json:"quantity"`

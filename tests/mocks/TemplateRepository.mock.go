@@ -22,9 +22,9 @@ func (_m *MockTemplateRepository) EXPECT() *MockTemplateRepository_Expecter {
 	return &MockTemplateRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreateTemplate provides a mock function with given fields: ctx, pkg
-func (_m *MockTemplateRepository) CreateTemplate(ctx context.Context, pkg *models.Template) error {
-	ret := _m.Called(ctx, pkg)
+// CreateTemplate provides a mock function with given fields: ctx, template
+func (_m *MockTemplateRepository) CreateTemplate(ctx context.Context, template *models.Template) error {
+	ret := _m.Called(ctx, template)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTemplate")
@@ -32,7 +32,7 @@ func (_m *MockTemplateRepository) CreateTemplate(ctx context.Context, pkg *model
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *models.Template) error); ok {
-		r0 = rf(ctx, pkg)
+		r0 = rf(ctx, template)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -47,12 +47,12 @@ type MockTemplateRepository_CreateTemplate_Call struct {
 
 // CreateTemplate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - pkg *models.Template
-func (_e *MockTemplateRepository_Expecter) CreateTemplate(ctx interface{}, pkg interface{}) *MockTemplateRepository_CreateTemplate_Call {
-	return &MockTemplateRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, pkg)}
+//   - template *models.Template
+func (_e *MockTemplateRepository_Expecter) CreateTemplate(ctx interface{}, template interface{}) *MockTemplateRepository_CreateTemplate_Call {
+	return &MockTemplateRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, template)}
 }
 
-func (_c *MockTemplateRepository_CreateTemplate_Call) Run(run func(ctx context.Context, pkg *models.Template)) *MockTemplateRepository_CreateTemplate_Call {
+func (_c *MockTemplateRepository_CreateTemplate_Call) Run(run func(ctx context.Context, template *models.Template)) *MockTemplateRepository_CreateTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*models.Template))
 	})

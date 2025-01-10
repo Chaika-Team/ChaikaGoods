@@ -132,14 +132,14 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 
 // GetTemplateByID retrieves template details along with its contents.
 func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (models.Template, error) {
-	var pkg models.Template
+	var template models.Template
 	const sqlTemplate = `SELECT templateid, templatename, description FROM public."template" WHERE templateid = $1;`
-	if err := r.client.QueryRow(ctx, sqlTemplate, id).Scan(&pkg.ID, &pkg.TemplateName, &pkg.Description); err != nil {
+	if err := r.client.QueryRow(ctx, sqlTemplate, id).Scan(&template.ID, &template.TemplateName, &template.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return pkg, myerr.NotFound(fmt.Sprintf("Template with ID %d not found", id), nil)
+			return template, myerr.NotFound(fmt.Sprintf("Template with ID %d not found", id), nil)
 		}
 		_ = r.logger.Log("error", "Failed to get template by ID", "id", id, "err", err)
-		return pkg, err
+		return template, err
 	}
 
 	// Get template contents
@@ -147,7 +147,7 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 	rows, err := r.client.Query(ctx, sqlContents, id)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to get template contents", "template_id", id, "err", err)
-		return pkg, err
+		return template, err
 	}
 	defer rows.Close()
 
@@ -155,16 +155,16 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 		var c models.TemplateContent
 		if err := rows.Scan(&c.ProductID, &c.Quantity); err != nil {
 			_ = r.logger.Log("error", "Failed to scan template content", "err", err)
-			return pkg, err
+			return template, err
 		}
-		pkg.Content = append(pkg.Content, c)
+		template.Content = append(template.Content, c)
 	}
 	if err := rows.Err(); err != nil {
 		_ = r.logger.Log("error", "Rows iteration error while getting template contents", "err", err)
-		return pkg, err
+		return template, err
 	}
 
-	return pkg, nil
+	return template, nil
 }
 
 // GetProductsByTemplateID retrieves all products within a specific template.
@@ -223,7 +223,7 @@ func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Templat
 }
 
 // CreateTemplate adds a new template to the database along with its contents.
-func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, pkg *models.Template) (err error) {
+func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, template *models.Template) (err error) {
 	const sqlInsertTemplate = `INSERT INTO public."template" (templatename, description) VALUES ($1, $2) RETURNING templateid;`
 
 	tx, err := r.client.Begin(ctx)
@@ -246,19 +246,19 @@ func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, pkg *models.Temp
 	}()
 
 	// Insert template
-	if err = tx.QueryRow(ctx, sqlInsertTemplate, pkg.TemplateName, pkg.Description).Scan(&pkg.ID); err != nil {
+	if err = tx.QueryRow(ctx, sqlInsertTemplate, template.TemplateName, template.Description).Scan(&template.ID); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return myerr.Conflict(fmt.Sprintf("Template with name %s already exists", pkg.TemplateName), err)
+			return myerr.Conflict(fmt.Sprintf("Template with name %s already exists", template.TemplateName), err)
 		}
-		_ = r.logger.Log("error", "Failed to insert template", "pkg_name", pkg.TemplateName, "err", err)
+		_ = r.logger.Log("error", "Failed to insert template", "template_name", template.TemplateName, "err", err)
 		return err
 	}
 
 	// Insert template contents
-	for _, content := range pkg.Content {
-		if err = r.createProductToTemplate(ctx, tx, pkg.ID, content); err != nil {
-			_ = r.logger.Log("error", "Failed to add product to template", "pkg_id", pkg.ID, "product_id", content.ProductID, "err", err)
+	for _, content := range template.Content {
+		if err = r.createProductToTemplate(ctx, tx, template.ID, content); err != nil {
+			_ = r.logger.Log("error", "Failed to add product to template", "template_id", template.ID, "product_id", content.ProductID, "err", err)
 			return err
 		}
 	}

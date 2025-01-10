@@ -48,40 +48,40 @@ type GetProductByIDResponse struct {
 	Product ProductSchema `json:"product"`
 }
 
-// SearchTemplatesRequest представляет собой запрос на поиск пакетов
-// @Description Запрос на поиск пакетов
+// SearchTemplatesRequest представляет собой запрос на поиск шаблонов
+// @Description Запрос на поиск шаблонов
 type SearchTemplatesRequest struct {
 	Query  string `json:"query,omitempty"`
 	Limit  int64  `json:"limit"`
 	Offset int64  `json:"offset"`
 }
 
-// SearchTemplatesResponse представляет собой ответ на запрос на поиск пакетов
-// @Description Ответ на запрос на поиск пакетов
+// SearchTemplatesResponse представляет собой ответ на запрос на поиск шаблонов
+// @Description Ответ на запрос на поиск шаблонов
 type SearchTemplatesResponse struct {
 	Templates []TemplateSchema `json:"Templates"`
 }
 
-// AddTemplateRequest представляет собой запрос на добавление пакета
-// @Description Запрос на добавление пакета
+// AddTemplateRequest представляет собой запрос на добавление шаблона
+// @Description Запрос на добавление шаблона
 type AddTemplateRequest struct {
-	Template TemplateSchema `json:"Template"` // Сведения о новом пакете
+	Template TemplateSchema `json:"Template"` // Сведения о новом шаблоне
 }
 
-// AddTemplateResponse представляет собой ответ на запрос на добавление пакета
-// @Description Ответ на запрос на добавление пакета
+// AddTemplateResponse представляет собой ответ на запрос на добавление шаблона
+// @Description Ответ на запрос на добавление шаблона
 type AddTemplateResponse struct {
-	TemplateID int64 `json:"id"` // ID созданного пакета
+	TemplateID int64 `json:"id"` // ID созданного шаблона
 }
 
-// GetTemplateByIDRequest представляет собой запрос на получение пакета по его ID
-// @Description Запрос на получение пакета по его ID
+// GetTemplateByIDRequest представляет собой запрос на получение шаблона по его ID
+// @Description Запрос на получение шаблона по его ID
 type GetTemplateByIDRequest struct {
 	TemplateID int64 `json:"id"`
 }
 
-// GetTemplateByIDResponse представляет собой ответ на запрос на получение пакета по его ID
-// @Description Ответ на запрос на получение пакета по его ID
+// GetTemplateByIDResponse представляет собой ответ на запрос на получение шаблона по его ID
+// @Description Ответ на запрос на получение шаблона по его ID
 type GetTemplateByIDResponse struct {
 	Template TemplateSchema `json:"Template"`
 }

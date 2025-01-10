@@ -45,14 +45,14 @@ func NewTemplateContentMapper() *TemplateContentMapper {
 	return &TemplateContentMapper{}
 }
 
-func (pcm *TemplateContentMapper) ToSchema(content models.TemplateContent) TemplateContentSchema {
+func (tcm *TemplateContentMapper) ToSchema(content models.TemplateContent) TemplateContentSchema {
 	return TemplateContentSchema{
 		ProductID: content.ProductID,
 		Quantity:  content.Quantity,
 	}
 }
 
-func (pcm *TemplateContentMapper) ToModel(contentSchema TemplateContentSchema) models.TemplateContent {
+func (tcm *TemplateContentMapper) ToModel(contentSchema TemplateContentSchema) models.TemplateContent {
 	return models.TemplateContent{
 		ProductID: contentSchema.ProductID,
 		Quantity:  contentSchema.Quantity,
@@ -72,28 +72,28 @@ func NewTemplateMapper(contentMapper Mapper[models.TemplateContent, TemplateCont
 	}
 }
 
-func (pm *TemplateMapper) ToSchema(pkg models.Template) TemplateSchema {
-	contentSchemas := make([]TemplateContentSchema, len(pkg.Content))
-	for i, content := range pkg.Content {
-		contentSchemas[i] = pm.ContentMapper.ToSchema(content)
+func (tm *TemplateMapper) ToSchema(template models.Template) TemplateSchema {
+	contentSchemas := make([]TemplateContentSchema, len(template.Content))
+	for i, content := range template.Content {
+		contentSchemas[i] = tm.ContentMapper.ToSchema(content)
 	}
 	return TemplateSchema{
-		ID:           pkg.ID,
-		TemplateName: pkg.TemplateName,
-		Description:  pkg.Description,
+		ID:           template.ID,
+		TemplateName: template.TemplateName,
+		Description:  template.Description,
 		Content:      contentSchemas,
 	}
 }
 
-func (pm *TemplateMapper) ToModel(pkgSchema TemplateSchema) models.Template {
-	contentModels := make([]models.TemplateContent, len(pkgSchema.Content))
-	for i, contentSchema := range pkgSchema.Content {
-		contentModels[i] = pm.ContentMapper.ToModel(contentSchema)
+func (tm *TemplateMapper) ToModel(templateSchema TemplateSchema) models.Template {
+	contentModels := make([]models.TemplateContent, len(templateSchema.Content))
+	for i, contentSchema := range templateSchema.Content {
+		contentModels[i] = tm.ContentMapper.ToModel(contentSchema)
 	}
 	return models.Template{
-		ID:           pkgSchema.ID,
-		TemplateName: pkgSchema.TemplateName,
-		Description:  pkgSchema.Description,
+		ID:           templateSchema.ID,
+		TemplateName: templateSchema.TemplateName,
+		Description:  templateSchema.Description,
 		Content:      contentModels,
 	}
 }
@@ -125,7 +125,7 @@ func (pm *ProductsMapper) ToModels(productSchemas []ProductSchema) []models.Prod
 	return modelsList
 }
 
-// TemplatesMapper реализует методы для работы с коллекциями пакетов.
+// TemplatesMapper реализует методы для работы с коллекциями шаблонов.
 type TemplatesMapper struct {
 	TemplateMapper Mapper[models.Template, TemplateSchema]
 }
@@ -136,18 +136,18 @@ func NewTemplatesMapper(pm Mapper[models.Template, TemplateSchema]) *TemplatesMa
 	}
 }
 
-func (pm *TemplatesMapper) ToSchemas(templates []models.Template) []TemplateSchema {
+func (tm *TemplatesMapper) ToSchemas(templates []models.Template) []TemplateSchema {
 	schemasList := make([]TemplateSchema, len(templates))
-	for i, pkg := range templates {
-		schemasList[i] = pm.TemplateMapper.ToSchema(pkg)
+	for i, template := range templates {
+		schemasList[i] = tm.TemplateMapper.ToSchema(template)
 	}
 	return schemasList
 }
 
-func (pm *TemplatesMapper) ToModels(templateSchemas []TemplateSchema) []models.Template {
+func (tm *TemplatesMapper) ToModels(templateSchemas []TemplateSchema) []models.Template {
 	modelsList := make([]models.Template, len(templateSchemas))
-	for i, pkgSchema := range templateSchemas {
-		modelsList[i] = pm.TemplateMapper.ToModel(pkgSchema)
+	for i, templateSchema := range templateSchemas {
+		modelsList[i] = tm.TemplateMapper.ToModel(templateSchema)
 	}
 	return modelsList
 }

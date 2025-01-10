@@ -18,13 +18,13 @@ type TemplateRepository interface {
 	GetTemplateByID(ctx context.Context, id int64) (Template, error)
 	GetProductsByTemplateID(ctx context.Context, templateID int64) ([]TemplateContent, error)
 	ListTemplates(ctx context.Context) ([]Template, error)
-	CreateTemplate(ctx context.Context, pkg *Template) error
+	CreateTemplate(ctx context.Context, template *Template) error
 	DeleteTemplate(ctx context.Context, templateID int64) error
 	SearchTemplates(ctx context.Context, searchString string, limit int64, offset int64) ([]Template, error)
 	GetAllTemplates(ctx context.Context, limit int64, offset int64) ([]Template, error)
 }
 
-// GoodsRepository объединяет репозитории для продуктов и пакетов.
+// GoodsRepository объединяет репозитории для продуктов и шаблонов.
 type GoodsRepository interface {
 	ProductRepository
 	TemplateRepository

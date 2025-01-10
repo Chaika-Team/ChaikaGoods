@@ -79,9 +79,9 @@ func (_c *MockGoodsRepository_CreateProduct_Call) RunAndReturn(run func(context.
 	return _c
 }
 
-// CreateTemplate provides a mock function with given fields: ctx, pkg
-func (_m *MockGoodsRepository) CreateTemplate(ctx context.Context, pkg *models.Template) error {
-	ret := _m.Called(ctx, pkg)
+// CreateTemplate provides a mock function with given fields: ctx, template
+func (_m *MockGoodsRepository) CreateTemplate(ctx context.Context, template *models.Template) error {
+	ret := _m.Called(ctx, template)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTemplate")
@@ -89,7 +89,7 @@ func (_m *MockGoodsRepository) CreateTemplate(ctx context.Context, pkg *models.T
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *models.Template) error); ok {
-		r0 = rf(ctx, pkg)
+		r0 = rf(ctx, template)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -104,12 +104,12 @@ type MockGoodsRepository_CreateTemplate_Call struct {
 
 // CreateTemplate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - pkg *models.Template
-func (_e *MockGoodsRepository_Expecter) CreateTemplate(ctx interface{}, pkg interface{}) *MockGoodsRepository_CreateTemplate_Call {
-	return &MockGoodsRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, pkg)}
+//   - template *models.Template
+func (_e *MockGoodsRepository_Expecter) CreateTemplate(ctx interface{}, template interface{}) *MockGoodsRepository_CreateTemplate_Call {
+	return &MockGoodsRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, template)}
 }
 
-func (_c *MockGoodsRepository_CreateTemplate_Call) Run(run func(ctx context.Context, pkg *models.Template)) *MockGoodsRepository_CreateTemplate_Call {
+func (_c *MockGoodsRepository_CreateTemplate_Call) Run(run func(ctx context.Context, template *models.Template)) *MockGoodsRepository_CreateTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*models.Template))
 	})
