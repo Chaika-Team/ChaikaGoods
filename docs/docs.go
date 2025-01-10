@@ -25,7 +25,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/Templates": {
+        "/api/v1/templates": {
             "post": {
                 "description": "Add a new Template of products to the database",
                 "consumes": [
@@ -71,7 +71,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/Templates/search": {
+        "/api/v1/templates/search": {
             "get": {
                 "description": "Search for Templates",
                 "consumes": [
@@ -122,7 +122,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/Templates/{id}": {
+        "/api/v1/templates/{id}": {
             "get": {
                 "description": "Get Template details by its ID",
                 "consumes": [

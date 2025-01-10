@@ -119,7 +119,7 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 //	@Param			offset	query		int		true	"Offset"
 //	@Success		200		{object}	schemas.SearchTemplatesResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Templates/search [get]
+//	@Router			/api/v1/templates/search [get]
 func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := mustCast[schemas.SearchTemplatesRequest](request)
@@ -145,7 +145,7 @@ func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMap
 //	@Success		200		{object}	schemas.AddTemplateResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Templates [post]
+//	@Router			/api/v1/templates [post]
 func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := mustCast[schemas.AddTemplateRequest](request)
@@ -172,7 +172,7 @@ func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) 
 //	@Success		200		{object}	schemas.GetTemplateByIDResponse
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/Templates/{id} [get]
+//	@Router			/api/v1/templates/{id} [get]
 func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := mustCast[*schemas.GetTemplateByIDRequest](request)
