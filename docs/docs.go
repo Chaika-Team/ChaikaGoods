@@ -25,147 +25,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/templates": {
-            "post": {
-                "description": "Add a new Template of products to the database",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Templates"
-                ],
-                "summary": "Add Template",
-                "parameters": [
-                    {
-                        "description": "Template details",
-                        "name": "Template",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/templates/search": {
-            "get": {
-                "description": "Search for Templates",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Templates"
-                ],
-                "summary": "Search Template",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset",
-                        "name": "offset",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/templates/{id}": {
-            "get": {
-                "description": "Get Template details by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Templates"
-                ],
-                "summary": "Get Template by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/products": {
             "get": {
                 "description": "Get all products from the database",
@@ -352,6 +211,147 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/templates": {
+            "post": {
+                "description": "Add a new Template of products to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Add Template",
+                "parameters": [
+                    {
+                        "description": "Template details",
+                        "name": "Template",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/templates/search": {
+            "get": {
+                "description": "Search for Templates",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Search Template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/templates/{id}": {
+            "get": {
+                "description": "Get Template details by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Get Template by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse"
                         }
                     },
                     "404": {
