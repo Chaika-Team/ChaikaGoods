@@ -10,16 +10,16 @@ type Product struct {
 	SKU         string  `json:"sku"`
 }
 
-// Package описывает пакет товаров.
-type Package struct {
-	ID          int64            `json:"id"`
-	PackageName string           `json:"package_name"`
-	Description string           `json:"description"`
-	Content     []PackageContent `json:"content"`
+// Template описывает шаблон товаров.
+type Template struct {
+	ID           int64             `json:"id"`
+	TemplateName string            `json:"template_name"`
+	Description  string            `json:"description"`
+	Content      []TemplateContent `json:"content"`
 }
 
-// PackageContent описывает одно содержимое пакета.
-type PackageContent struct {
+// TemplateContent описывает одно содержимое шаблона.
+type TemplateContent struct {
 	ProductID int64 `json:"product_id"`
 	Quantity  int   `json:"quantity"`
 }

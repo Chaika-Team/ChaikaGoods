@@ -22,147 +22,6 @@
     "host": "127.0.0.1:8080",
     "basePath": "/",
     "paths": {
-        "/api/v1/Packages": {
-            "post": {
-                "description": "Add a new Package of products to the database",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Packages"
-                ],
-                "summary": "Add Package",
-                "parameters": [
-                    {
-                        "description": "Package details",
-                        "name": "Package",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/Packages/search": {
-            "get": {
-                "description": "Search for Packages",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Packages"
-                ],
-                "summary": "Search Package",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset",
-                        "name": "offset",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/Packages/{id}": {
-            "get": {
-                "description": "Get Package details by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Packages"
-                ],
-                "summary": "Get Package by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Package ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/products": {
             "get": {
                 "description": "Get all products from the database",
@@ -365,29 +224,170 @@
                     }
                 }
             }
+        },
+        "/api/v1/templates": {
+            "post": {
+                "description": "Add a new Template of products to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Add Template",
+                "parameters": [
+                    {
+                        "description": "Template details",
+                        "name": "Template",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/templates/search": {
+            "get": {
+                "description": "Search for Templates",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Search Template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/templates/{id}": {
+            "get": {
+                "description": "Get Template details by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Get Template by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Template ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageRequest": {
-            "description": "Запрос на добавление пакета",
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest": {
+            "description": "Запрос на добавление шаблона",
             "type": "object",
             "properties": {
-                "Package": {
-                    "description": "Сведения о новом пакете",
+                "Template": {
+                    "description": "Сведения о новом шаблоне",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
+                            "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                         }
                     ]
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddPackageResponse": {
-            "description": "Ответ на запрос на добавление пакета",
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse": {
+            "description": "Ответ на запрос на добавление шаблона",
             "type": "object",
             "properties": {
                 "id": {
-                    "description": "ID созданного пакета",
+                    "description": "ID созданного шаблона",
                     "type": "integer"
                 }
             }
@@ -439,15 +439,6 @@
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetPackageByIDResponse": {
-            "description": "Ответ на запрос на получение пакета по его ID",
-            "type": "object",
-            "properties": {
-                "Package": {
-                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
-                }
-            }
-        },
         "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse": {
             "description": "Ответ на запрос на получение продукта по его ID",
             "type": "object",
@@ -457,34 +448,12 @@
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema": {
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse": {
+            "description": "Ответ на запрос на получение шаблона по его ID",
             "type": "object",
             "properties": {
-                "product_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageContentSchema"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "package_name": {
-                    "type": "string"
+                "Template": {
+                    "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                 }
             }
         },
@@ -508,15 +477,46 @@
                 }
             }
         },
-        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchPackagesResponse": {
-            "description": "Ответ на запрос на поиск пакетов",
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse": {
+            "description": "Ответ на запрос на поиск шаблонов",
             "type": "object",
             "properties": {
-                "Packages": {
+                "Templates": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.PackageSchema"
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
                     }
+                }
+            }
+        },
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "template_name": {
+                    "type": "string"
                 }
             }
         },

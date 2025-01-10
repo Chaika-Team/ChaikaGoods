@@ -18,13 +18,13 @@ func createTestProduct(id int64, name string) models.Product {
 	}
 }
 
-// createTestPackage создает и возвращает тестовый пакет с заданным ID и именем.
-func createTestPackage(id int64, name string) models.Package {
-	return models.Package{
-		ID:          id,
-		PackageName: name,
-		Description: "Description for " + name,
-		Content: []models.PackageContent{
+// createTestTemplate создает и возвращает тестовый шаблон с заданным ID и именем.
+func createTestTemplate(id int64, name string) models.Template {
+	return models.Template{
+		ID:           id,
+		TemplateName: name,
+		Description:  "Description for " + name,
+		Content: []models.TemplateContent{
 			{ProductID: 1, Quantity: 2},
 			{ProductID: 2, Quantity: 3},
 		},
