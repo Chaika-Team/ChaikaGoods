@@ -116,8 +116,8 @@ info:
     name: Chaika
   description: This is a simple API to manage goods for the Chaika app.
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: GPL v3
+    url: https://www.gnu.de/documents/gpl.en.html
   title: ChaikaGoods API
   version: 1.0.1
 paths:
