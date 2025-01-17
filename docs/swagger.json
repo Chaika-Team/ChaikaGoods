@@ -3,7 +3,7 @@
         "application/json"
     ],
     "schemes": [
-        "http"
+        "https"
     ],
     "swagger": "2.0",
     "info": {
@@ -17,9 +17,9 @@
             "name": "GPL v3",
             "url": "https://www.gnu.de/documents/gpl.en.html"
         },
-        "version": "0.0.2"
+        "version": "1.0.1"
     },
-    "host": "127.0.0.1:8080",
+    "host": "chaika-soft.ru",
     "basePath": "/",
     "paths": {
         "/api/v1/products": {

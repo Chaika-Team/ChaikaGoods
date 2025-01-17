@@ -19,11 +19,11 @@ import (
 )
 
 //	@title			ChaikaGoods API
-//	@version		0.0.2
+//	@version		1.0.1
 //	@description	This is a simple API to manage goods for the Chaika app.
-//	@host			127.0.0.1:8080
+//	@host			chaika-soft.ru
 //	@BasePath		/
-//	@schemes		http
+//	@schemes		https
 //	@produce		json
 //	@consumes		json
 

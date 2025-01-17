@@ -541,10 +541,10 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.2",
-	Host:             "127.0.0.1:8080",
+	Version:          "1.0.1",
+	Host:             "chaika-soft.ru",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "ChaikaGoods API",
 	Description:      "This is a simple API to manage goods for the Chaika app.",
 	InfoInstanceName: "swagger",
