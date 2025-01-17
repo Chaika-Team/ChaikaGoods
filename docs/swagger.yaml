@@ -109,7 +109,7 @@ definitions:
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse:
     description: Ответ на запрос на обновление продукта
     type: object
-host: 127.0.0.1:8080
+host: chaika-soft.ru
 info:
   contact:
     email: chaika.contact@yandex.ru
@@ -119,7 +119,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
   title: ChaikaGoods API
-  version: 0.0.2
+  version: 1.0.1
 paths:
   /api/v1/products:
     get:
@@ -351,5 +351,5 @@ paths:
 produces:
 - application/json
 schemes:
-- http
+- https
 swagger: "2.0"
