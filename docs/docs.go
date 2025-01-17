@@ -17,8 +17,8 @@ const docTemplate = `{
             "email": "chaika.contact@yandex.ru"
         },
         "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
+            "name": "GPL v3",
+            "url": "https://www.gnu.de/documents/gpl.en.html"
         },
         "version": "{{.Version}}"
     },
