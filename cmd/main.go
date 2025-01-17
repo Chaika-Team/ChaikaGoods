@@ -29,8 +29,8 @@ import (
 
 //	@contact.name	Chaika
 //	@contact.email	chaika.contact@yandex.ru
-//	@license.name	MIT
-//	@license.url	https://opensource.org/licenses/MIT
+//	@license.name	GPL v3
+//	@license.url	https://www.gnu.de/documents/gpl.en.html
 
 func main() {
 	// Определение флага -config
