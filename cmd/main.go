@@ -19,7 +19,7 @@ import (
 )
 
 //	@title			ChaikaGoods API
-//	@version		1.0.1
+//	@version		1.0.2
 //	@description	This is a simple API to manage goods for the Chaika app.
 //	@host			chaika-soft.ru
 //	@BasePath		/
@@ -50,7 +50,7 @@ func main() {
 	}(level.Info(logger), "message", "Service ended")
 
 	// Загрузка конфигурации
-	cfg := config.GetConfigWithPath(logger, configPath)
+	cfg := config.GetConfig(logger, configPath)
 
 	// Конфигурация логгера с учётом уровня
 	logger = config.ConfigureLogger(logger, cfg.Log.Level)
