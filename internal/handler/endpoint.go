@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 	"github.com/Chaika-Team/ChaikaGoods/internal/service"
@@ -60,6 +59,13 @@ func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
 	}
 }
 
+// castRequest приводит запрос к нужному типу или возвращает ошибку
+func castRequest[T any](req interface{}) (T, error) {
+	casted, ok := req.(T)
+	if !ok {
+		return *new(T), fmt.Errorf("invalid request type: expected %T, got %T", *new(T), req)
+	}
+	return casted, nil
 // castRequest приводит запрос к нужному типу или возвращает ошибку
 func castRequest[T any](req interface{}) (T, error) {
 	casted, ok := req.(T)
