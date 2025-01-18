@@ -50,7 +50,7 @@ func main() {
 	}(level.Info(logger), "message", "Service ended")
 
 	// Загрузка конфигурации
-	cfg := config.GetConfigWithPath(logger, configPath)
+	cfg := config.GetConfig(logger, configPath)
 
 	// Конфигурация логгера с учётом уровня
 	logger = config.ConfigureLogger(logger, cfg.Log.Level)
