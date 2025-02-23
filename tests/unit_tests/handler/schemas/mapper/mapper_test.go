@@ -79,7 +79,7 @@ func TestTemplateMapperToSchema(t *testing.T) {
 	templateModel := models.Template{
 		ID:           1,
 		TemplateName: "108A",
-		Description:  "Main template for route 109A St.Petersburg -> Moscow",
+		Description:  "Main template for route 108A St.Petersburg -> Moscow",
 		Content: []models.TemplateContent{
 			{ProductID: 1, Quantity: 10},
 			{ProductID: 2, Quantity: 20},
@@ -172,18 +172,18 @@ func TestProductsMapperToModels(t *testing.T) {
 func TestTemplatesMapperToSchema(t *testing.T) {
 	templatesModel := []models.Template{
 		{
-			ID:           1,
+			ID:           3,
 			TemplateName: "108A",
-			Description:  "Main template for route 109A St.Petersburg -> Moscow",
+			Description:  "Additional (extra) template for route 108A St.Petersburg -> Moscow",
 			Content: []models.TemplateContent{
 				{ProductID: 1, Quantity: 10},
 				{ProductID: 2, Quantity: 20},
 			},
 		},
 		{
-			ID:           2,
+			ID:           4,
 			TemplateName: "109A",
-			Description:  "Main template for route 109A Moscow -> St.Petersburg",
+			Description:  "Additional (extra) template for route 109A Moscow -> St.Petersburg",
 			Content: []models.TemplateContent{
 				{ProductID: 1, Quantity: 5},
 				{ProductID: 2, Quantity: 7},
@@ -207,21 +207,21 @@ func TestTemplatesMapperToSchema(t *testing.T) {
 func TestTemplatesMapperToModel(t *testing.T) {
 	templatesSchema := []schemas.TemplateSchema{
 		{
-			ID:           1,
+			ID:           5,
 			TemplateName: "108A",
-			Description:  "Main template for route 109A St.Petersburg -> Moscow",
+			Description:  "Business template for route 108A St.Petersburg -> Moscow",
 			Content: []schemas.TemplateContentSchema{
 				{ProductID: 1, Quantity: 10},
 				{ProductID: 2, Quantity: 20},
 			},
 		},
 		{
-			ID:           2,
+			ID:           6,
 			TemplateName: "109A",
-			Description:  "Main template for route 109A Moscow -> St.Petersburg",
+			Description:  "Business template for route 109A Moscow -> St.Petersburg",
 			Content: []schemas.TemplateContentSchema{
-				{ProductID: 1, Quantity: 5},
-				{ProductID: 2, Quantity: 7},
+				{ProductID: 1, Quantity: 50},
+				{ProductID: 2, Quantity: 50},
 			},
 		},
 	}
