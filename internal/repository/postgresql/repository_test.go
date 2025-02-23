@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,22 +16,22 @@ import (
 	"github.com/Chaika-Team/ChaikaGoods/internal/repository/postgresql"
 )
 
-// MockRow для мокирования ответа QueryRow
-type MockRow struct {
-	mock.Mock
-}
-
-func (m *MockRow) Scan(dest ...interface{}) error {
-	args := m.Called(dest...)
-	return args.Error(0)
-}
-
-func TestGetProductByID(t *testing.T) {
+func newTestRepo() (*postgresql.MockClient, models.GoodsRepository, context.Context) {
 	ctx := context.Background()
 	logger := log.NewNopLogger()
 	mockClient := new(postgresql.MockClient)
+	repo := postgresql.NewGoodsRepository(mockClient, logger) // Возвращает интерфейс
 
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	return mockClient, repo, ctx
+}
+
+// Техника тест-дизайна: #1 Классы эквивалентности
+// Автор: safr
+// Описание:
+//   - Тест для метода GetProductByID.
+//   - Классы эквивалентности: корректный ID, несуществующий ID, ошибка БД.
+func TestGetProductByID(t *testing.T) {
+	mockClient, repo, ctx := newTestRepo()
 
 	productID := int64(1)
 	expectedProduct := models.Product{
@@ -45,7 +44,7 @@ func TestGetProductByID(t *testing.T) {
 	}
 
 	// Создаём мок для QueryRow
-	mockRow := new(MockRow)
+	mockRow := new(postgresql.MockRows)
 	mockClient.On("QueryRow", mock.Anything, mock.Anything, productID).Return(mockRow)
 	mockRow.On("Scan", mock.AnythingOfType("*int64"), mock.AnythingOfType("*string"),
 		mock.AnythingOfType("*string"), mock.AnythingOfType("*float64"),
@@ -72,54 +71,13 @@ func TestGetProductByID(t *testing.T) {
 }
 
 // Тест 2 --------------------------------------------------------------------------------
-
-// MockRows для мокирования pgx.Rows
-type MockRows struct {
-	mock.Mock
-}
-
-func (m *MockRows) Next() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *MockRows) Scan(dest ...interface{}) error {
-	args := m.Called(dest...)
-	return args.Error(0)
-}
-
-func (m *MockRows) Err() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockRows) CommandTag() pgconn.CommandTag {
-	return pgconn.CommandTag{}
-}
-
-func (m *MockRows) Conn() *pgx.Conn {
-	return nil
-}
-
-func (m *MockRows) Close() {}
-func (m *MockRows) FieldDescriptions() []pgconn.FieldDescription {
-	return nil
-}
-func (m *MockRows) RawValues() [][]byte {
-	return nil
-}
-
-// Исправление: добавляем метод Values()
-func (m *MockRows) Values() ([]interface{}, error) {
-	args := m.Called()
-	return args.Get(0).([]interface{}), args.Error(1)
-}
-
+// Техника тест-дизайна: #2 Классы эквивалентности + граничные значения
+// Автор: safr
+// Описание:
+//   - Тест для метода GetAllProducts.
+//   - Классы эквивалентности: пустая таблица, несколько записей, ошибка БД.
 func TestGetAllProducts(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	expectedProducts := []models.Product{
 		{ID: 1, Name: "Product 1", Description: "Desc 1", Price: 10.0, ImageURL: "http://test.com/1.jpg", SKU: "SKU1"},
@@ -127,7 +85,7 @@ func TestGetAllProducts(t *testing.T) {
 	}
 
 	// Создаем мокированные строки
-	mockRows := new(MockRows)
+	mockRows := new(postgresql.MockRows)
 	mockClient.On("Query", mock.Anything, mock.Anything).Return(mockRows, nil)
 
 	// Ожидаем вызовы Next()
@@ -174,12 +132,13 @@ func TestGetAllProducts(t *testing.T) {
 }
 
 // Тест 3 --------------------------------------------------------------------------------
-
+// Техника тест-дизайна: #3 Классы эквивалентности + обработка ошибок
+// Автор: safr
+// Описание:
+//   - Тест для метода CreateProduct.
+//   - Проверка успешного создания продукта, ошибки UniqueViolation, ошибки БД.
 func TestCreateProduct(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	product := &models.Product{
 		Name:        "New Product",
@@ -190,7 +149,7 @@ func TestCreateProduct(t *testing.T) {
 	}
 
 	t.Run("Успешное создание продукта", func(t *testing.T) {
-		mockRow := new(MockRow)
+		mockRow := new(postgresql.MockRow)
 		mockClient.On("QueryRow", mock.Anything, mock.Anything, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).
 			Return(mockRow).Once()
 		mockRow.On("Scan", mock.AnythingOfType("*int64")).
@@ -206,7 +165,7 @@ func TestCreateProduct(t *testing.T) {
 	})
 
 	t.Run("Ошибка UniqueViolation (SKU уже существует)", func(t *testing.T) {
-		mockRow := new(MockRow)
+		mockRow := new(postgresql.MockRow)
 		mockClient.On("QueryRow", mock.Anything, mock.Anything, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).
 			Return(mockRow).Once()
 		mockRow.On("Scan", mock.AnythingOfType("*int64")).
@@ -219,7 +178,7 @@ func TestCreateProduct(t *testing.T) {
 	})
 
 	t.Run("Ошибка БД", func(t *testing.T) {
-		mockRow := new(MockRow)
+		mockRow := new(postgresql.MockRow)
 		mockClient.On("QueryRow", mock.Anything, mock.Anything, product.Name, product.Description, product.Price, product.ImageURL, product.SKU).
 			Return(mockRow).Once()
 		mockRow.On("Scan", mock.AnythingOfType("*int64")).
@@ -233,22 +192,13 @@ func TestCreateProduct(t *testing.T) {
 }
 
 // Тест 4 --------------------------------------------------------------------------------
-
-// MockResult для мокирования CommandTag (результата Exec)
-type MockResult struct {
-	mock.Mock
-}
-
-func (m *MockResult) RowsAffected() int64 {
-	args := m.Called()
-	return args.Get(0).(int64)
-}
-
+// Техника тест-дизайна: #4 Классы эквивалентности + обработка ошибок
+// Автор: safr
+// Описание:
+//   - Тест для метода UpdateProduct.
+//   - Классы эквивалентности: успешное обновление, конфликт из-за существующего SKU, отсутствие продукта в БД.
 func TestUpdateProduct(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	product := &models.Product{
 		ID:          1,
