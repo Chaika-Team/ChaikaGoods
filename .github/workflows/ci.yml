@@ -105,5 +105,5 @@ jobs:
             -Dsonar.projectKey=ChaikaGoods
             -Dsonar.sources=./internal,./cmd
             -Dsonar.tests=./tests
-            -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go
+            -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go,**/mock_client.go
             -Dsonar.go.coverage.reportPaths=coverage.out
