@@ -26,7 +26,29 @@ func newTestRepo() (*postgresql.MockClient, models.GoodsRepository, context.Cont
 	return mockClient, repo, ctx
 }
 
-// Техника тест-дизайна: #1 Классы эквивалентности
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: safr
+// Описание:
+//   - Тест для функции NewGoodsRepository.
+//   - Проверяет, что репозиторий создается корректно.
+//   - Классы эквивалентности: переданы валидные зависимости (мок клиента и логгер).
+func TestNewGoodsRepository(t *testing.T) {
+	// Подготавливаем моки
+	mockClient := new(postgresql.MockClient)
+	mockLogger := log.NewNopLogger()
+
+	// Создаем репозиторий
+	repo := postgresql.NewGoodsRepository(mockClient, mockLogger)
+
+	// Проверяем, что repo не nil и является *GoodsPGRepository
+	assert.NotNil(t, repo)
+
+	// Проверяем, что repo имеет правильный тип
+	_, ok := repo.(*postgresql.GoodsPGRepository)
+	assert.True(t, ok, "repo должен быть типа *GoodsPGRepository")
+}
+
+// Техника тест-дизайна:  Классы эквивалентности
 // Автор: safr
 // Описание:
 //   - Тест для метода GetProductByID.
@@ -71,7 +93,6 @@ func TestGetProductByID(t *testing.T) {
 	mockRow.AssertExpectations(t)
 }
 
-// Тест 2 --------------------------------------------------------------------------------
 // Техника тест-дизайна: #2 Классы эквивалентности + граничные значения
 // Автор: safr
 // Описание:
@@ -132,7 +153,6 @@ func TestGetAllProducts(t *testing.T) {
 	mockRows.AssertExpectations(t)
 }
 
-// Тест 3 --------------------------------------------------------------------------------
 // Техника тест-дизайна: #3 Классы эквивалентности + обработка ошибок
 // Автор: safr
 // Описание:
@@ -192,7 +212,6 @@ func TestCreateProduct(t *testing.T) {
 	})
 }
 
-// Тест 4 --------------------------------------------------------------------------------
 // Техника тест-дизайна: #4 Классы эквивалентности + обработка ошибок
 // Автор: safr
 // Описание:
@@ -243,8 +262,6 @@ func TestUpdateProduct(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-// Тест 5 --------------------------------------------------------------------------------
-
 // Техника тест-дизайна: #4 Классы эквивалентности + граничные значения
 // Автор: safr
 // Описание:
@@ -288,7 +305,6 @@ func TestDeleteProduct(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-// Тест 6 --------------------------------------------------------------------------------
 // Техника тест-дизайна: #5 Классы эквивалентности + анализ граничных значений
 // Автор: safr
 // Описание:
@@ -402,12 +418,14 @@ func TestGetTemplateByID(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-// Тест 7 --------------------------------------------------------------------------------
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: safr
+// Описание:
+//   - Тест для метода GetProductsByTemplateID.
+//   - Проверяет, что метод корректно возвращает список продуктов, относящихся к определенному шаблону.
+//   - Классы эквивалентности: шаблон содержит продукты, шаблон пуст, ошибка БД.
 func TestGetProductsByTemplateID(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	templateID := int64(1)
 
@@ -437,7 +455,12 @@ func TestGetProductsByTemplateID(t *testing.T) {
 
 }
 
-// Тест 8 --------------------------------------------------------------------------------
+// Техника тест-дизайна: Классы эквивалентности + анализ граничных значений
+// Автор: safr
+// Описание:
+//   - Тест для метода ListTemplates.
+//   - Проверяет корректность получения списка всех шаблонов с пагинацией.
+//   - Классы эквивалентности: успешное получение данных, ошибка при выполнении запроса, ошибка при сканировании данных, ошибка при итерации по результатам.
 func TestListTemplates(t *testing.T) {
 	mockClient, repo, ctx := newTestRepo()
 
@@ -495,8 +518,7 @@ func TestListTemplates(t *testing.T) {
 	})
 
 	t.Run("Ошибка при Scan()", func(t *testing.T) {
-		mockClient = new(postgresql.MockClient)
-		repo = postgresql.NewGoodsRepository(mockClient, log.NewNopLogger())
+		mockClient, repo, ctx := newTestRepo()
 
 		mockRows := new(postgresql.MockRows)
 		mockClient.On("Query", mock.Anything, mock.Anything).Return(mockRows, nil)
@@ -538,12 +560,14 @@ func TestListTemplates(t *testing.T) {
 	})
 }
 
-// Тест 9 --------------------------------------------------------------------------------
+// Техника тест-дизайна: Классы эквивалентности + анализ граничных значений
+// Автор: safr
+// Описание:
+//   - Тест для метода CreateTemplate.
+//   - Проверяет корректность создания нового шаблона с продуктами.
+//   - Классы эквивалентности: успешное создание шаблона, ошибка при вставке шаблона, ошибка при вставке содержимого шаблона, ошибка при коммите транзакции.
 func TestCreateTemplate(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	template := &models.Template{
 		TemplateName: "New Template",
@@ -629,6 +653,12 @@ func TestCreateTemplate(t *testing.T) {
 	})
 }
 
+// Техника тест-дизайна: Классы эквивалентности + анализ граничных значений
+// Автор: safr
+// Описание:
+//   - Тест для метода DeleteTemplate.
+//   - Проверяет корректность удаления шаблона и его содержимого.
+//   - Классы эквивалентности: успешное удаление, ошибка начала транзакции, ошибка удаления содержимого шаблона, ошибка удаления самого шаблона, ошибка коммита транзакции.
 func TestDeleteTemplate(t *testing.T) {
 	ctx := context.Background()
 	logger := log.NewNopLogger()
@@ -714,11 +744,14 @@ func TestDeleteTemplate(t *testing.T) {
 	})
 }
 
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: safr
+// Описание:
+//   - Тест для метода SearchTemplates.
+//   - Проверяет поиск шаблонов по названию и описанию с пагинацией.
+//   - Классы эквивалентности: успешный поиск, ошибка выполнения запроса.
 func TestSearchTemplates(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	searchString := "test"
 	limit := int64(10)
@@ -739,11 +772,14 @@ func TestSearchTemplates(t *testing.T) {
 
 }
 
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: safr
+// Описание:
+//   - Тест для метода GetAllTemplates.
+//   - Проверяет получение всех шаблонов с лимитом и смещением.
+//   - Классы эквивалентности: успешное получение списка, ошибка выполнения запроса.
 func TestGetAllTemplates(t *testing.T) {
-	ctx := context.Background()
-	logger := log.NewNopLogger()
-	mockClient := new(postgresql.MockClient)
-	repo := postgresql.NewGoodsRepository(mockClient, logger)
+	mockClient, repo, ctx := newTestRepo()
 
 	limit := int64(10)
 	offset := int64(0)
