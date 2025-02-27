@@ -120,7 +120,7 @@ func TestTemplateMapperToModel(t *testing.T) {
 	assert.Equal(t, templateSchema.ID, templateModel.ID)
 	assert.Equal(t, templateSchema.TemplateName, templateModel.TemplateName)
 	assert.Equal(t, templateSchema.Description, templateModel.Description)
-	assert.Len(t, templateSchema.Content, 2)
+	assert.Len(t, templateModel.Content, 2)
 	assert.Equal(t, templateSchema.Content[0].ProductID, templateModel.Content[0].ProductID)
 	assert.Equal(t, templateSchema.Content[0].Quantity, templateModel.Content[0].Quantity)
 	assert.Equal(t, templateSchema.Content[1].ProductID, templateModel.Content[1].ProductID)
@@ -197,7 +197,7 @@ func TestTemplatesMapperToSchema(t *testing.T) {
 
 	templatesSchema := tm.ToSchemas(templatesModel)
 
-	assert.Len(t, templatesModel, 2)
+	assert.Len(t, templatesSchema, 2)
 	assert.Equal(t, templatesModel[0].ID, templatesSchema[0].ID)
 	assert.Equal(t, templatesModel[1].ID, templatesSchema[1].ID)
 	assert.Equal(t, templatesModel[0].Content[0].ProductID, templatesSchema[0].Content[0].ProductID)
