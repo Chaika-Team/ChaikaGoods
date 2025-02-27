@@ -139,7 +139,7 @@ func TestMakeSearchTemplatesEndpointSuccess(t *testing.T) {
 	mockTemplatesMapper := schemas.NewTemplatesMapper(mockTemplateMapper)
 
 	ep := makeSearchTemplatesEndpoint(mockSvc, mockTemplatesMapper)
-	req := schemas.SearchTemplatesRequest{Query: "Default", Limit: 10, Offset: 0}
+	req := &schemas.SearchTemplatesRequest{Query: "Default", Limit: 10, Offset: 0}
 	resp, err := ep(context.Background(), req)
 
 	assert.NoError(t, err)
@@ -159,7 +159,7 @@ func TestMakeSearchTemplatesEndpointFailed(t *testing.T) {
 	mockTemplatesMapper := schemas.NewTemplatesMapper(mockTemplateMapper)
 
 	ep := makeSearchTemplatesEndpoint(mockSvc, mockTemplatesMapper)
-	req := schemas.SearchTemplatesRequest{Query: "Default", Limit: 10, Offset: 0}
+	req := &schemas.SearchTemplatesRequest{Query: "Default", Limit: 10, Offset: 0}
 	resp, err := ep(context.Background(), req)
 
 	assert.Error(t, err)
@@ -193,7 +193,7 @@ func TestMakeAddTemplateEndpointSuccess(t *testing.T) {
 	mockSvc.EXPECT().AddTemplate(context.Background(), &expectedModel).Return(reqTemplateSchema.ID, nil)
 
 	ep := makeAddTemplateEndpoint(mockSvc, mockTemplateMapper)
-	req := schemas.AddTemplateRequest{Template: reqTemplateSchema}
+	req := &schemas.AddTemplateRequest{Template: reqTemplateSchema}
 	resp, err := ep(context.Background(), req)
 
 	assert.NoError(t, err)
@@ -227,7 +227,7 @@ func TestMakeAddTemplateEndpointFailed(t *testing.T) {
 	mockTemplateMapper := schemas.NewTemplateMapper(schemas.NewTemplateContentMapper(), schemas.NewProductMapper())
 
 	ep := makeAddTemplateEndpoint(mockSvc, mockTemplateMapper)
-	req := schemas.AddTemplateRequest{Template: reqTemplateSchema}
+	req := &schemas.AddTemplateRequest{Template: reqTemplateSchema}
 	resp, err := ep(context.Background(), req)
 
 	assert.Error(t, err)
@@ -302,7 +302,7 @@ func TestMakeCreateProductEndpointSuccess(t *testing.T) {
 		Return(reqProductSchema.ID, nil)
 
 	ep := makeCreateProductEndpoint(mockSvc, mockProductMapper)
-	req := schemas.CreateProductRequest{Product: reqProductSchema}
+	req := &schemas.CreateProductRequest{Product: reqProductSchema}
 	resp, err := ep(context.Background(), req)
 	assert.NoError(t, err)
 
@@ -332,7 +332,7 @@ func TestMakeCreateProductEndpointFailed(t *testing.T) {
 	mockSvc.EXPECT().CreateProduct(context.Background(), &expectedModel).Return(expectedModel.ID, errors.New(errMsg))
 
 	ep := makeCreateProductEndpoint(mockSvc, mockProductMapper)
-	req := schemas.CreateProductRequest{Product: reqProductSchema}
+	req := &schemas.CreateProductRequest{Product: reqProductSchema}
 	resp, err := ep(context.Background(), req)
 
 	assert.Error(t, err)
@@ -347,7 +347,7 @@ func TestMakeUpdateProductEndpointSuccess(t *testing.T) {
 		ID:   3,
 		Name: "Updated chocolate",
 	}
-	reqUpdate := schemas.UpdateProductRequest{Product: reqProductSchema}
+	reqUpdate := &schemas.UpdateProductRequest{Product: reqProductSchema}
 
 	expectedModel := models.Product{
 		ID:   3,
@@ -375,7 +375,7 @@ func TestMakeUpdateProductEndpointFailed(t *testing.T) {
 	}
 	mockSvc.EXPECT().UpdateProduct(context.Background(), &expectedModel).Return(errors.New(errMsg))
 	mockProductMapper := schemas.NewProductMapper()
-	reqUpdate := schemas.UpdateProductRequest{Product: reqProductSchema}
+	reqUpdate := &schemas.UpdateProductRequest{Product: reqProductSchema}
 
 	ep := makeUpdateProductEndpoint(mockSvc, mockProductMapper)
 	resp, err := ep(context.Background(), reqUpdate)

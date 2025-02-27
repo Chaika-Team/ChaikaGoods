@@ -74,18 +74,17 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 			expStatus:  http.StatusOK,
 		},
 		{
-			name:   "Get All Products",
-			method: "GET",
-			url:    "/api/v1/products",
-			// TODO: Fix error with 500 code response when body is empty
-			body:       `{"dummy":"data"}`,
+			name:       "Get All Products",
+			method:     "GET",
+			url:        "/api/v1/products",
+			body:       "",
 			expHandler: "GetAllProducts",
 			expStatus:  http.StatusOK,
 		},
 		{
 			name:       "Search Templates",
 			method:     "GET",
-			url:        "/api/v1/Templates/search?query=test&limit=1&offset=0",
+			url:        "/api/v1/templates/search?query=test&limit=1&offset=0",
 			body:       "",
 			expHandler: "SearchTemplates",
 			expStatus:  http.StatusOK,
@@ -93,7 +92,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Add Template",
 			method:     "POST",
-			url:        "/api/v1/Templates",
+			url:        "/api/v1/templates",
 			body:       `{"dummy":"data"}`,
 			expHandler: "AddTemplate",
 			expStatus:  http.StatusOK,
@@ -101,7 +100,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Get Template By ID",
 			method:     "GET",
-			url:        "/api/v1/Templates/456",
+			url:        "/api/v1/templates/456",
 			body:       "",
 			expHandler: "GetTemplateByID",
 			expStatus:  http.StatusOK,
@@ -176,7 +175,7 @@ func TestEncodeResponseCauseEffect(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx := context.Background()
 	responseObj := map[string]interface{}{"result": "success"}
-	encoder := EncodeResponse(log.NewNopLogger())
+	encoder := encodeResponse(log.NewNopLogger())
 
 	err := encoder(ctx, rec, responseObj)
 	assert.NoError(t, err)
@@ -238,7 +237,7 @@ func TestEncodeErrorResponseDecisionTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			encoder := EncodeErrorResponse(logger)
+			encoder := encodeErrorResponse(logger)
 			encoder(context.Background(), tc.err, rec)
 			assert.Equal(t, tc.expectedStatus, rec.Code)
 
@@ -261,7 +260,7 @@ func TestEncodeErrorResponseDecisionTable(t *testing.T) {
 //   - Прогнозирование ошибок: пустой запрос приводит к ошибке.
 func TestDecodeJSONRequestErrorEmptyBody(t *testing.T) {
 	req := httptest.NewRequest("POST", dummyEndpoint, nil)
-	decoder := DecodeJSONRequest(&struct{ Field string }{})
+	decoder := decodeJSONRequest(&struct{ Field string }{})
 	_, err := decoder(context.Background(), req)
 	assert.Error(t, err)
 	assert.Equal(t, "empty request body", err.Error())
@@ -275,7 +274,7 @@ func TestDecodeJSONRequestErrorEmptyBody(t *testing.T) {
 func TestDecodeJSONRequestErrorInvalidJSON(t *testing.T) {
 	invalidJSON := `{"Field": "value",}` // Некорректный JSON: лишняя запятая
 	req := httptest.NewRequest("POST", dummyEndpoint, strings.NewReader(invalidJSON))
-	decoder := DecodeJSONRequest(&struct{ Field string }{})
+	decoder := decodeJSONRequest(&struct{ Field string }{})
 	_, err := decoder(context.Background(), req)
 	assert.Error(t, err)
 }
@@ -288,7 +287,7 @@ func TestDecodeJSONRequestErrorInvalidJSON(t *testing.T) {
 func TestDecodeJSONRequestErrorNotClosedBody(t *testing.T) {
 	validJSON := `{"Field": "value"}`
 	req := httptest.NewRequest("POST", dummyEndpoint, strings.NewReader(validJSON))
-	decoder := DecodeJSONRequest(&struct{ Field string }{})
+	decoder := decodeJSONRequest(&struct{ Field string }{})
 	_, err := decoder(context.Background(), req)
 	assert.NoError(t, err)
 }
@@ -307,7 +306,7 @@ func TestDecodeRequestWithIDBoundaryNonNumericID(t *testing.T) {
 	req := httptest.NewRequest("GET", "/products/abc", nil)
 	req = mux.SetURLVars(req, map[string]string{"id": "abc"})
 	schema := &schemas.GetProductByIDRequest{}
-	decoder := DecodeRequestWithID(logger, "id", schema)
+	decoder := decodeRequestWithID(logger, "id", schema)
 	_, err := decoder(context.Background(), req)
 	assert.Error(t, err)
 }
@@ -357,7 +356,7 @@ func TestDecodeRequestWithIDDecisionTableValidSchemas(t *testing.T) {
 			parts := strings.Split(tc.url, "/")
 			idStr := parts[len(parts)-1]
 			req = mux.SetURLVars(req, map[string]string{"id": idStr})
-			decoder := DecodeRequestWithID(logger, "id", tc.schema)
+			decoder := decodeRequestWithID(logger, "id", tc.schema)
 			result, err := decoder(context.Background(), req)
 
 			switch s := result.(type) {
@@ -426,13 +425,13 @@ func TestDecodeSearchTemplatesRequestDecisionTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/Templates/search?"+tc.queryParams, nil)
-			result, err := DecodeSearchTemplatesRequest(context.Background(), req)
+			result, err := decodeSearchTemplatesRequest(context.Background(), req)
 			if tc.expectedError != "" {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
-				stReq, ok := result.(schemas.SearchTemplatesRequest)
+				stReq, ok := result.(*schemas.SearchTemplatesRequest)
 				assert.True(t, ok)
 				assert.Equal(t, tc.expectedRequest.Query, stReq.Query)
 				assert.Equal(t, tc.expectedRequest.Limit, stReq.Limit)
