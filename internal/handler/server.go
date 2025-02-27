@@ -33,7 +33,7 @@ func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
 	// Register file and folder routes
-	RegisterRoutes(logger, r.PathPrefix("/api/v1").Subrouter(), endpoints)
+	registerRoutes(logger, r.PathPrefix("/api/v1").Subrouter(), endpoints)
 
 	return r
 }
@@ -61,62 +61,62 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Get product by ID
 	api.Methods("GET").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
-		DecodeRequestWithID(logger, "id", &schemas.GetProductByIDRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeRequestWithID(logger, "id", &schemas.GetProductByIDRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Search Template
 	api.Methods("GET").Path("/templates/search").Handler(httpGoKit.NewServer(
 		endpoints.SearchTemplates,
-		DecodeSearchTemplatesRequest,
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeSearchTemplatesRequest,
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Add Template
 	api.Methods("POST").Path("/templates").Handler(httpGoKit.NewServer(
 		endpoints.AddTemplate,
-		DecodeJSONRequest(&schemas.AddTemplateRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeJSONRequest(&schemas.AddTemplateRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Get Template by ID
 	api.Methods("GET").Path("/templates/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetTemplateByID,
-		DecodeRequestWithID(logger, "id", &schemas.GetTemplateByIDRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeRequestWithID(logger, "id", &schemas.GetTemplateByIDRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Add product
 	api.Methods("POST").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.CreateProduct,
-		DecodeJSONRequest(&schemas.CreateProductRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeJSONRequest(&schemas.CreateProductRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Update product
 	api.Methods("PUT").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.UpdateProduct,
-		DecodeJSONRequest(&schemas.UpdateProductRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeJSONRequest(&schemas.UpdateProductRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 
 	// Delete product
 	api.Methods("DELETE").Path("/products/{id}").Handler(httpGoKit.NewServer(
 		endpoints.DeleteProduct,
-		DecodeRequestWithID(logger, "id", &schemas.DeleteProductRequest{}),
-		EncodeResponse(logger),
-		httpGoKit.ServerErrorEncoder(EncodeErrorResponse(logger)),
+		decodeRequestWithID(logger, "id", &schemas.DeleteProductRequest{}),
+		encodeResponse(logger),
+		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
 }
 
 // encodeResponse encodes the response as JSON.
-func EncodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
+func encodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
 	return func(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 		// Common response encoding logic here
 		return json.NewEncoder(w).Encode(response)
@@ -124,7 +124,7 @@ func EncodeResponse(_ log.Logger) httpGoKit.EncodeResponseFunc {
 }
 
 // encodeErrorResponse encodes the error response as JSON with appropriate status code.
-func EncodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
+func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		var status int
 		var response interface{}
@@ -154,7 +154,7 @@ func EncodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 	}
 }
 
-func DecodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
+func decodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		defer req.Body.Close()
 		err := json.NewDecoder(req.Body).Decode(schema)
@@ -168,7 +168,7 @@ func DecodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
 }
 
 // decodeRequestWithID генерирует DecodeRequestFunc для запросов с ID в пути.
-func DecodeRequestWithID(logger log.Logger, paramName string, schema interface{}) httpGoKit.DecodeRequestFunc {
+func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}) httpGoKit.DecodeRequestFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		id, err := extractID(req, paramName)
 		if err != nil {
@@ -202,7 +202,7 @@ func decodeEmptyRequest[T any]() func(context.Context, *http.Request) (interface
 }
 
 // decodeSearchTemplatesRequest декодирует GET запрос с параметрами query, limit и offset.
-func DecodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interface{}, error) {
+func decodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interface{}, error) {
 	query := req.URL.Query()
 
 	searchString := query.Get("query")
