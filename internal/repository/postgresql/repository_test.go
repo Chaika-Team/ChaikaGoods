@@ -628,3 +628,137 @@ func TestCreateTemplate(t *testing.T) {
 		mockRow.AssertExpectations(t)
 	})
 }
+
+func TestDeleteTemplate(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	mockClient := new(postgresql.MockClient)
+	repo := postgresql.NewGoodsRepository(mockClient, logger)
+
+	packageID := int64(1)
+
+	t.Run("успешное удаление шаблона", func(t *testing.T) {
+		mockTx := new(postgresql.MockTx)
+
+		mockClient.On("Begin", mock.Anything).Return(mockTx, nil).Once()
+		mockTx.On("Exec", mock.Anything, mock.Anything, packageID).
+			Return(pgconn.NewCommandTag("DELETE 1"), nil).Twice()
+		mockTx.On("Commit", mock.Anything).Return(nil).Once()
+
+		err := repo.DeleteTemplate(ctx, packageID)
+
+		assert.NoError(t, err)
+		mockClient.AssertExpectations(t)
+		mockTx.AssertExpectations(t)
+	})
+
+	t.Run("ошибка: не удалось начать транзакцию", func(t *testing.T) {
+		mockClient.On("Begin", mock.Anything).Return((*postgresql.MockTx)(nil), errors.New("transaction error")).Once()
+
+		err := repo.DeleteTemplate(ctx, packageID)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "transaction error")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ошибка: не удалось удалить содержимое шаблона", func(t *testing.T) {
+		mockTx := new(postgresql.MockTx)
+
+		mockClient.On("Begin", mock.Anything).Return(mockTx, nil).Once()
+		mockTx.On("Exec", mock.Anything, mock.Anything, packageID).
+			Return(pgconn.NewCommandTag("DELETE 0"), errors.New("delete content error")).Once()
+		mockTx.On("Rollback", mock.Anything).Return(nil).Once()
+
+		err := repo.DeleteTemplate(ctx, packageID)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "delete content error")
+		mockClient.AssertExpectations(t)
+		mockTx.AssertExpectations(t)
+	})
+
+	t.Run("ошибка: не удалось удалить сам шаблон", func(t *testing.T) {
+		mockTx := new(postgresql.MockTx)
+
+		mockClient.On("Begin", mock.Anything).Return(mockTx, nil).Once()
+		mockTx.On("Exec", mock.Anything, mock.Anything, packageID).
+			Return(pgconn.NewCommandTag("DELETE 1"), nil).Once()
+		mockTx.On("Exec", mock.Anything, mock.Anything, packageID).
+			Return(pgconn.NewCommandTag("DELETE 0"), errors.New("delete template error")).Once()
+		mockTx.On("Rollback", mock.Anything).Return(nil).Once()
+
+		err := repo.DeleteTemplate(ctx, packageID)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "delete template error")
+		mockClient.AssertExpectations(t)
+		mockTx.AssertExpectations(t)
+	})
+
+	t.Run("ошибка: не удалось зафиксировать транзакцию", func(t *testing.T) {
+		mockTx := new(postgresql.MockTx)
+
+		mockClient.On("Begin", mock.Anything).Return(mockTx, nil).Once()
+		mockTx.On("Exec", mock.Anything, mock.Anything, packageID).
+			Return(pgconn.NewCommandTag("DELETE 1"), nil).Twice()
+		mockTx.On("Commit", mock.Anything).Return(errors.New("commit error")).Once()
+		mockTx.On("Rollback", mock.Anything).Return(nil).Once() // Добавляем Rollback
+
+		err := repo.DeleteTemplate(ctx, packageID)
+
+		assert.Error(t, err)
+		assert.EqualError(t, err, "commit error")
+		mockClient.AssertExpectations(t)
+		mockTx.AssertExpectations(t)
+	})
+}
+
+func TestSearchTemplates(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	mockClient := new(postgresql.MockClient)
+	repo := postgresql.NewGoodsRepository(mockClient, logger)
+
+	searchString := "test"
+	limit := int64(10)
+	offset := int64(0)
+
+	t.Run("ошибка выполнения запроса", func(t *testing.T) {
+		mockClient.On("Query", mock.Anything, mock.Anything, "%test%", limit, offset).
+			Return((*postgresql.MockRows)(nil), errors.New("query error")).Once()
+
+		templates, err := repo.SearchTemplates(ctx, searchString, limit, offset)
+
+		assert.Error(t, err)
+		assert.Nil(t, templates)
+		assert.EqualError(t, err, "query error")
+
+		mockClient.AssertExpectations(t)
+	})
+
+}
+
+func TestGetAllTemplates(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	mockClient := new(postgresql.MockClient)
+	repo := postgresql.NewGoodsRepository(mockClient, logger)
+
+	limit := int64(10)
+	offset := int64(0)
+
+	t.Run("ошибка выполнения запроса", func(t *testing.T) {
+		mockClient.On("Query", mock.Anything, mock.Anything, limit, offset).
+			Return((*postgresql.MockRows)(nil), errors.New("query error")).Once()
+
+		templates, err := repo.GetAllTemplates(ctx, limit, offset)
+
+		assert.Error(t, err)
+		assert.Nil(t, templates)
+		assert.EqualError(t, err, "query error")
+
+		mockClient.AssertExpectations(t)
+	})
+
+}
