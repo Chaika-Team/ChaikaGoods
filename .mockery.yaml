@@ -7,8 +7,17 @@ packages:
     config:
       mockname: "Mock{{.InterfaceName}}"
       filename: "{{.InterfaceName}}.mock.go"
-      dir: "tests/mocks"
+      dir: "/ChaikaGoods/tests/mocks"
       outpkg: "mocks"
       inpackage: false
     interfaces:
       GoodsRepository:
+  github.com/Chaika-Team/ChaikaGoods/internal/service:
+    config:
+      mockname: "Mock{{.InterfaceName}}"
+      filename: "{{.InterfaceName}}.mock.go"
+      dir: "/ChaikaGoods/tests/mocks"
+      outpkg: "mocks"
+      inpackage: false
+    interfaces:
+      Service:

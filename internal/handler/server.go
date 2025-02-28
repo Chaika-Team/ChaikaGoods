@@ -42,7 +42,7 @@ func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// GetAllProducts    endpoint.Endpoint
 	// GetProductByID    endpoint.Endpoint
-	// For Templates
+	// For templates
 	// SearchTemplates endpoint.Endpoint
 	// AddTemplate    endpoint.Endpoint
 	// For products (admin)
@@ -53,7 +53,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// Get all products
 	api.Methods("GET").Path("/products").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
-		decodeJSONRequest(&schemas.GetAllProductsRequest{}),
+		decodeEmptyRequest[schemas.GetAllProductsRequest](),
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -67,7 +67,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Search Template
-	api.Methods("GET").Path("/Templates/search").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path("/templates/search").Handler(httpGoKit.NewServer(
 		endpoints.SearchTemplates,
 		decodeSearchTemplatesRequest,
 		encodeResponse(logger),
@@ -75,7 +75,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Add Template
-	api.Methods("POST").Path("/Templates").Handler(httpGoKit.NewServer(
+	api.Methods("POST").Path("/templates").Handler(httpGoKit.NewServer(
 		endpoints.AddTemplate,
 		decodeJSONRequest(&schemas.AddTemplateRequest{}),
 		encodeResponse(logger),
@@ -83,7 +83,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Get Template by ID
-	api.Methods("GET").Path("/Templates/{id}").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path("/templates/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetTemplateByID,
 		decodeRequestWithID(logger, "id", &schemas.GetTemplateByIDRequest{}),
 		encodeResponse(logger),
@@ -156,17 +156,11 @@ func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 
 func decodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
-		if req.Body == nil {
+		defer req.Body.Close()
+		err := json.NewDecoder(req.Body).Decode(schema)
+		if err == io.EOF {
 			return nil, errors.New("empty request body")
-		}
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				_ = level.Error(log.NewNopLogger()).Log("msg", "error closing request body", "err", err)
-			}
-		}(req.Body)
-
-		if err := json.NewDecoder(req.Body).Decode(schema); err != nil {
+		} else if err != nil {
 			return nil, err
 		}
 		return schema, nil
@@ -200,6 +194,13 @@ func decodeRequestWithID(logger log.Logger, paramName string, schema interface{}
 	}
 }
 
+// decodeEmptyRequest безопасно возвращает пустую структуру запроса.
+func decodeEmptyRequest[T any]() func(context.Context, *http.Request) (interface{}, error) {
+	return func(ctx context.Context, req *http.Request) (interface{}, error) {
+		return new(T), nil
+	}
+}
+
 // decodeSearchTemplatesRequest декодирует GET запрос с параметрами query, limit и offset.
 func decodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interface{}, error) {
 	query := req.URL.Query()
@@ -215,7 +216,7 @@ func decodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interfa
 		return nil, errors.New("invalid or missing offset parameter")
 	}
 
-	return schemas.SearchTemplatesRequest{
+	return &schemas.SearchTemplatesRequest{
 		Query:  searchString,
 		Limit:  limit,
 		Offset: offset,

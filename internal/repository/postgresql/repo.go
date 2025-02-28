@@ -133,7 +133,7 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 // GetTemplateByID retrieves template details along with its contents.
 func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (models.Template, error) {
 	var template models.Template
-	const sqlTemplate = `SELECT templateid, templatename, description FROM public."template" WHERE templateid = $1;`
+	const sqlTemplate = `SELECT packageid, packagename, description FROM public.package WHERE packageid = $1;`
 	if err := r.client.QueryRow(ctx, sqlTemplate, id).Scan(&template.ID, &template.TemplateName, &template.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return template, myerr.NotFound(fmt.Sprintf("Template with ID %d not found", id), nil)
@@ -143,7 +143,7 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 	}
 
 	// Get template contents
-	const sqlContents = `SELECT productid, quantity FROM public.templatecontent WHERE templateid = $1;`
+	const sqlContents = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sqlContents, id)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to get template contents", "template_id", id, "err", err)
@@ -169,7 +169,7 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 
 // GetProductsByTemplateID retrieves all products within a specific template.
 func (r *GoodsPGRepository) GetProductsByTemplateID(ctx context.Context, templateID int64) ([]models.TemplateContent, error) {
-	const sql = `SELECT productid, quantity FROM public.templatecontent WHERE templateid = $1;`
+	const sql = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sql, templateID)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to get products by template ID", "template_id", templateID, "err", err)
@@ -197,7 +197,7 @@ func (r *GoodsPGRepository) GetProductsByTemplateID(ctx context.Context, templat
 
 // ListTemplates returns a list of all templates.
 func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Template, error) {
-	const sql = `SELECT templateid, templatename, description FROM public."template";`
+	const sql = `SELECT packageid, packagename, description FROM public.package;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to list templates", "err", err)
@@ -224,7 +224,7 @@ func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Templat
 
 // CreateTemplate adds a new template to the database along with its contents.
 func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, template *models.Template) (err error) {
-	const sqlInsertTemplate = `INSERT INTO public."template" (templatename, description) VALUES ($1, $2) RETURNING templateid;`
+	const sqlInsertTemplate = `INSERT INTO public.package (packagename, description) VALUES ($1, $2) RETURNING packageid;`
 
 	tx, err := r.client.Begin(ctx)
 	if err != nil {
@@ -267,27 +267,27 @@ func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, template *models
 }
 
 // createProductToTemplate adds a single template content entry.
-func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.Tx, templateID int64, content models.TemplateContent) error {
+func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.Tx, packageid int64, content models.TemplateContent) error {
 	// Insert template content
-	const sqlInsertContent = `INSERT INTO public.templatecontent (templateid, productid, quantity) VALUES ($1, $2, $3);`
-	if _, err := tx.Exec(ctx, sqlInsertContent, templateID, content.ProductID, content.Quantity); err != nil {
+	const sqlInsertContent = `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
+	if _, err := tx.Exec(ctx, sqlInsertContent, packageid, content.ProductID, content.Quantity); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
 			return myerr.NotFound(fmt.Sprintf(fmtProductNotFound, content.ProductID), err)
 		} else if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return myerr.Conflict(fmt.Sprintf("Product with ID %d already exists in template", content.ProductID), err)
 		}
-		_ = r.logger.Log("error", "Failed to insert template content", "template_id", templateID, "product_id", content.ProductID, "err", err)
+		_ = r.logger.Log("error", "Failed to insert template content", "template_id", packageid, "product_id", content.ProductID, "err", err)
 		return err
 	}
 	return nil
 }
 
 // DeleteTemplate deletes a template and its contents from the database by template ID.
-func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, templateID int64) error {
+func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64) error {
 	const (
-		sqlDeleteContents = `DELETE FROM public.templatecontent WHERE templateid = $1;`
-		sqlDeleteTemplate = `DELETE FROM public."template" WHERE templateid = $1;`
+		sqlDeleteContents = `DELETE FROM public.packagecontent WHERE packageid = $1;`
+		sqlDeleteTemplate = `DELETE FROM public.package WHERE packageid = $1;`
 	)
 
 	tx, err := r.client.Begin(ctx)
@@ -302,19 +302,19 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, templateID int64
 	}()
 
 	// Delete template contents
-	if _, err = tx.Exec(ctx, sqlDeleteContents, templateID); err != nil {
-		_ = r.logger.Log("error", "Failed to delete template contents", "template_id", templateID, "err", err)
+	if _, err = tx.Exec(ctx, sqlDeleteContents, packageid); err != nil {
+		_ = r.logger.Log("error", "Failed to delete template contents", "template_id", packageid, "err", err)
 		return err
 	}
 
 	// Delete template
-	ct, err := tx.Exec(ctx, sqlDeleteTemplate, templateID)
+	ct, err := tx.Exec(ctx, sqlDeleteTemplate, packageid)
 	if err != nil {
-		_ = r.logger.Log("error", "Failed to delete template", "template_id", templateID, "err", err)
+		_ = r.logger.Log("error", "Failed to delete template", "template_id", packageid, "err", err)
 		return err
 	}
 	if ct.RowsAffected() == 0 {
-		return myerr.NotFound(fmt.Sprintf("Template with id %d not found", templateID), nil)
+		return myerr.NotFound(fmt.Sprintf("Template with id %d not found", packageid), nil)
 	}
 
 	// Commit transaction
@@ -329,8 +329,8 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, templateID int64
 // SearchTemplates searches for templates by name or description with pagination.
 func (r *GoodsPGRepository) SearchTemplates(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Template, error) {
 	searchPattern := "%" + searchString + "%"
-	const sql = `SELECT templateid, templatename, description FROM public."template"
-	        WHERE templatename ILIKE $1 OR description ILIKE $1 
+	const sql = `SELECT packageid, packagename, description FROM public.package
+	        WHERE package.packagename ILIKE $1 OR description ILIKE $1 
 	        LIMIT $2 OFFSET $3;`
 
 	rows, err := r.client.Query(ctx, sql, searchPattern, limit, offset)
@@ -360,7 +360,7 @@ func (r *GoodsPGRepository) SearchTemplates(ctx context.Context, searchString st
 
 // GetAllTemplates returns all templates with pagination.
 func (r *GoodsPGRepository) GetAllTemplates(ctx context.Context, limit int64, offset int64) ([]models.Template, error) {
-	const sql = `SELECT templateid, templatename, description FROM public."template" LIMIT $1 OFFSET $2;`
+	const sql = `SELECT packageid, packagename, description FROM public.package LIMIT $1 OFFSET $2;`
 	rows, err := r.client.Query(ctx, sql, limit, offset)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to retrieve all templates", "err", err)

@@ -2,12 +2,18 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
 	"github.com/Chaika-Team/ChaikaGoods/internal/service"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
+)
+
+const (
+	invalidRequestType = "invalid request type"
 )
 
 // Endpoints содержит все Go kit эндпоинты для всех операций
@@ -54,9 +60,13 @@ func MakeEndpoints(logger log.Logger, svc service.Service) Endpoints {
 	}
 }
 
-// Типизированная функция для приведения типов без проверки
-func mustCast[T any](req interface{}) T {
-	return req.(T) // Паникует, если приведение неудачно
+// castRequest приводит запрос к нужному типу или возвращает ошибку
+func castRequest[T any](req interface{}) (T, error) {
+	casted, ok := req.(T)
+	if !ok {
+		return *new(T), fmt.Errorf("invalid request type: expected %T, got %T", *new(T), req)
+	}
+	return casted, nil
 }
 
 // makeGetAllProductsEndpoint constructs a GetAllProducts endpoint wrapping the service.
@@ -95,7 +105,10 @@ func makeGetAllProductsEndpoint(s service.Service, mapper *schemas.ProductsMappe
 //	@Router			/api/v1/products/{id} [get]
 func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[*schemas.GetProductByIDRequest](request)
+		req, err := castRequest[*schemas.GetProductByIDRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		product, err := s.GetProductByID(ctx, req.ProductID)
 		if err != nil {
@@ -122,7 +135,10 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 //	@Router			/api/v1/templates/search [get]
 func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.SearchTemplatesRequest](request)
+		req, err := castRequest[*schemas.SearchTemplatesRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		Templates, err := s.SearchTemplates(ctx, req.Query, req.Limit, req.Offset)
 		if err != nil {
@@ -148,7 +164,10 @@ func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMap
 //	@Router			/api/v1/templates [post]
 func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.AddTemplateRequest](request)
+		req, err := castRequest[*schemas.AddTemplateRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		TemplateModel := mapper.ToModel(req.Template)
 
@@ -175,7 +194,10 @@ func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) 
 //	@Router			/api/v1/templates/{id} [get]
 func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[*schemas.GetTemplateByIDRequest](request)
+		req, err := castRequest[*schemas.GetTemplateByIDRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		Template, err := s.GetTemplateByID(ctx, req.TemplateID)
 		if err != nil {
@@ -201,7 +223,10 @@ func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapp
 //	@Router			/api/v1/products [post]
 func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.CreateProductRequest](request)
+		req, err := castRequest[*schemas.CreateProductRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		productModel := mapper.ToModel(req.Product)
 
@@ -228,11 +253,14 @@ func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 //	@Router			/api/v1/products [put]
 func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[schemas.UpdateProductRequest](request)
+		req, err := castRequest[*schemas.UpdateProductRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
 		productModel := mapper.ToModel(req.Product)
 
-		err := s.UpdateProduct(ctx, &productModel)
+		err = s.UpdateProduct(ctx, &productModel)
 		if err != nil {
 			return nil, err
 		}
@@ -255,9 +283,12 @@ func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 //	@Router			/api/v1/products/{id} [delete]
 func makeDeleteProductEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := mustCast[*schemas.DeleteProductRequest](request)
+		req, err := castRequest[*schemas.DeleteProductRequest](request)
+		if err != nil {
+			return nil, myerr.Validation(invalidRequestType, err)
+		}
 
-		err := s.DeleteProduct(ctx, req.ProductID)
+		err = s.DeleteProduct(ctx, req.ProductID)
 		if err != nil {
 			return nil, err
 		}

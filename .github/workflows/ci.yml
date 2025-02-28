@@ -8,6 +8,7 @@ on:
       - master
       - dev
       - ci-cd
+      - tests/*
   pull_request:
     branches:
       - master
@@ -63,7 +64,7 @@ jobs:
 
       # 8. Сохранение артефактов покрытия
       - name: Upload coverage to artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.out
@@ -104,6 +105,5 @@ jobs:
             -Dsonar.projectKey=ChaikaGoods
             -Dsonar.sources=./internal,./cmd
             -Dsonar.tests=./tests
-            -Dsonar.exclusions=**/tests/**,**/*.mock.go
+            -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go
             -Dsonar.go.coverage.reportPaths=coverage.out
-  

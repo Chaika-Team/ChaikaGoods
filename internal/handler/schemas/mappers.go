@@ -130,9 +130,9 @@ type TemplatesMapper struct {
 	TemplateMapper Mapper[models.Template, TemplateSchema]
 }
 
-func NewTemplatesMapper(pm Mapper[models.Template, TemplateSchema]) *TemplatesMapper {
+func NewTemplatesMapper(tm Mapper[models.Template, TemplateSchema]) *TemplatesMapper {
 	return &TemplatesMapper{
-		TemplateMapper: pm,
+		TemplateMapper: tm,
 	}
 }
 
