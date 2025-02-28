@@ -7,17 +7,30 @@ import (
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
+<<<<<<< HEAD
+=======
+	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
+>>>>>>> origin/master
 	"github.com/Chaika-Team/ChaikaGoods/tests/mocks"
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 )
 
+<<<<<<< HEAD
 // Техника тест-дизайна: попарное тестирование
 // Автор: Фоломкин Дмитрий
 // Описание:
 //   - Тест проверяет функцию MakeEndpoints, которая инициализирует все эндпоинты.
 //   - Используется мок-сервис (сгенерированный с помощью mockery) для задания ожидания вызова метода GetAllProducts.
 //   - Проверяется, что все поля структуры Endpoints заполнены, а вызов одного из эндпоинтов (GetAllProducts) возвращает ожидаемый результат.
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию MakeEndpoints, которая инициализирует все эндпоинты
+//   - Используется мок-сервис (сгенерированный с помощью mockery) для задания ожидания вызова метода GetAllProducts
+//   - Проверяется, что все поля структуры Endpoints заполнены, а вызов одного из эндпоинтов (GetAllProducts) возвращает ожидаемый результат
+>>>>>>> origin/master
 func TestMakeEndpoints(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	logger := log.NewNopLogger()
@@ -43,6 +56,14 @@ func TestMakeEndpoints(t *testing.T) {
 	assert.Empty(t, getAllResp.Products, "Products list should be empty")
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeGetAllProducts
+//   - Идет проверка соответствия фактически полученных данных и тех, которые находились на эндпоинте
+>>>>>>> origin/master
 func TestMakeGetAllProductsEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	products := []models.Product{
@@ -68,10 +89,17 @@ func TestMakeGetAllProductsEndpointSuccess(t *testing.T) {
 }
 
 // Техника тест-дизайна: Прогнозирование ошибок
+<<<<<<< HEAD
 // Автор: Дмитрий Фоломкин
 // Описание:
 //   - Тест проверяет негативный сценарий для эндпоинта GetAllProducts.
 //   - Прогнозирование ошибок: если сервис возвращает ошибку, эндпоинт должен вернуть её и не формировать корректный ответ.
+=======
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для эндпоинта GetAllProducts
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, эндпоинт должен вернуть её и не формировать корректный ответ
+>>>>>>> origin/master
 func TestMakeGetAllProductsEndpointFailed(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "Database is unreachable!"
@@ -88,6 +116,14 @@ func TestMakeGetAllProductsEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeGetProductByIDEndpoint
+//   - Идет проверка соответствия фактически полученных данных по ID и тех, которые находились на эндпоинте ID
+>>>>>>> origin/master
 func TestMakeGetProductByIDEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	product := models.Product{ID: 33, Name: "Doshirak"}
@@ -106,7 +142,36 @@ func TestMakeGetProductByIDEndpointSuccess(t *testing.T) {
 	assert.Equal(t, "Doshirak", getByIDResp.Product.Name)
 }
 
+<<<<<<< HEAD
 func TestMakeGetProductByIDEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeGetProductByIDEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockProductMapper := schemas.NewProductMapper()
+
+	ep := makeGetProductByIDEndpoint(mockSvc, mockProductMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeGetProductByIDEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "ID not found"
 	mockSvc.EXPECT().GetProductByID(context.Background(), int64(5)).Return(models.Product{}, errors.New(errMsg))
@@ -121,6 +186,14 @@ func TestMakeGetProductByIDEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeSearchTemplatesEndpoint
+//   - Идет проверка соответствия фактически полученных данных по ID и тех, которые находились на эндпоинте ID
+>>>>>>> origin/master
 func TestMakeSearchTemplatesEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	templates := []models.Template{
@@ -151,7 +224,37 @@ func TestMakeSearchTemplatesEndpointSuccess(t *testing.T) {
 	assert.Len(t, searchTemplates.Templates[0].Content, 2)
 }
 
+<<<<<<< HEAD
 func TestMakeSearchTemplatesEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeSearchTemplatesEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockTemplateMapper := schemas.NewTemplateMapper(schemas.NewTemplateContentMapper(), schemas.NewProductMapper())
+	mockTemplatesMapper := schemas.NewTemplatesMapper(mockTemplateMapper)
+
+	ep := makeSearchTemplatesEndpoint(mockSvc, mockTemplatesMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeSearchTemplatesEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "No such templates!"
 	mockSvc.EXPECT().SearchTemplates(context.Background(), string("Default"), int64(10), int64(0)).Return([]models.Template{}, errors.New(errMsg))
@@ -167,6 +270,14 @@ func TestMakeSearchTemplatesEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeAddTemplateEndpoint
+//   - Идет проверка соответствия фактически полученного айди от добавления и айди, который должен был добавиться
+>>>>>>> origin/master
 func TestMakeAddTemplateEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	reqTemplateSchema := schemas.TemplateSchema{
@@ -202,7 +313,36 @@ func TestMakeAddTemplateEndpointSuccess(t *testing.T) {
 	assert.Equal(t, int64(42), addTempResp.TemplateID)
 }
 
+<<<<<<< HEAD
 func TestMakeAddTemplateEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeAddTemplateEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockTemplateMapper := schemas.NewTemplateMapper(schemas.NewTemplateContentMapper(), schemas.NewProductMapper())
+
+	ep := makeAddTemplateEndpoint(mockSvc, mockTemplateMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeAddTemplateEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "Template already exists!"
 	reqTemplateSchema := schemas.TemplateSchema{
@@ -235,6 +375,14 @@ func TestMakeAddTemplateEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeGetTemplateByIDEndpoint
+//   - Идет проверка соответствия фактически полученного шаблона и того, который должен был быть получен
+>>>>>>> origin/master
 func TestMakeGetTemplateByIDEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	template := models.Template{
@@ -264,7 +412,36 @@ func TestMakeGetTemplateByIDEndpointSuccess(t *testing.T) {
 	assert.Len(t, getByIDResp.Template.Content, 2)
 }
 
+<<<<<<< HEAD
 func TestMakeGetTemplateByIDEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeGetTemplateByIDEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockTemplateMapper := schemas.NewTemplateMapper(schemas.NewTemplateContentMapper(), schemas.NewProductMapper())
+
+	ep := makeGetTemplateByIDEndpoint(mockSvc, mockTemplateMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeGetTemplateByIDEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "ID not found"
 	mockSvc.EXPECT().GetTemplateByID(context.Background(), int64(51)).Return(models.Template{}, errors.New(errMsg))
@@ -281,6 +458,14 @@ func TestMakeGetTemplateByIDEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeCreateProductEndpoint
+//   - Идет проверка соответствия фактически полученного продукта и того, который должен был быть получен
+>>>>>>> origin/master
 func TestMakeCreateProductEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	reqProductSchema := schemas.ProductSchema{
@@ -311,7 +496,36 @@ func TestMakeCreateProductEndpointSuccess(t *testing.T) {
 	assert.Equal(t, int64(1), cpResp.ProductID)
 }
 
+<<<<<<< HEAD
 func TestMakeCreateProductEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeCreateProductEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockProductMapper := schemas.NewProductMapper()
+
+	ep := makeCreateProductEndpoint(mockSvc, mockProductMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeCreateProductEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "Product already exists!"
 	reqProductSchema := schemas.ProductSchema{
@@ -340,6 +554,14 @@ func TestMakeCreateProductEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeUpdateProductEndpoint
+//   - Идет проверка соответствия фактически полученного ответа об обновлении и того, который должен был быть получен
+>>>>>>> origin/master
 func TestMakeUpdateProductEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	mockProductMapper := schemas.NewProductMapper()
@@ -362,7 +584,36 @@ func TestMakeUpdateProductEndpointSuccess(t *testing.T) {
 	assert.True(t, ok, "response should be of type UpdateProductResponse")
 }
 
+<<<<<<< HEAD
 func TestMakeUpdateProductEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeUpdateProductEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+	mockProductMapper := schemas.NewProductMapper()
+
+	ep := makeUpdateProductEndpoint(mockSvc, mockProductMapper)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeUpdateProductEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "Product to update not found!"
 	reqProductSchema := schemas.ProductSchema{
@@ -385,6 +636,14 @@ func TestMakeUpdateProductEndpointFailed(t *testing.T) {
 	assert.Equal(t, errMsg, err.Error())
 }
 
+<<<<<<< HEAD
+=======
+// Техника тест-дизайна: Классы эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет функцию makeUpdateProductEndpoint
+//   - Идет проверка соответствия фактически полученного ответа об удалении и того, который должен был быть получен
+>>>>>>> origin/master
 func TestMakeDeleteProductEndpointSuccess(t *testing.T) {
 	mockSvc := mocks.NewMockService(t)
 	reqDelete := &schemas.DeleteProductRequest{
@@ -400,7 +659,35 @@ func TestMakeDeleteProductEndpointSuccess(t *testing.T) {
 	assert.True(t, ok, "response should be of type DeleteProductResponse")
 }
 
+<<<<<<< HEAD
 func TestMakeDeleteProductEndpointFailed(t *testing.T) {
+=======
+// Техника тест-дизайна: Прогнозирование ошибок + таблица эквивалентности
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для неверного типа request
+//   - Прогнозирование ошибок: если запрос возвращает ошибку, то он должен вернуть ошибку валидации
+func TestMakeDeleteProductEndpointCastFailed(t *testing.T) {
+	mockSvc := mocks.NewMockService(t)
+
+	ep := makeDeleteProductEndpoint(mockSvc)
+	req := "invalid request type"
+	resp, err := ep(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	appErr, ok := myerr.IsAppError(err)
+	assert.True(t, ok, "error is AppError")
+	assert.Contains(t, appErr.Message, req)
+}
+
+// Техника тест-дизайна: Прогнозирование ошибок
+// Автор: Фоломкин Дмитрий
+// Описание:
+//   - Тест проверяет негативный сценарий для ошибок на уровне сервиса во время запроса
+//   - Прогнозирование ошибок: если сервис возвращает ошибку, то запрос неудачен и сервис недоступен
+func TestMakeDeleteProductEndpointServiceFailed(t *testing.T) {
+>>>>>>> origin/master
 	mockSvc := mocks.NewMockService(t)
 	errMsg := "Product to delete not found!"
 	reqDelete := &schemas.DeleteProductRequest{
