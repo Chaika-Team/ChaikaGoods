@@ -757,6 +757,36 @@ func TestSearchTemplates(t *testing.T) {
 	limit := int64(10)
 	offset := int64(0)
 
+	t.Run("успешный поиск шаблонов", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, "%test%", limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(true).Once()
+		mockRows.On("Scan", mock.AnythingOfType("*int64"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+			Run(func(args mock.Arguments) {
+				*(args[0].(*int64)) = 1
+				*(args[1].(*string)) = "Test Template"
+				*(args[2].(*string)) = "Description"
+			}).Return(nil).Once()
+
+		mockRows.On("Next").Return(false).Once()
+		mockRows.On("Err").Return(nil).Once()
+		mockRows.On("Close").Return().Maybe()
+
+		templates, err := repo.SearchTemplates(ctx, searchString, limit, offset)
+
+		assert.NoError(t, err)
+		assert.Len(t, templates, 1)
+		assert.Equal(t, int64(1), templates[0].ID)
+		assert.Equal(t, "Test Template", templates[0].TemplateName)
+		assert.Equal(t, "Description", templates[0].Description)
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
+
 	t.Run("ошибка выполнения запроса", func(t *testing.T) {
 		mockClient.On("Query", mock.Anything, mock.Anything, "%test%", limit, offset).
 			Return((*postgresql.MockRows)(nil), errors.New("query error")).Once()
@@ -770,6 +800,47 @@ func TestSearchTemplates(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
+	t.Run("ошибка при сканировании строки", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, "%test%", limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(true).Once()
+		mockRows.On("Scan", mock.AnythingOfType("*int64"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+			Return(errors.New("scan error")).Once()
+		mockRows.On("Next").Return(false).Once() // Завершаем итерацию
+		mockRows.On("Err").Return(nil).Once()    // Нет ошибки на уровне строк
+		mockRows.On("Close").Return().Maybe()    // Теперь не ломает тест, если `Close()` уже вызван
+
+		templates, err := repo.SearchTemplates(ctx, searchString, limit, offset)
+
+		assert.NoError(t, err)      // Ошибка сканирования не должна прерывать выполнение
+		assert.Len(t, templates, 0) // Строка не добавляется
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
+
+	t.Run("ошибка при итерации по rows", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, "%test%", limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(false).Once()
+		mockRows.On("Err").Return(errors.New("rows iteration error")).Once()
+		mockRows.On("Close").Return().Maybe() // Теперь не ломает тест, если `Close()` уже вызван
+
+		templates, err := repo.SearchTemplates(ctx, searchString, limit, offset)
+
+		assert.Error(t, err)
+		assert.Nil(t, templates)
+		assert.EqualError(t, err, "rows iteration error")
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
 }
 
 // Техника тест-дизайна: Классы эквивалентности
@@ -784,6 +855,38 @@ func TestGetAllTemplates(t *testing.T) {
 	limit := int64(10)
 	offset := int64(0)
 
+	// Успешное получение шаблонов
+	t.Run("успешное получение шаблонов", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(true).Once()
+		mockRows.On("Scan", mock.AnythingOfType("*int64"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+			Run(func(args mock.Arguments) {
+				*(args[0].(*int64)) = 1
+				*(args[1].(*string)) = "Test Template"
+				*(args[2].(*string)) = "Description"
+			}).Return(nil).Once()
+
+		mockRows.On("Next").Return(false).Once()
+		mockRows.On("Err").Return(nil).Once()
+		mockRows.On("Close").Return().Maybe()
+
+		templates, err := repo.GetAllTemplates(ctx, limit, offset)
+
+		assert.NoError(t, err)
+		assert.Len(t, templates, 1)
+		assert.Equal(t, int64(1), templates[0].ID)
+		assert.Equal(t, "Test Template", templates[0].TemplateName)
+		assert.Equal(t, "Description", templates[0].Description)
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
+
+	// Ошибка выполнения запроса
 	t.Run("ошибка выполнения запроса", func(t *testing.T) {
 		mockClient.On("Query", mock.Anything, mock.Anything, limit, offset).
 			Return((*postgresql.MockRows)(nil), errors.New("query error")).Once()
@@ -797,4 +900,48 @@ func TestGetAllTemplates(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
+	// Ошибка сканирования строки
+	t.Run("ошибка при сканировании строки", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(true).Once()
+		mockRows.On("Scan", mock.AnythingOfType("*int64"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+			Return(errors.New("scan error")).Once()
+
+		mockRows.On("Next").Return(false).Once()
+		mockRows.On("Err").Return(nil).Once()
+		mockRows.On("Close").Return().Maybe()
+
+		templates, err := repo.GetAllTemplates(ctx, limit, offset)
+
+		assert.NoError(t, err)      // Ошибки нет, так как пропускаем сбойную строку
+		assert.Len(t, templates, 0) // Но шаблоны не добавляются
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
+
+	// Ошибка при итерации по rows
+	t.Run("ошибка при итерации по rows", func(t *testing.T) {
+		mockRows := new(postgresql.MockRows)
+
+		mockClient.On("Query", mock.Anything, mock.Anything, limit, offset).
+			Return(mockRows, nil).Once()
+
+		mockRows.On("Next").Return(false).Once()
+		mockRows.On("Err").Return(errors.New("rows error")).Once()
+		mockRows.On("Close").Return().Maybe()
+
+		templates, err := repo.GetAllTemplates(ctx, limit, offset)
+
+		assert.Error(t, err)
+		assert.Nil(t, templates)
+		assert.EqualError(t, err, "rows error")
+
+		mockClient.AssertExpectations(t)
+		mockRows.AssertExpectations(t)
+	})
 }
