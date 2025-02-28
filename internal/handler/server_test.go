@@ -186,7 +186,7 @@ func TestEncodeResponseCauseEffect(t *testing.T) {
 }
 
 // -----------------------------------
-// Тест для EncodeErrorResponse (решающее дерево)
+// Тест для EncodeErrorResponse
 // -----------------------------------
 
 // Техника тест-дизайна: Таблица принятия решений
@@ -311,11 +311,11 @@ func TestDecodeRequestWithIDBoundaryNonNumericID(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Техника тест-дизайна: Попарное тестирование (через таблицу решений)
+// Техника тест-дизайна: Таблица принятия решений
 // Автор: Дмитрий Фоломкин
 // Описание:
 //   - Тест для функции decodeRequestWithID для поддерживаемых схем.
-//   - Попарное тестирование: для каждой схемы проверяется корректное извлечение идентификатора.
+//   - Таблица принятия решений: проверка соответствия запросов каждой схеме
 func TestDecodeRequestWithIDDecisionTableValidSchemas(t *testing.T) {
 	logger := log.NewNopLogger()
 	tests := []struct {
