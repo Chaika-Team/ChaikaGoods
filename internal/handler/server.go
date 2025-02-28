@@ -20,9 +20,10 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// Constants for logging messages
+// Constants for logging messages and endpoint
 const (
 	decoderReturningMsg = "decoder returning"
+	productEndpoint     = "/products"
 )
 
 // NewHTTPServer initializes and returns a new HTTP server with all routes defined.
@@ -51,7 +52,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// DeleteProduct endpoint.Endpoint
 
 	// Get all products
-	api.Methods("GET").Path("/products").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path(productEndpoint).Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
 		decodeEmptyRequest[schemas.GetAllProductsRequest](),
 		encodeResponse(logger),
@@ -59,7 +60,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Get product by ID
-	api.Methods("GET").Path("/products/{id}").Handler(httpGoKit.NewServer(
+	api.Methods("GET").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
 		decodeRequestWithID(logger, "id", &schemas.GetProductByIDRequest{}),
 		encodeResponse(logger),
@@ -91,7 +92,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Add product
-	api.Methods("POST").Path("/products").Handler(httpGoKit.NewServer(
+	api.Methods("POST").Path(productEndpoint).Handler(httpGoKit.NewServer(
 		endpoints.CreateProduct,
 		decodeJSONRequest(&schemas.CreateProductRequest{}),
 		encodeResponse(logger),
@@ -99,7 +100,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Update product
-	api.Methods("PUT").Path("/products/{id}").Handler(httpGoKit.NewServer(
+	api.Methods("PUT").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
 		endpoints.UpdateProduct,
 		decodeJSONRequest(&schemas.UpdateProductRequest{}),
 		encodeResponse(logger),
@@ -107,7 +108,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Delete product
-	api.Methods("DELETE").Path("/products/{id}").Handler(httpGoKit.NewServer(
+	api.Methods("DELETE").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
 		endpoints.DeleteProduct,
 		decodeRequestWithID(logger, "id", &schemas.DeleteProductRequest{}),
 		encodeResponse(logger),

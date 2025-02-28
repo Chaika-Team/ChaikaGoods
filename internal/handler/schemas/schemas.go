@@ -27,7 +27,6 @@ type TemplateContentSchema struct {
 // GetAllProductsRequest представляет собой запрос на получение всех продуктов
 // @Description Запрос на получение всех продуктов
 type GetAllProductsRequest struct {
-	// TODO: Фильтры, пагинация и другие параметры могут быть тут
 }
 
 // GetAllProductsResponse представляет собой ответ на запрос на получение всех продуктов
