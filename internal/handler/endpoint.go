@@ -12,6 +12,10 @@ import (
 	"github.com/go-kit/log"
 )
 
+const (
+	invalidRequestType = "invalid request type"
+)
+
 // Endpoints содержит все Go kit эндпоинты для всех операций
 type Endpoints struct {
 	// For products
@@ -103,7 +107,7 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.GetProductByIDRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		product, err := s.GetProductByID(ctx, req.ProductID)
@@ -133,7 +137,7 @@ func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMap
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.SearchTemplatesRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		Templates, err := s.SearchTemplates(ctx, req.Query, req.Limit, req.Offset)
@@ -162,7 +166,7 @@ func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) 
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.AddTemplateRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		TemplateModel := mapper.ToModel(req.Template)
@@ -192,7 +196,7 @@ func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapp
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.GetTemplateByIDRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		Template, err := s.GetTemplateByID(ctx, req.TemplateID)
@@ -221,7 +225,7 @@ func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.CreateProductRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		productModel := mapper.ToModel(req.Product)
@@ -251,7 +255,7 @@ func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.UpdateProductRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		productModel := mapper.ToModel(req.Product)
@@ -281,7 +285,7 @@ func makeDeleteProductEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.DeleteProductRequest](request)
 		if err != nil {
-			return nil, myerr.Validation("invalid request type", err)
+			return nil, myerr.Validation(invalidRequestType, err)
 		}
 
 		err = s.DeleteProduct(ctx, req.ProductID)
