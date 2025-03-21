@@ -6,8 +6,6 @@ on:
       - CHG-*
       - CHOPS-*
       - fix/*
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
   build:
