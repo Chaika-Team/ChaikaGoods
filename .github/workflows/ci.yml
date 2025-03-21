@@ -1,35 +1,28 @@
-# .github/workflows/go-ci.yml
-
 name: Go CI/CD Pipeline
 
 on:
   push:
     branches:
-      - dev
-      - ci-cd
-      - tests/*
-      - feature/*
+      - CHG-*
+      - CHOPS-*
+      - fix/*
   pull_request:
-    branches:
-      - master
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
-    name: Build and Test
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout код
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Установить нужную версию Go
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23.4'
 
-      # 3. Кэширование модулей Go
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
@@ -40,15 +33,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      # 4. Установка зависимостей
       - name: Install dependencies
         run: go mod download
 
-      # 5. Проверка форматирования кода
       - name: Run go fmt
         run: go fmt ./...
 
-      # 6. Статический анализ кода
       - name: Run go vet
         run: go vet ./...
 
@@ -57,19 +47,6 @@ jobs:
           go install honnef.co/go/tools/cmd/staticcheck@latest
           staticcheck ./...
 
-      # 7. Запуск тестов с покрытием
-      - name: Run tests
-        run: |
-          go test ./... -v -coverprofile=coverage.out -covermode=atomic
-
-      # 8. Сохранение артефактов покрытия
-      - name: Upload coverage to artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.out
-
-      # 9. Сборка приложения
       - name: Build
         run: go build -v -o chaika-goods ./cmd
 
@@ -79,22 +56,18 @@ jobs:
     needs: build
 
     steps:
-      # 1. Checkout код
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Установить нужную версию Go
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23.4'
 
-      # 3. Run tests and generate coverage
       - name: Run Tests
         run: |
           go test ./... -coverprofile=coverage.out
 
-      # 4. SonarQube Scan
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4.2.1
         env:
@@ -107,7 +80,7 @@ jobs:
             -Dsonar.tests=./tests
             -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go,**/mock_client.go,**/postgres_client.go
             -Dsonar.go.coverage.reportPaths=coverage.out
-      # 5. SonarQube QualityGate
+
       - name: SonarQube QualityGate 
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
