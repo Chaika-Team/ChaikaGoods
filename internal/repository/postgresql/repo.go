@@ -37,7 +37,7 @@ func NewGoodsRepository(client Client, logger log.Logger) models.GoodsRepository
 
 // GetProductByID returns a product by its ID.
 func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (models.Product, error) {
-	const sql = `SELECT id, name, description, price, imageurl, sku FROM public.product WHERE id = $1;`
+	const sql = `SELECT id, name, description, price, imageurl, sku FROM product WHERE id = $1;`
 	row := r.client.QueryRow(ctx, sql, id)
 
 	var p models.Product
@@ -54,7 +54,7 @@ func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (model
 
 // GetAllProducts returns a list of all products.
 func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Product, error) {
-	const sql = `SELECT id, name, description, price, imageurl, sku FROM public.product;`
+	const sql = `SELECT id, name, description, price, imageurl, sku FROM product;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to retrieve all products", "err", err)
@@ -81,7 +81,7 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 
 // CreateProduct creates a new product in the database.
 func (r *GoodsPGRepository) CreateProduct(ctx context.Context, p *models.Product) (int64, error) {
-	const sql = `INSERT INTO public.product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+	const sql = `INSERT INTO product (name, description, price, imageurl, sku) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 	if err := r.client.QueryRow(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU).Scan(&p.ID); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -95,7 +95,7 @@ func (r *GoodsPGRepository) CreateProduct(ctx context.Context, p *models.Product
 
 // UpdateProduct updates an existing product in the database.
 func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product) error {
-	const sql = `UPDATE public.product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
+	const sql = `UPDATE product SET name = $1, description = $2, price = $3, imageurl = $4, sku = $5 WHERE id = $6;`
 	ct, err := r.client.Exec(ctx, sql, p.Name, p.Description, p.Price, p.ImageURL, p.SKU, p.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -113,7 +113,7 @@ func (r *GoodsPGRepository) UpdateProduct(ctx context.Context, p *models.Product
 
 // DeleteProduct deletes a product from the database by its ID.
 func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
-	const sql = `DELETE FROM public.product WHERE id = $1;`
+	const sql = `DELETE FROM product WHERE id = $1;`
 	ct, err := r.client.Exec(ctx, sql, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -133,7 +133,7 @@ func (r *GoodsPGRepository) DeleteProduct(ctx context.Context, id int64) error {
 // GetTemplateByID retrieves template details along with its contents.
 func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (models.Template, error) {
 	var template models.Template
-	const sqlTemplate = `SELECT packageid, packagename, description FROM public.package WHERE packageid = $1;`
+	const sqlTemplate = `SELECT packageid, packagename, description FROM package WHERE packageid = $1;`
 	if err := r.client.QueryRow(ctx, sqlTemplate, id).Scan(&template.ID, &template.TemplateName, &template.Description); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return template, myerr.NotFound(fmt.Sprintf("Template with ID %d not found", id), nil)
@@ -143,7 +143,7 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 	}
 
 	// Get template contents
-	const sqlContents = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	const sqlContents = `SELECT productid, quantity FROM packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sqlContents, id)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to get template contents", "template_id", id, "err", err)
@@ -169,7 +169,7 @@ func (r *GoodsPGRepository) GetTemplateByID(ctx context.Context, id int64) (mode
 
 // GetProductsByTemplateID retrieves all products within a specific template.
 func (r *GoodsPGRepository) GetProductsByTemplateID(ctx context.Context, templateID int64) ([]models.TemplateContent, error) {
-	const sql = `SELECT productid, quantity FROM public.packagecontent WHERE packageid = $1;`
+	const sql = `SELECT productid, quantity FROM packagecontent WHERE packageid = $1;`
 	rows, err := r.client.Query(ctx, sql, templateID)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to get products by template ID", "template_id", templateID, "err", err)
@@ -197,7 +197,7 @@ func (r *GoodsPGRepository) GetProductsByTemplateID(ctx context.Context, templat
 
 // ListTemplates returns a list of all templates.
 func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Template, error) {
-	const sql = `SELECT packageid, packagename, description FROM public.package;`
+	const sql = `SELECT packageid, packagename, description FROM package;`
 	rows, err := r.client.Query(ctx, sql)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to list templates", "err", err)
@@ -224,7 +224,7 @@ func (r *GoodsPGRepository) ListTemplates(ctx context.Context) ([]models.Templat
 
 // CreateTemplate adds a new template to the database along with its contents.
 func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, template *models.Template) (err error) {
-	const sqlInsertTemplate = `INSERT INTO public.package (packagename, description) VALUES ($1, $2) RETURNING packageid;`
+	const sqlInsertTemplate = `INSERT INTO package (packagename, description) VALUES ($1, $2) RETURNING packageid;`
 
 	tx, err := r.client.Begin(ctx)
 	if err != nil {
@@ -269,7 +269,7 @@ func (r *GoodsPGRepository) CreateTemplate(ctx context.Context, template *models
 // createProductToTemplate adds a single template content entry.
 func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.Tx, packageid int64, content models.TemplateContent) error {
 	// Insert template content
-	const sqlInsertContent = `INSERT INTO public.packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
+	const sqlInsertContent = `INSERT INTO packagecontent (packageid, productid, quantity) VALUES ($1, $2, $3);`
 	if _, err := tx.Exec(ctx, sqlInsertContent, packageid, content.ProductID, content.Quantity); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
@@ -286,8 +286,8 @@ func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.
 // DeleteTemplate deletes a template and its contents from the database by template ID.
 func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64) error {
 	const (
-		sqlDeleteContents = `DELETE FROM public.packagecontent WHERE packageid = $1;`
-		sqlDeleteTemplate = `DELETE FROM public.package WHERE packageid = $1;`
+		sqlDeleteContents = `DELETE FROM packagecontent WHERE packageid = $1;`
+		sqlDeleteTemplate = `DELETE FROM package WHERE packageid = $1;`
 	)
 
 	tx, err := r.client.Begin(ctx)
@@ -329,7 +329,7 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64)
 // SearchTemplates searches for templates by name or description with pagination.
 func (r *GoodsPGRepository) SearchTemplates(ctx context.Context, searchString string, limit int64, offset int64) ([]models.Template, error) {
 	searchPattern := "%" + searchString + "%"
-	const sql = `SELECT packageid, packagename, description FROM public.package
+	const sql = `SELECT packageid, packagename, description FROM package
 	        WHERE package.packagename ILIKE $1 OR description ILIKE $1 
 	        LIMIT $2 OFFSET $3;`
 
@@ -360,7 +360,7 @@ func (r *GoodsPGRepository) SearchTemplates(ctx context.Context, searchString st
 
 // GetAllTemplates returns all templates with pagination.
 func (r *GoodsPGRepository) GetAllTemplates(ctx context.Context, limit int64, offset int64) ([]models.Template, error) {
-	const sql = `SELECT packageid, packagename, description FROM public.package LIMIT $1 OFFSET $2;`
+	const sql = `SELECT packageid, packagename, description FROM package LIMIT $1 OFFSET $2;`
 	rows, err := r.client.Query(ctx, sql, limit, offset)
 	if err != nil {
 		_ = r.logger.Log("error", "Failed to retrieve all templates", "err", err)

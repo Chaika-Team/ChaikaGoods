@@ -32,6 +32,7 @@ type StorageConfig struct {
 	Database    string `yaml:"database" env-default:"chaikagoods" env:"DB_NAME"`
 	User        string `yaml:"user" env-default:"postgres" env:"DB_USER"`
 	Password    string `yaml:"password" env-required:"true" env:"DB_PASSWORD"`
+	Schema      string `yaml:"schema" env-default:"public" env:"DB_SCHEMA"`
 	MaxAttempts int    `yaml:"max_attempts" env-default:"5" env:"DB_MAX_ATTEMPTS"`
 	MaxConns    int32  `yaml:"max_conns" env-default:"10" env:"DB_MAX_CONNS"`
 	MinConns    int32  `yaml:"min_conns" env-default:"2" env:"DB_MIN_CONNS"`
@@ -44,8 +45,8 @@ type StorageConfig struct {
 
 // DSN формирует строку подключения для pgx.
 func (c *StorageConfig) DSN() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.Host, c.Port, c.User, c.Password, c.Database)
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=%s",
+		c.Host, c.Port, c.User, c.Password, c.Database, c.Schema)
 }
 
 var instance *Config

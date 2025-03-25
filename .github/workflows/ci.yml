@@ -78,9 +78,55 @@ jobs:
             -Dsonar.tests=./tests
             -Dsonar.exclusions=**/tests/**,**/*.mock.go,**/*test.go,**/mock_client.go,**/postgres_client.go
             -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.projectVersion=v0.1.0-alpha
 
       - name: SonarQube QualityGate 
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: postgres
+      DB_HOST: localhost
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.4'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Set up PostgreSQL
+        uses: ikalnytskyi/action-setup-postgres@v7
+        with:
+          username: ${{ env.DB_USER }}
+          password: ${{ env.DB_PASS }}
+          database: ${{ env.DB_NAME }}
+          port: ${{ env.DB_PORT }}
+          postgres-version: "17"
+          ssl: false
+        id: postgres
+      - run: ./scripts/db_restore.sh
+
+      - name: Run Integration Tests
+        run: |
+          go test -v -tags=integration ./tests/integration_tests
