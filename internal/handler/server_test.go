@@ -284,7 +284,7 @@ func TestDecodeJSONRequestErrorInvalidJSON(t *testing.T) {
 // Описание:
 //   - Тест для функции DecodeJSONRequest с корректными данными JSON.
 //   - Классы эквивалентности: валидный запрос не порождает ошибки
-func TestDecodeJSONRequestErrorNotClosedBody(t *testing.T) {
+func TestDecodeJSONRequestSuccess(t *testing.T) {
 	validJSON := `{"Field": "value"}`
 	req := httptest.NewRequest("POST", dummyEndpoint, strings.NewReader(validJSON))
 	decoder := decodeJSONRequest(&struct{ Field string }{})
