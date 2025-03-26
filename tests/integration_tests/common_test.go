@@ -5,12 +5,14 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/go-kit/log"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/config"
+	"github.com/Chaika-Team/ChaikaGoods/internal/repository/postgresql"
 	repo "github.com/Chaika-Team/ChaikaGoods/internal/repository/postgresql"
 	"github.com/Chaika-Team/ChaikaGoods/internal/service"
 )
@@ -18,7 +20,7 @@ import (
 func setupService(t *testing.T, keyspace string) service.Service {
 	t.Helper()
 
-	startupCfg := config.Config{
+	cfg := config.Config{
 		Storage: config.StorageConfig{
 			Host:                  os.Getenv("DB_HOST"),
 			Port:                  os.Getenv("DB_PORT"),
@@ -35,34 +37,48 @@ func setupService(t *testing.T, keyspace string) service.Service {
 			MaxConnLifetimeJitter: 0,
 		},
 	}
-
-	logger := log.NewLogfmtLogger(os.Stderr)
-	logger = log.With(logger, "component", "test")
+	logger := log.With(log.NewLogfmtLogger(os.Stderr), "component", "test")
 
 	ctx := context.Background()
-	basePool, err := repo.NewClient(ctx, startupCfg.Storage, logger)
-	if err != nil {
-		t.Fatalf("failed to connect to DB: %v", err)
-	}
+	createDB(ctx, t, cfg, keyspace, logger)
 
-	_, err = basePool.Exec(ctx, `DROP SCHEMA IF EXISTS `+keyspace+` CASCADE`)
-	if err != nil {
-		t.Fatalf("failed to drop keyspace: %v", err)
-	}
+	cfg.Storage.Database = keyspace
+	pool := mustConnect(ctx, t, cfg, logger)
 
-	_, err = basePool.Exec(ctx, `SELECT clone_schema('public', $1);`, keyspace)
-	if err != nil {
-		t.Fatalf("failed to clone DB schema: %v", err)
-	}
-	basePool.Close()
+	t.Cleanup(func() {
+		cleanupDB(ctx, t, cfg, keyspace, pool, logger)
+	})
 
-	cfg := startupCfg
-	cfg.Storage.Schema = keyspace
+	return service.NewService(repo.NewGoodsRepository(pool, logger), logger)
+}
+
+func createDB(ctx context.Context, t *testing.T, cfg config.Config, keyspace string, logger log.Logger) {
+	pool := mustConnect(ctx, t, cfg, logger)
+	defer pool.Close()
+
+	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s",
+		keyspace, cfg.Storage.Database, cfg.Storage.User)
+	if _, err := pool.Exec(ctx, query); err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+}
+
+func mustConnect(ctx context.Context, t *testing.T, cfg config.Config, logger log.Logger) postgresql.Client {
 	pool, err := repo.NewClient(ctx, cfg.Storage, logger)
 	if err != nil {
-		t.Fatalf("failed to connect to test keyspace: %v", err)
+		t.Fatalf("Failed to connect: %v", err)
 	}
+	return pool
+}
 
-	repository := repo.NewGoodsRepository(pool, logger)
-	return service.NewService(repository, logger)
+func cleanupDB(ctx context.Context, t *testing.T, cfg config.Config, keyspace string, pool postgresql.Client, logger log.Logger) {
+	pool.Close()
+
+	cfg.Storage.Database = "postgres"
+	cleanupPool := mustConnect(ctx, t, cfg, logger)
+	defer cleanupPool.Close()
+
+	if _, err := cleanupPool.Exec(ctx, "DROP DATABASE IF EXISTS "+keyspace); err != nil {
+		t.Errorf("Failed to drop test DB: %v", err)
+	}
 }

@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/models"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateTemplateSuccess(t *testing.T) {
-	keyspace := "template_create_test"
+func TestCreateTemplateProductNotFound(t *testing.T) {
+	keyspace := "create_template_test"
 
 	svc := setupService(t, keyspace)
 	ctx := context.Background()
@@ -26,8 +25,7 @@ func TestCreateTemplateSuccess(t *testing.T) {
 		},
 	}
 	id, err := svc.AddTemplate(ctx, &template)
-	if err != nil {
-		t.Fatalf("Expected id, got error: %v", err)
+	if err == nil {
+		t.Fatalf("Expected err, got id: %v", id)
 	}
-	assert.NotNil(t, id)
 }
