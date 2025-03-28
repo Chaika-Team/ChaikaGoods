@@ -54,7 +54,7 @@ func NewClient(ctx context.Context, cfg config.StorageConfig, logger log.Logger)
 			// Тестирование подключения
 			err = pool.Ping(ctx)
 			if err == nil {
-				_ = level.Info(logger).Log("msg", "Connected to PostgreSQL database")
+				_ = level.Info(logger).Log("msg", "Connected to PostgreSQL database", "name", cfg.Database)
 				return &PGClient{pool: pool, logger: logger}, nil
 			}
 			pool.Close()
