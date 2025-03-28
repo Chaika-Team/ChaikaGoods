@@ -265,7 +265,7 @@ func (r *GoodsPGRepository) createProductToTemplate(ctx context.Context, tx pgx.
 }
 
 // DeleteTemplate deletes a template and its contents from the database by template ID.
-func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64) error {
+func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64) (err error) {
 	const (
 		sqlDeleteContents = `DELETE FROM packagecontent WHERE packageid = $1;`
 		sqlDeleteTemplate = `DELETE FROM package WHERE packageid = $1;`
@@ -276,7 +276,10 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64)
 		return err
 	}
 	defer func() {
-		if err != nil {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		} else if err != nil {
 			_ = tx.Rollback(ctx)
 		}
 	}()
@@ -287,7 +290,8 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64)
 	}
 
 	// Delete template
-	ct, err := tx.Exec(ctx, sqlDeleteTemplate, packageid)
+	var ct pgconn.CommandTag
+	ct, err = tx.Exec(ctx, sqlDeleteTemplate, packageid)
 	if err != nil {
 		return err
 	}
@@ -295,12 +299,8 @@ func (r *GoodsPGRepository) DeleteTemplate(ctx context.Context, packageid int64)
 		return myerr.NotFound(fmt.Sprintf("Template with id %d not found", packageid), nil)
 	}
 
-	// Commit transaction
-	if err = tx.Commit(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	err = tx.Commit(ctx)
+	return err
 }
 
 // SearchTemplates searches for templates by name or description with pagination.
