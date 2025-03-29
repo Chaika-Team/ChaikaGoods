@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 
 	"github.com/Chaika-Team/ChaikaGoods/internal/config"
 	"github.com/Chaika-Team/ChaikaGoods/internal/repository/postgresql"
@@ -81,4 +82,5 @@ func cleanupDB(ctx context.Context, t *testing.T, cfg config.Config, keyspace st
 	if _, err := cleanupPool.Exec(ctx, "DROP DATABASE IF EXISTS "+keyspace); err != nil {
 		t.Errorf("Failed to drop test DB: %v", err)
 	}
+	_ = level.Info(logger).Log("msg", "Successful cleanup DB", "name", keyspace)
 }

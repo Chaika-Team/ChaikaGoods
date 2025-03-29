@@ -487,7 +487,18 @@ const docTemplate = `{
                 "Templates": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema"
+                        "description": {
+                            "type": "string"
+                        },
+                        "id": {
+                            "type": "integer"
+                        },
+                        "template_name": {
+                            "type": "string"
+                        },
+                        "content": {
+                            "type": "array"
+                        }
                     }
                 }
             }

@@ -77,7 +77,14 @@ definitions:
     properties:
       Templates:
         items:
-          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema'
+          description:
+            type: string
+          id:
+            type: integer
+          template_name:
+            type: string
+          content:
+            type: array
         type: array
     type: object
   github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema:

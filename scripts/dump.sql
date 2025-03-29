@@ -189,7 +189,7 @@ ALTER SEQUENCE public.changes_change_id_seq OWNED BY public.changes.change_id;
 
 CREATE TABLE public.package (
     packageid integer NOT NULL,
-    packagename character varying(255) NOT NULL,
+    packagename character varying(255) NOT NULL UNIQUE,
     description text
 );
 
@@ -264,7 +264,7 @@ CREATE TABLE public.product (
     description text,
     price numeric(10,2) NOT NULL,
     imageurl character varying(255),
-    sku character varying(100)
+    sku character varying(100) NOT NULL UNIQUE
 );
 
 
