@@ -1,36 +1,36 @@
 basePath: /
 definitions:
-  schemas.AddTemplateRequest:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest:
     description: Запрос на добавление шаблона
     properties:
       Template:
         allOf:
-        - $ref: '#/definitions/schemas.TemplateSchema'
+        - $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema'
         description: Сведения о новом шаблоне
     type: object
-  schemas.AddTemplateResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse:
     description: Ответ на запрос на добавление шаблона
     properties:
       id:
         description: ID созданного шаблона
         type: integer
     type: object
-  schemas.CreateProductRequest:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductRequest:
     description: Запрос на добавление продукта
     properties:
       product:
-        $ref: '#/definitions/schemas.ProductSchema'
+        $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
     type: object
-  schemas.CreateProductResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductResponse:
     description: Ответ на запрос на добавление продукта
     properties:
       id:
         type: integer
     type: object
-  schemas.DeleteProductResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse:
     description: Ответ на запрос на удаление продукта
     type: object
-  schemas.ErrorResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse:
     properties:
       code:
         description: Код ошибки
@@ -39,27 +39,27 @@ definitions:
         description: Сообщение об ошибке
         type: string
     type: object
-  schemas.GetAllProductsResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetAllProductsResponse:
     description: Ответ на запрос на получение всех продуктов
     properties:
       products:
         items:
-          $ref: '#/definitions/schemas.ProductSchema'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
         type: array
     type: object
-  schemas.GetProductByIDResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse:
     description: Ответ на запрос на получение продукта по его ID
     properties:
       product:
-        $ref: '#/definitions/schemas.ProductSchema'
+        $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
     type: object
-  schemas.GetTemplateByIDResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse:
     description: Ответ на запрос на получение шаблона по его ID
     properties:
       Template:
-        $ref: '#/definitions/schemas.TemplateSchema'
+        $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema'
     type: object
-  schemas.ProductSchema:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema:
     properties:
       description:
         type: string
@@ -72,26 +72,26 @@ definitions:
       price:
         type: number
     type: object
-  schemas.SearchTemplatesResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse:
     description: Ответ на запрос на поиск шаблонов
     properties:
       Templates:
         items:
-          $ref: '#/definitions/schemas.TemplateSchema'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema'
         type: array
     type: object
-  schemas.TemplateContentSchema:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema:
     properties:
       product_id:
         type: integer
       quantity:
         type: integer
     type: object
-  schemas.TemplateSchema:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateSchema:
     properties:
       content:
         items:
-          $ref: '#/definitions/schemas.TemplateContentSchema'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.TemplateContentSchema'
         type: array
       description:
         type: string
@@ -100,13 +100,13 @@ definitions:
       template_name:
         type: string
     type: object
-  schemas.UpdateProductRequest:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductRequest:
     description: Запрос на обновление продукта
     properties:
       product:
-        $ref: '#/definitions/schemas.ProductSchema'
+        $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ProductSchema'
     type: object
-  schemas.UpdateProductResponse:
+  github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse:
     description: Ответ на запрос на обновление продукта
     type: object
 host: chaika-soft.ru
@@ -119,7 +119,7 @@ info:
     name: GPL v3
     url: https://www.gnu.de/documents/gpl.en.html
   title: ChaikaGoods API
-  version: 1.0.2
+  version: 1.0.6
 paths:
   /api/v1/product:
     get:
@@ -132,11 +132,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetAllProductsResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetAllProductsResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Get all products
       tags:
       - products
@@ -150,22 +150,22 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/schemas.CreateProductRequest'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.CreateProductResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.CreateProductResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Add product
       tags:
       - products
@@ -179,22 +179,22 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/schemas.UpdateProductRequest'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.UpdateProductResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.UpdateProductResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Update product
       tags:
       - products
@@ -215,15 +215,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.DeleteProductResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.DeleteProductResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Delete product
       tags:
       - products
@@ -243,15 +243,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetProductByIDResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetProductByIDResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Get product by ID
       tags:
       - products
@@ -266,22 +266,22 @@ paths:
         name: Template
         required: true
         schema:
-          $ref: '#/definitions/schemas.AddTemplateRequest'
+          $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.AddTemplateResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.AddTemplateResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Add Template
       tags:
       - Templates
@@ -302,15 +302,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GetTemplateByIDResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.GetTemplateByIDResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Get Template by ID
       tags:
       - Templates
@@ -340,11 +340,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.SearchTemplatesResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.SearchTemplatesResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/github_com_Chaika-Team_ChaikaGoods_internal_handler_schemas.ErrorResponse'
       summary: Search Template
       tags:
       - Templates
