@@ -76,7 +76,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Get All Products",
 			method:     "GET",
-			url:        "/api/v1/product",
+			url:        "/api/v1/product/",
 			body:       "",
 			expHandler: "GetAllProducts",
 			expStatus:  http.StatusOK,
@@ -108,7 +108,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Create Product",
 			method:     "POST",
-			url:        "/api/v1/product",
+			url:        "/api/v1/product/",
 			body:       `{"dummy":"data"}`,
 			expHandler: "CreateProduct",
 			expStatus:  http.StatusOK,
