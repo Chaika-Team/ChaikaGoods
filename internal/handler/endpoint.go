@@ -78,7 +78,7 @@ func castRequest[T any](req interface{}) (T, error) {
 //	@Produce		json
 //	@Success		200	{object}	schemas.GetAllProductsResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
-//	@Router			/api/v1/products [get]
+//	@Router			/api/v1/product [get]
 func makeGetAllProductsEndpoint(s service.Service, mapper *schemas.ProductsMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		products, err := s.GetAllProducts(ctx)
@@ -102,7 +102,7 @@ func makeGetAllProductsEndpoint(s service.Service, mapper *schemas.ProductsMappe
 //	@Success		200	{object}	schemas.GetProductByIDResponse
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
-//	@Router			/api/v1/products/{id} [get]
+//	@Router			/api/v1/product/{id} [get]
 func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.GetProductByIDRequest](request)
@@ -132,7 +132,7 @@ func makeGetProductByIDEndpoint(s service.Service, mapper *schemas.ProductMapper
 //	@Param			offset	query		int		true	"Offset"
 //	@Success		200		{object}	schemas.SearchTemplatesResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/templates/search [get]
+//	@Router			/api/v1/product/template/search [get]
 func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.SearchTemplatesRequest](request)
@@ -161,7 +161,7 @@ func makeSearchTemplatesEndpoint(s service.Service, mapper *schemas.TemplatesMap
 //	@Success		200		{object}	schemas.AddTemplateResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/templates [post]
+//	@Router			/api/v1/product/template [post]
 func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.AddTemplateRequest](request)
@@ -191,7 +191,7 @@ func makeAddTemplateEndpoint(s service.Service, mapper *schemas.TemplateMapper) 
 //	@Success		200		{object}	schemas.GetTemplateByIDResponse
 //	@Failure		404		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/templates/{id} [get]
+//	@Router			/api/v1/product/template/{id} [get]
 func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.GetTemplateByIDRequest](request)
@@ -220,7 +220,7 @@ func makeGetTemplateByIDEndpoint(s service.Service, mapper *schemas.TemplateMapp
 //	@Success		200		{object}	schemas.CreateProductResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/products [post]
+//	@Router			/api/v1/product [post]
 func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.CreateProductRequest](request)
@@ -250,7 +250,7 @@ func makeCreateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 //	@Success		200		{object}	schemas.UpdateProductResponse
 //	@Failure		400		{object}	schemas.ErrorResponse
 //	@Failure		500		{object}	schemas.ErrorResponse
-//	@Router			/api/v1/products [put]
+//	@Router			/api/v1/product [put]
 func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.UpdateProductRequest](request)
@@ -280,7 +280,7 @@ func makeUpdateProductEndpoint(s service.Service, mapper *schemas.ProductMapper)
 //	@Success		200	{object}	schemas.DeleteProductResponse
 //	@Failure		404	{object}	schemas.ErrorResponse
 //	@Failure		500	{object}	schemas.ErrorResponse
-//	@Router			/api/v1/products/{id} [delete]
+//	@Router			/api/v1/product/{id} [delete]
 func makeDeleteProductEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req, err := castRequest[*schemas.DeleteProductRequest](request)

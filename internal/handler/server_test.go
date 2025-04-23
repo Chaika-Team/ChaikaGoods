@@ -68,7 +68,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Get Product By ID",
 			method:     "GET",
-			url:        "/api/v1/products/123",
+			url:        "/api/v1/product/123",
 			body:       "",
 			expHandler: "GetProductByID",
 			expStatus:  http.StatusOK,
@@ -76,7 +76,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Get All Products",
 			method:     "GET",
-			url:        "/api/v1/products",
+			url:        "/api/v1/product",
 			body:       "",
 			expHandler: "GetAllProducts",
 			expStatus:  http.StatusOK,
@@ -84,7 +84,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Search Templates",
 			method:     "GET",
-			url:        "/api/v1/templates/search?query=test&limit=1&offset=0",
+			url:        "/api/v1/product/template/search?query=test&limit=1&offset=0",
 			body:       "",
 			expHandler: "SearchTemplates",
 			expStatus:  http.StatusOK,
@@ -92,7 +92,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Add Template",
 			method:     "POST",
-			url:        "/api/v1/templates",
+			url:        "/api/v1/product/template",
 			body:       `{"dummy":"data"}`,
 			expHandler: "AddTemplate",
 			expStatus:  http.StatusOK,
@@ -100,7 +100,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Get Template By ID",
 			method:     "GET",
-			url:        "/api/v1/templates/456",
+			url:        "/api/v1/product/template/456",
 			body:       "",
 			expHandler: "GetTemplateByID",
 			expStatus:  http.StatusOK,
@@ -108,7 +108,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Create Product",
 			method:     "POST",
-			url:        "/api/v1/products",
+			url:        "/api/v1/product",
 			body:       `{"dummy":"data"}`,
 			expHandler: "CreateProduct",
 			expStatus:  http.StatusOK,
@@ -116,7 +116,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Update Product",
 			method:     "PUT",
-			url:        "/api/v1/products/789",
+			url:        "/api/v1/product/789",
 			body:       `{"dummy":"data"}`,
 			expHandler: "UpdateProduct",
 			expStatus:  http.StatusOK,
@@ -124,7 +124,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:       "Delete Product",
 			method:     "DELETE",
-			url:        "/api/v1/products/101",
+			url:        "/api/v1/product/101",
 			body:       "",
 			expHandler: "DeleteProduct",
 			expStatus:  http.StatusOK,
@@ -132,7 +132,7 @@ func TestNewHTTPServerRoutes(t *testing.T) {
 		{
 			name:      "Swagger Docs",
 			method:    "GET",
-			url:       "/docs/index.html",
+			url:       "/api/v1/product/docs/index.html",
 			body:      "",
 			expStatus: http.StatusOK,
 		},
@@ -303,7 +303,7 @@ func TestDecodeJSONRequestSuccess(t *testing.T) {
 //   - Прогнозирование ошибок: передача строки вместо числа приводит к ошибке.
 func TestDecodeRequestWithIDBoundaryNonNumericID(t *testing.T) {
 	logger := log.NewNopLogger()
-	req := httptest.NewRequest("GET", "/products/abc", nil)
+	req := httptest.NewRequest("GET", "/api/v1/product/abc", nil)
 	req = mux.SetURLVars(req, map[string]string{"id": "abc"})
 	schema := &schemas.GetProductByIDRequest{}
 	decoder := decodeRequestWithID(logger, "id", schema)
@@ -326,25 +326,25 @@ func TestDecodeRequestWithIDDecisionTableValidSchemas(t *testing.T) {
 	}{
 		{
 			name:       "GetProductByIDRequest",
-			url:        "/products/101",
+			url:        "/api/v1/product/101",
 			schema:     &schemas.GetProductByIDRequest{},
 			expectedID: 101,
 		},
 		{
 			name:       "GetTemplateByIDRequest",
-			url:        "/Templates/202",
+			url:        "/api/v1/product/template/202",
 			schema:     &schemas.GetTemplateByIDRequest{},
 			expectedID: 202,
 		},
 		{
 			name:       "DeleteProductRequest",
-			url:        "/products/303",
+			url:        "/api/v1/product/303",
 			schema:     &schemas.DeleteProductRequest{},
 			expectedID: 303,
 		},
 		{
 			name:       "AddTemplateRequest",
-			url:        "/Templates/404",
+			url:        "/api/v1/template/404",
 			schema:     &schemas.AddTemplateRequest{},
 			expectedID: 404,
 		},
@@ -424,7 +424,7 @@ func TestDecodeSearchTemplatesRequestDecisionTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "/Templates/search?"+tc.queryParams, nil)
+			req := httptest.NewRequest("GET", "/api/v1/template/search?"+tc.queryParams, nil)
 			result, err := decodeSearchTemplatesRequest(context.Background(), req)
 			if tc.expectedError != "" {
 				assert.Error(t, err)

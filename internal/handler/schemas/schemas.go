@@ -14,13 +14,13 @@ type ProductSchema struct {
 
 type TemplateSchema struct {
 	ID           int64                   `json:"id"`
-	TemplateName string                  `json:"template_name"`
+	TemplateName string                  `json:"templateName"`
 	Description  string                  `json:"description"`
 	Content      []TemplateContentSchema `json:"content"`
 }
 
 type TemplateContentSchema struct {
-	ProductID int64 `json:"product_id"`
+	ProductID int64 `json:"productID"`
 	Quantity  int   `json:"quantity"`
 }
 
@@ -58,13 +58,13 @@ type SearchTemplatesRequest struct {
 // SearchTemplatesResponse представляет собой ответ на запрос на поиск шаблонов
 // @Description Ответ на запрос на поиск шаблонов
 type SearchTemplatesResponse struct {
-	Templates []TemplateSchema `json:"Templates"`
+	Templates []TemplateSchema `json:"templates"`
 }
 
 // AddTemplateRequest представляет собой запрос на добавление шаблона
 // @Description Запрос на добавление шаблона
 type AddTemplateRequest struct {
-	Template TemplateSchema `json:"Template"` // Сведения о новом шаблоне
+	Template TemplateSchema `json:"template"` // Сведения о новом шаблоне
 }
 
 // AddTemplateResponse представляет собой ответ на запрос на добавление шаблона
@@ -82,7 +82,7 @@ type GetTemplateByIDRequest struct {
 // GetTemplateByIDResponse представляет собой ответ на запрос на получение шаблона по его ID
 // @Description Ответ на запрос на получение шаблона по его ID
 type GetTemplateByIDResponse struct {
-	Template TemplateSchema `json:"Template"`
+	Template TemplateSchema `json:"template"`
 }
 
 // CreateProductRequest представляет собой запрос на добавление продукта
