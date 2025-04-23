@@ -88,7 +88,7 @@ func registerV1Routes(logger log.Logger, router *mux.Router, endpoints Endpoints
 	))
 
 	// Get all products
-	v1.Methods("GET").Path("/").Handler(httpGoKit.NewServer(
+	v1.Methods("GET").Path("").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
 		decodeEmptyRequest[schemas.GetAllProductsRequest](),
 		encodeResponse(logger),
@@ -128,7 +128,7 @@ func registerV1Routes(logger log.Logger, router *mux.Router, endpoints Endpoints
 	))
 
 	// Add product
-	v1.Methods("POST").Path("/").Handler(httpGoKit.NewServer(
+	v1.Methods("POST").Path("").Handler(httpGoKit.NewServer(
 		endpoints.CreateProduct,
 		decodeJSONRequest(&schemas.CreateProductRequest{}),
 		encodeResponse(logger),
