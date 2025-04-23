@@ -492,7 +492,7 @@
         "schemas.TemplateContentSchema": {
             "type": "object",
             "properties": {
-                "product_id": {
+                "productID": {
                     "type": "integer"
                 },
                 "quantity": {
@@ -515,7 +515,7 @@
                 "id": {
                     "type": "integer"
                 },
-                "template_name": {
+                "templateName": {
                     "type": "string"
                 }
             }

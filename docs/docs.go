@@ -495,7 +495,7 @@ const docTemplate = `{
         "schemas.TemplateContentSchema": {
             "type": "object",
             "properties": {
-                "product_id": {
+                "productID": {
                     "type": "integer"
                 },
                 "quantity": {
@@ -518,7 +518,7 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "template_name": {
+                "templateName": {
                     "type": "string"
                 }
             }

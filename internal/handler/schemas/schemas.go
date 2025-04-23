@@ -14,13 +14,13 @@ type ProductSchema struct {
 
 type TemplateSchema struct {
 	ID           int64                   `json:"id"`
-	TemplateName string                  `json:"template_name"`
+	TemplateName string                  `json:"templateName"`
 	Description  string                  `json:"description"`
 	Content      []TemplateContentSchema `json:"content"`
 }
 
 type TemplateContentSchema struct {
-	ProductID int64 `json:"product_id"`
+	ProductID int64 `json:"productID"`
 	Quantity  int   `json:"quantity"`
 }
 

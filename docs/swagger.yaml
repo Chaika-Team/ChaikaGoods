@@ -82,7 +82,7 @@ definitions:
     type: object
   schemas.TemplateContentSchema:
     properties:
-      product_id:
+      productID:
         type: integer
       quantity:
         type: integer
@@ -97,7 +97,7 @@ definitions:
         type: string
       id:
         type: integer
-      template_name:
+      templateName:
         type: string
     type: object
   schemas.UpdateProductRequest:
