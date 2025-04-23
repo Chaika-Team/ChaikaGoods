@@ -303,7 +303,7 @@ func TestDecodeJSONRequestSuccess(t *testing.T) {
 //   - Прогнозирование ошибок: передача строки вместо числа приводит к ошибке.
 func TestDecodeRequestWithIDBoundaryNonNumericID(t *testing.T) {
 	logger := log.NewNopLogger()
-	req := httptest.NewRequest("GET", "/product/abc", nil)
+	req := httptest.NewRequest("GET", "/api/v1/product/abc", nil)
 	req = mux.SetURLVars(req, map[string]string{"id": "abc"})
 	schema := &schemas.GetProductByIDRequest{}
 	decoder := decodeRequestWithID(logger, "id", schema)
@@ -326,25 +326,25 @@ func TestDecodeRequestWithIDDecisionTableValidSchemas(t *testing.T) {
 	}{
 		{
 			name:       "GetProductByIDRequest",
-			url:        "/product/101",
+			url:        "/api/v1/product/101",
 			schema:     &schemas.GetProductByIDRequest{},
 			expectedID: 101,
 		},
 		{
 			name:       "GetTemplateByIDRequest",
-			url:        "/product/template/202",
+			url:        "/api/v1/product/template/202",
 			schema:     &schemas.GetTemplateByIDRequest{},
 			expectedID: 202,
 		},
 		{
 			name:       "DeleteProductRequest",
-			url:        "/product/303",
+			url:        "/api/v1/product/303",
 			schema:     &schemas.DeleteProductRequest{},
 			expectedID: 303,
 		},
 		{
 			name:       "AddTemplateRequest",
-			url:        "/template/404",
+			url:        "/api/v1/template/404",
 			schema:     &schemas.AddTemplateRequest{},
 			expectedID: 404,
 		},
@@ -424,7 +424,7 @@ func TestDecodeSearchTemplatesRequestDecisionTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "/template/search?"+tc.queryParams, nil)
+			req := httptest.NewRequest("GET", "/api/v1/template/search?"+tc.queryParams, nil)
 			result, err := decodeSearchTemplatesRequest(context.Background(), req)
 			if tc.expectedError != "" {
 				assert.Error(t, err)

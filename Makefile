@@ -55,5 +55,5 @@ bump-version: ## Bump version (usage: make bump-version VERSION=1.0.2)
 	@echo "Version bumped to $(VERSION)"
 
 swag: ## Generate Swagger documentation
-	swag init -g cmd/main.go
+	swag init -g cmd/main.go --parseInternal
 	@echo "Swagger documentation generated in docs/swagger"
