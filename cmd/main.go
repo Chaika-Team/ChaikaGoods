@@ -19,7 +19,7 @@ import (
 )
 
 //	@title			ChaikaGoods API
-//	@version		1.0.2
+//	@version		1.0.6
 //	@description	This is a simple API to manage goods for the Chaika app.
 //	@host			chaika-soft.ru
 //	@BasePath		/

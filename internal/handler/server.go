@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	_ "github.com/Chaika-Team/ChaikaGoods/docs"
 	"github.com/Chaika-Team/ChaikaGoods/internal/handler/schemas"
 	"github.com/Chaika-Team/ChaikaGoods/internal/myerr"
@@ -17,30 +19,55 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // Constants for logging messages and endpoint
 const (
+	// apiPrefix is the common prefix for all API routes
+	apiPrefix = "/api"
+	// v1Prefix is the prefix for API v1 routes
+	v1Prefix            = apiPrefix + "/v1/product"
 	decoderReturningMsg = "decoder returning"
-	productEndpoint     = "/products"
 )
 
-// NewHTTPServer initializes and returns a new HTTP server with all routes defined.
+// NewHTTPServer initializes and returns a new HTTP server with all the necessary routes and middleware.
+// It sets up the router with middleware and registers all API endpoints.
+//
+// Parameters:
+//   - logger: Logger instance for logging HTTP requests and errors
+//   - endpoints: Collection of service endpoints to be exposed via HTTP
+//
+// Returns:
+//   - http.Handler: Configured HTTP handler with all routes and middleware
 func NewHTTPServer(logger log.Logger, endpoints Endpoints) http.Handler {
 	r := mux.NewRouter()
 	r.Use(HTTPLoggingMiddleware(logger), HeaderMiddleware)
-	// Swagger UI
-	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
-	// Register file and folder routes
-	registerRoutes(logger, r.PathPrefix("/api/v1").Subrouter(), endpoints)
+	// API information endpoint
+	r.HandleFunc(apiPrefix, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"versions":      []string{"v1"},
+			"documentation": v1Prefix + "/docs",
+		})
+		if err != nil {
+			_ = level.Error(logger).Log("msg", "failed to encode API info", "err", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}).Methods("GET")
+
+	// Register API v1 routes
+	registerV1Routes(logger, r, endpoints)
+
+	// Future versions can be added here as needed
+	// registerV2Routes(logger, r, endpoints)
 
 	return r
 }
 
-// registerRoutes registers all routes for the service using go-kit transport.
-func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
+// registerV1Routes registers all routes for the service using go-kit transport.
+func registerV1Routes(logger log.Logger, router *mux.Router, endpoints Endpoints) {
 	// GetAllProducts    endpoint.Endpoint
 	// GetProductByID    endpoint.Endpoint
 	// For templates
@@ -50,9 +77,18 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	// CreateProduct    endpoint.Endpoint
 	// UpdateProduct endpoint.Endpoint
 	// DeleteProduct endpoint.Endpoint
+	v1 := router.PathPrefix(v1Prefix).Subrouter()
+
+	// Swagger UI at /api/v1/product/docs/
+	v1.PathPrefix("/docs/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("./doc.json"), // The URL points to API definition (relative path)
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("list"),
+		httpSwagger.DomID("swagger-ui"),
+	))
 
 	// Get all products
-	api.Methods("GET").Path(productEndpoint).Handler(httpGoKit.NewServer(
+	v1.Methods("GET").Path("/").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
 		decodeEmptyRequest[schemas.GetAllProductsRequest](),
 		encodeResponse(logger),
@@ -60,7 +96,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Get product by ID
-	api.Methods("GET").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
+	v1.Methods("GET").Path("/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetProductByID,
 		decodeRequestWithID(logger, "id", &schemas.GetProductByIDRequest{}),
 		encodeResponse(logger),
@@ -68,7 +104,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Search Template
-	api.Methods("GET").Path("/templates/search").Handler(httpGoKit.NewServer(
+	v1.Methods("GET").Path("/template/search").Handler(httpGoKit.NewServer(
 		endpoints.SearchTemplates,
 		decodeSearchTemplatesRequest,
 		encodeResponse(logger),
@@ -76,7 +112,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Add Template
-	api.Methods("POST").Path("/templates").Handler(httpGoKit.NewServer(
+	v1.Methods("POST").Path("/template").Handler(httpGoKit.NewServer(
 		endpoints.AddTemplate,
 		decodeJSONRequest(&schemas.AddTemplateRequest{}),
 		encodeResponse(logger),
@@ -84,7 +120,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Get Template by ID
-	api.Methods("GET").Path("/templates/{id}").Handler(httpGoKit.NewServer(
+	v1.Methods("GET").Path("/template/{id}").Handler(httpGoKit.NewServer(
 		endpoints.GetTemplateByID,
 		decodeRequestWithID(logger, "id", &schemas.GetTemplateByIDRequest{}),
 		encodeResponse(logger),
@@ -92,7 +128,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Add product
-	api.Methods("POST").Path(productEndpoint).Handler(httpGoKit.NewServer(
+	v1.Methods("POST").Path("/").Handler(httpGoKit.NewServer(
 		endpoints.CreateProduct,
 		decodeJSONRequest(&schemas.CreateProductRequest{}),
 		encodeResponse(logger),
@@ -100,7 +136,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Update product
-	api.Methods("PUT").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
+	v1.Methods("PUT").Path("/{id}").Handler(httpGoKit.NewServer(
 		endpoints.UpdateProduct,
 		decodeJSONRequest(&schemas.UpdateProductRequest{}),
 		encodeResponse(logger),
@@ -108,7 +144,7 @@ func registerRoutes(logger log.Logger, api *mux.Router, endpoints Endpoints) {
 	))
 
 	// Delete product
-	api.Methods("DELETE").Path(productEndpoint + "/{id}").Handler(httpGoKit.NewServer(
+	v1.Methods("DELETE").Path("/{id}").Handler(httpGoKit.NewServer(
 		endpoints.DeleteProduct,
 		decodeRequestWithID(logger, "id", &schemas.DeleteProductRequest{}),
 		encodeResponse(logger),
@@ -157,7 +193,12 @@ func encodeErrorResponse(logger log.Logger) httpGoKit.ErrorEncoder {
 
 func decodeJSONRequest(schema interface{}) httpGoKit.DecodeRequestFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
-		defer req.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				_ = level.Error(log.With(ctx.Value("logger").(log.Logger))).Log("msg", "failed to close request body", "err", err)
+			}
+		}(req.Body)
 		err := json.NewDecoder(req.Body).Decode(schema)
 		if err == io.EOF {
 			return nil, errors.New("empty request body")
