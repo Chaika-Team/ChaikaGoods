@@ -27,6 +27,8 @@ type TemplateContentSchema struct {
 // GetAllProductsRequest представляет собой запрос на получение всех продуктов
 // @Description Запрос на получение всех продуктов
 type GetAllProductsRequest struct {
+	Limit  int64 `json:"limit" example:"10"`
+	Offset int64 `json:"offset" example:"0"`
 }
 
 // GetAllProductsResponse представляет собой ответ на запрос на получение всех продуктов

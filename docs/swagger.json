@@ -17,14 +17,14 @@
             "name": "GPL v3",
             "url": "https://www.gnu.de/documents/gpl.en.html"
         },
-        "version": "1.1.0"
+        "version": "1.1.2"
     },
     "host": "chaika-soft.ru",
     "basePath": "/",
     "paths": {
         "/api/v1/product": {
             "get": {
-                "description": "Get all products from the database",
+                "description": "Get all products with pagination",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,11 +35,33 @@
                     "products"
                 ],
                 "summary": "Get all products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max number of items",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset from start",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.GetAllProductsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
                         }
                     },
                     "500": {
