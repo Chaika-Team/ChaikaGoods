@@ -7,7 +7,7 @@ import (
 // ProductRepository defines methods for product-related database operations.
 type ProductRepository interface {
 	GetProductByID(ctx context.Context, id int64) (Product, error)
-	GetAllProducts(ctx context.Context) ([]Product, error)
+	GetAllProducts(ctx context.Context, limit, offset int64) ([]Product, error)
 	CreateProduct(ctx context.Context, p *Product) (int64, error)
 	UpdateProduct(ctx context.Context, p *Product) error
 	DeleteProduct(ctx context.Context, id int64) error

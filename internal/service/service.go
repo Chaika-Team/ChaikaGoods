@@ -11,7 +11,7 @@ import (
 // Service описывает сервис для работы с продуктами и шаблонами.
 type Service interface {
 	// GetAllProducts возвращает список всех продуктов.
-	GetAllProducts(ctx context.Context) ([]models.Product, error)
+	GetAllProducts(ctx context.Context, limit, offset int64) ([]models.Product, error)
 	// GetProductByID возвращает продукт по его ID.
 	GetProductByID(ctx context.Context, id int64) (models.Product, error)
 	// SearchTemplates ищет шаблоны продуктов по их имени или ID с пагинацией.
@@ -43,9 +43,9 @@ func NewService(repo models.GoodsRepository, logger log.Logger) Service {
 }
 
 // GetAllProducts возвращает список всех продуктов.
-func (s *GoodsService) GetAllProducts(ctx context.Context) ([]models.Product, error) {
+func (s *GoodsService) GetAllProducts(ctx context.Context, limit, offset int64) ([]models.Product, error) {
 	logger := log.With(s.log, "method", "GetAllProducts")
-	products, err := s.repo.GetAllProducts(ctx)
+	products, err := s.repo.GetAllProducts(ctx, limit, offset)
 	if err != nil {
 		_ = level.Error(logger).Log("err", err)
 		return nil, err

@@ -119,13 +119,24 @@ info:
     name: GPL v3
     url: https://www.gnu.de/documents/gpl.en.html
   title: ChaikaGoods API
-  version: 1.1.0
+  version: 1.1.2
 paths:
   /api/v1/product:
     get:
       consumes:
       - application/json
-      description: Get all products from the database
+      description: Get all products with pagination
+      parameters:
+        - description: Max number of items
+          in: query
+          name: limit
+          required: true
+          type: integer
+        - description: Offset from start
+          in: query
+          name: offset
+          required: true
+          type: integer
       produces:
       - application/json
       responses:
@@ -133,6 +144,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/schemas.GetAllProductsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:

@@ -52,9 +52,9 @@ func (r *GoodsPGRepository) GetProductByID(ctx context.Context, id int64) (model
 }
 
 // GetAllProducts returns a list of all products.
-func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Product, error) {
-	const sql = `SELECT id, name, description, price, imageurl, sku FROM product;`
-	rows, err := r.client.Query(ctx, sql)
+func (r *GoodsPGRepository) GetAllProducts(ctx context.Context, limit, offset int64) ([]models.Product, error) {
+	const sql = `SELECT id, name, description, price, imageurl, sku FROM product ORDER BY id LIMIT $1 OFFSET $2;`
+	rows, err := r.client.Query(ctx, sql, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,6 @@ func (r *GoodsPGRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return products, nil
 }
 

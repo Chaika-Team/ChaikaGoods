@@ -90,7 +90,7 @@ func registerV1Routes(logger log.Logger, router *mux.Router, endpoints Endpoints
 	// Get all products
 	v1.Methods("GET").Path("").Handler(httpGoKit.NewServer(
 		endpoints.GetAllProducts,
-		decodeEmptyRequest[schemas.GetAllProductsRequest](),
+		decodeGetAllProductsRequest,
 		encodeResponse(logger),
 		httpGoKit.ServerErrorEncoder(encodeErrorResponse(logger)),
 	))
@@ -260,6 +260,22 @@ func decodeSearchTemplatesRequest(_ context.Context, req *http.Request) (interfa
 
 	return &schemas.SearchTemplatesRequest{
 		Query:  searchString,
+		Limit:  limit,
+		Offset: offset,
+	}, nil
+}
+
+func decodeGetAllProductsRequest(_ context.Context, req *http.Request) (interface{}, error) {
+	q := req.URL.Query()
+	limit, err := strconv.ParseInt(q.Get("limit"), 10, 64)
+	if err != nil || limit <= 0 {
+		return nil, errors.New("invalid or missing 'limit' parameter")
+	}
+	offset, err := strconv.ParseInt(q.Get("offset"), 10, 64)
+	if err != nil || offset < 0 {
+		return nil, errors.New("invalid or missing 'offset' parameter")
+	}
+	return &schemas.GetAllProductsRequest{
 		Limit:  limit,
 		Offset: offset,
 	}, nil

@@ -69,25 +69,28 @@ func castRequest[T any](req interface{}) (T, error) {
 	return casted, nil
 }
 
-// makeGetAllProductsEndpoint constructs a GetAllProducts endpoint wrapping the service.
-//
-//	@Summary		Get all products
-//	@Description	Get all products from the database
-//	@Tags			products
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	schemas.GetAllProductsResponse
-//	@Failure		500	{object}	schemas.ErrorResponse
-//	@Router			/api/v1/product [get]
+// @Summary      Get all products
+// @Description  Get all products with pagination
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        limit   query    int  true  "Max number of items"
+// @Param        offset  query    int  true  "Offset from start"
+// @Success      200  {object}  schemas.GetAllProductsResponse
+// @Failure      400  {object}  schemas.ErrorResponse
+// @Failure      500  {object}  schemas.ErrorResponse
+// @Router       /api/v1/product [get]
 func makeGetAllProductsEndpoint(s service.Service, mapper *schemas.ProductsMapper) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		products, err := s.GetAllProducts(ctx)
+		req := request.(*schemas.GetAllProductsRequest)
+		products, err := s.GetAllProducts(ctx, req.Limit, req.Offset)
 		if err != nil {
 			return nil, err
 		}
 
-		productsSchema := mapper.ToSchemas(products)
-		return schemas.GetAllProductsResponse{Products: productsSchema}, nil
+		return schemas.GetAllProductsResponse{
+			Products: mapper.ToSchemas(products),
+		}, nil
 	}
 }
 

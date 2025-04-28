@@ -27,7 +27,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/product": {
             "get": {
-                "description": "Get all products from the database",
+                "description": "Get all products with pagination",
                 "consumes": [
                     "application/json"
                 ],
@@ -38,11 +38,33 @@ const docTemplate = `{
                     "products"
                 ],
                 "summary": "Get all products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max number of items",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset from start",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.GetAllProductsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
                         }
                     },
                     "500": {
@@ -541,7 +563,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.1.0",
+	Version:          "1.1.2",
 	Host:             "chaika-soft.ru",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
